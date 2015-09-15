@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# set PATH so it includes user's private bin if it exists
+[ ! -e "$HOME/bin/" ] || {
+	PATH=$PATH:$HOME/bin
+}
+
+if [ -e "$HOME/bin" ] ; then
+		export PATH="$HOME/bin:$PATH"
+fi
+
+# XXX or init from env
+test -n "$DEFAULT_UCONFDIR" \
+			 || export DEFAULT_UCONFDIR=$HOME/.conf
+
+init_user_env()
+{
+	test -n "$DEFAULT_UCONFDIR" || DEFAULT_UCONFDIR=$HOME/.config
+
+	local key= value=
+	for key in UCONFDIR HTDIR
+	do
+		value=$(eval echo \$$key)
+		default=$(eval echo \$DEFAULT_$key)
+		test -n "$value" || value=$default
+		export $key=$value
+		test -e "$value" || {
+			echo "warning: path for $key does not exist: $value"
+		}
+	done
+}
+
+init_uconfdir_path()
+{
+	# Add path dirs in $UCONFDIR to $PATH
+	local name
+	for name in $(uname) Generic
+	do
+		local user_PATH=$UCONFDIR/path/$name
+		if test -d "$user_PATH"
+		then
+			PATH=$user_PATH:$PATH
+		fi
+	done
+}
+
+case "$(hostname -s)" in
+
+	* )
+		init_user_env
+		init_uconfdir_path
+#		export USER_EMAIL='@brixcrm.nl'
+		;;
+
+esac
+

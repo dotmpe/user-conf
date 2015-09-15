@@ -1,0 +1,66 @@
+
+
+" Vim Airline config
+let g:airline_powerline_fonts = 1
+let g:airline_extensions = ['branch', 'tabline']
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#branch#enabled = 1
+let g:airline#extensions#tmuxline#enabled = 1
+
+" Syntactic config - auto syntax gutter/pane
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+let g:airline#extensions#syntastic#enabled = 1
+
+
+" reload .vimrc when changing
+"autocmd bufwritepost .vimrc source %
+
+" strip trailing space on save
+autocmd BufWritePre *.{js,php,c,cpp,ino,pde,py,json} :%s/\s\+$//e
+
+
+set nobomb
+
+set hlsearch
+
+
+" {{{ Plugins
+
+call pathogen#infect()
+
+filetype plugin indent on      " Indent and plugins by filetype
+
+" }}}
+
+" run file with PHP CLI (CTRL-M)
+:autocmd FileType php noremap <C-M> :w!<CR>:!/usr/bin/php %<CR>
+
+" PHP parser check (CTRL-L)
+:autocmd FileType php noremap <C-L> :!/usr/bin/php -l %<CR>
+
+" Airline customizations
+
+let g:airline_section_x = airline#section#create([ 'tagbar', '%{synIDattr(synID(line(''.''),col(''.''),0),''name'')}', '(', 'filetype', ')' ])
+
+let g:tmuxline_preset = {
+      \'a'    : '#S',
+      \'b'    : [ '#(whoami)'],
+      \'c'    : [ '#(tmux-uptime 3)', '#(tmux-uptime 2)'],
+      \'win'  : [ '#I', '#W'],
+      \'cwin' : [ '#I', '#W', '#F'],
+      \'x'    : [ '#(tmux-uptime 1)' ],
+      \'y'    : ['%R', '%a', '%Y'],
+      \'z'    : '#H'}
+
+colorscheme $VIM_THEME
+let g:airline_theme = $VIM_AIRLINE_THEME
+  
+" vim:ft=vim:
