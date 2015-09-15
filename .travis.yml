@@ -1,0 +1,10 @@
+
+install:
+
+before_script:
+
+script: ./script/test.sh
+
+after_script:
+
+env:
