@@ -147,13 +147,21 @@ init
   esac
   stdio_type 1
   test "$?" = "0"
-  test "$stdio_1_type" = "p"
+  case $(current_test_env) in jenkins )
+      test "$stdio_1_type" = "f" ;;
+    * )
+      test "$stdio_1_type" = "p" ;;
+  esac
   stdio_type 2
   test "$?" = "0"
-  test "$stdio_2_type" = "p"
-  stdio_type 3
-  test "$?" = "0"
-  test "$stdio_3_type" = "p"
+  case $(current_test_env) in jenkins )
+      test "$stdio_2_type" = "f" ;;
+    * )
+      test "$stdio_2_type" = "p"
+  esac
+  #stdio_type 3
+  #test "$?" = "0"
+  #test "$stdio_3_type" = "p"
 
   { echo foo | file /dev/fd/{0,1,2,3} > /tmp/1; }
   echo >>/tmp/1
