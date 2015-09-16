@@ -39,7 +39,7 @@ is_skipped()
 current_test_env()
 {
   case $(hostname -s) in
-    simza | vs1 ) hostname -s;;
+    simza | brix* | jenkins ) hostname -s;;
     * ) whoami ;;
   esac
 }
