@@ -170,7 +170,7 @@ init
 }
 
 @test "${lib}/${base} - function should ..." {
-  check_skipped_envs || \
+  check_skipped_envs jenkins || \
     skip "TODO envs $envs: implement lib (test) for env"
   #run function args
   #echo ${status} > /tmp/1
