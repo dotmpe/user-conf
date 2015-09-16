@@ -158,10 +158,8 @@ init
   esac
   stdio_type 2
   test "$?" = "0"
-  case $(current_test_env) in jenkins )
+  case $(current_test_env) in * )
       test "$stdio_2_type" = "f" ;;
-    * )
-      test "$stdio_2_type" = "p"
   esac
 
   #stdio_type 3
@@ -175,8 +173,8 @@ init
       echo >>/tmp/1
 #  { echo foo | file /dev/fd/0 >> /tmp/1; }
 #  { echo foo | stdio_type 0; echo "$stdio_0_type" > /tmp/1; test "$stdio_0_type" = "p"; }
-  { echo foo | stdio_type 1; echo "$stdio_1_type" > /tmp/1; test "$stdio_1_type" = "p"; }
-  { echo foo | stdio_type 2; echo "$stdio_2_type" > /tmp/1; test "$stdio_2_type" = "p"; }
+#  { echo foo | stdio_type 1; echo "$stdio_1_type" > /tmp/1; test "$stdio_1_type" = "p"; }
+#  { echo foo | stdio_type 2; echo "$stdio_2_type" > /tmp/1; test "$stdio_2_type" = "p"; }
 #  test "$stdio_0_type" = "p"
       ;;
   esac
@@ -192,7 +190,7 @@ init
 }
 
 @test "${lib}/${base} - function should ..." {
-  check_skipped_envs jenkins || \
+  check_skipped_envs || \
     skip "TODO envs $envs: implement lib (test) for env"
   #run function args
   #echo ${status} > /tmp/1
