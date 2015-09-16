@@ -4,7 +4,10 @@ test_init()
   test -n "$uname" || uname=$(uname)
   hostname_vid="$(hostname -s | tr 'a-z.-' 'A-Z__')"
   local val=$(eval echo "\$${hostname_vid}_SKIP")
-  test -n "$val" || export ${hostname_vid}_SKIP=1
+  test -n "$val" && {
+    export ${hostname_vid}_SKIP=1
+    note "Exported ${hostname_vid}_SKIP=1"
+  }
 }
 
 init_bin()
@@ -30,7 +33,7 @@ init()
 
 is_skipped()
 {
-  local key=$(echo $1 | tr 'a-z' 'A-Z')
+  local key=$(echo $1 | tr 'a-z-.' 'A-Z__')
   local skipped=$(echo $(eval echo \$${key}_SKIP))
   test -n "$skipped" && return
   return 1
