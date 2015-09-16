@@ -26,9 +26,6 @@ init()
     init_bin
   }
   init_lib
-
-  # XXX does this overwrite bats load?
-  . main.init.sh
 }
 
 is_skipped()
