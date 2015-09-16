@@ -140,7 +140,11 @@ init
   # std bats IO...
   stdio_type 0
   test "$?" = "0"
-  test "$stdio_0_type" = "t"
+  case $(current_test_env) in jenkins )
+      test "$stdio_0_type" = "f" ;;
+    * )
+      test "$stdio_0_type" = "t" ;;
+  esac
   stdio_type 1
   test "$?" = "0"
   test "$stdio_1_type" = "p"
