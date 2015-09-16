@@ -139,7 +139,7 @@ init
 
 }
 
-@test "${lib}/${base} - stdio_type detects difference between interactive (terminal) I/O and other and sets stdio_{0,1,2}_type " {
+@test "${lib}/${base} - stdio_type detects interactive (terminal) I/O and other, sets stdio_{0,1,2}_type" {
 
   # std bats IO...
   stdio_type 0
@@ -161,7 +161,9 @@ init
   case $(current_test_env) in * )
       test "$stdio_2_type" = "f" ;;
   esac
+}
 
+@test "${lib}/${base} - stdio_type detects interactive (terminal) I/O and other, sets stdio_{0,1,2}_type (cont'd)" {
   #stdio_type 3
   #test "$?" = "0"
   #test "$stdio_3_type" = "p"
