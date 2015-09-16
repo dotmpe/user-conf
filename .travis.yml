@@ -2,8 +2,10 @@
 install:
 
 before_script:
+- test -d build || mkdir build
 
-script: ./script/test.sh
+script:
+- ./script/test.sh > ./build/test-result.tap
 
 after_script:
 
