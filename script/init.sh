@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-source ./script/util.sh
-
+base=uconf:script/init
+. ./script/lib.sh
+c_initialize
 

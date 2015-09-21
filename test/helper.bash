@@ -2,11 +2,17 @@
 test_init()
 {
   test -n "$uname" || uname=$(uname)
-  hostname_vid="$(hostname -s | tr 'a-z.-' 'A-Z__')"
+  hostname_init
+}
+
+hostname_init()
+{
+  hostname="$(hostname -s | tr 'A-Z.-' 'a-z__')"
+  local hostname_vid=$(echo ${hostname}|tr 'a-z' 'A-Z')
   local val=$(eval echo "\$${hostname_vid}_SKIP")
   test -z "$val" && {
     export ${hostname_vid}_SKIP=1
-    #printf "Exported ${hostname_vid}_SKIP=1"
+    printf "# Exported ${hostname_vid}_SKIP=1" >/tmp/2
   } || set --
 }
 
@@ -41,8 +47,9 @@ is_skipped()
 
 current_test_env()
 {
-  case $(hostname -s) in
-    simza | brix* | jenkins ) hostname -s;;
+  test -n "$hostname" || hostname_init
+  case "$hostname" in
+    simza | brix* | jenkins ) echo $hostname;;
     * ) whoami ;;
   esac
 }
@@ -51,8 +58,9 @@ check_skipped_envs()
 {
   # XXX hardcoded envs
   local skipped=0
-  test -n "$1" && envs="$*" || envs="$(hostname -s) $(whoami)"
-  cur_env=$(current_test_env)
+  test -n "$hostname" || hostname_init
+  test -n "$1" && envs="$*" || envs="$hostname $(whoami)"
+  cur_env="$(current_test_env)"
   for env in $envs
   do
     is_skipped $env && {

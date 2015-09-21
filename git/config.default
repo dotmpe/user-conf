@@ -1,0 +1,39 @@
+
+[merge]
+  tool = vimdiff
+
+[color]
+  ui = true
+  status = auto
+  branch = auto
+  interactive = auto
+  diff = auto
+
+[alias]
+  stat = status
+  st = status
+  co = checkout
+  br = branch
+  ci = commit
+  mt = mergetool
+  ad = add
+  pul = pull
+  pl = pull
+  pus = push
+  ps = push
+  rs = reset
+  mt = mergetool
+  last = log -1 HEAD
+  vimdiff = difftool -y -t vimdiff
+  ign = ls-files -o -i --exclude-standard
+  tree = log --graph --full-history --all --color --date=short --pretty=format:\"%x1b[31m%h%x09%x1b[0m%x20%ad%x1b[32m%d%x1b[0m %aN: %s\"
+  undo-commit = reset --soft HEAD^
+
+[push]
+  default = matching
+# simple
+
+[core]
+  excludesfile = $HOME/.gitignore_global
+
+

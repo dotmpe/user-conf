@@ -2,59 +2,58 @@
 
 load helper
 base=std
-
 init
-. $lib/std.sh
-. $lib/str.sh
+. $lib/std.lib.sh
+. $lib/str.lib.sh
 
 
-@test "${lib}/${base} - test_v <n> should return 1 if <n> <= <verbosity>. No output." {
+@test "${lib}/${base} - std_v <n> should return 1 if <n> <= <verbosity>. No output." {
 
   verbosity=1
-  run test_v 1
+  run std_v 1
   test ${status} -eq 0
   test -z "${lines[*]}"
-  run test_v 2
+  run std_v 2
   test ${status} -eq 1
   test -z "${lines[*]}"
-  run test_v 0
+  run std_v 0
   test ${status} -eq 0
   test -z "${lines[*]}"
 
   verbosity=6
-  run test_v 7
+  run std_v 7
   test ${status} -eq 1
   test -z "${lines[*]}"
-  run test_v 1
+  run std_v 1
   test ${status} -eq 0
   test -z "${lines[*]}"
-  run test_v 0
+  run std_v 0
   test ${status} -eq 0
   test -z "${lines[*]}"
 
   verbosity=0
-  run test_v 0
+  run std_v 0
   test ${status} -eq 0
   test -z "${lines[*]}"
-  run test_v 1
+  run std_v 1
   test ${status} -eq 1
   test -z "${lines[*]}"
 }
 
 
-@test "${lib}/${base} - test_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. " {
+@test "${lib}/${base} - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. " {
 
   exit(){ echo 'exit '$1' ok'; }
 
-  run test_exit
+  run std_exit
   test ${status} -eq 1
   test -z "${lines[*]}"
 
-  run test_exit 1
+  run std_exit 1
   test ${status} -eq 0
   test "exit 1 ok" = "${lines[*]}"
 
-  run test_exit 0
+  run std_exit 0
   test ${status} -eq 0
   test "exit 0 ok" = "${lines[*]}"
 }
@@ -122,74 +121,6 @@ init
   fnmatch "*exit 0 call" "${lines[*]}"
 }
 
-@test "${lib}/${base} - stdio_type works without errors and output" {
-
-  run stdio_type
-  test ${status} -eq 0
-  test "${lines[*]}" = ""
-  run stdio_type 0
-  test ${status} -eq 0
-  test "${lines[*]}" = ""
-  run stdio_type 1
-  test ${status} -eq 0
-  test "${lines[*]}" = ""
-  run stdio_type 2
-  test ${status} -eq 0
-  test "${lines[*]}" = ""
-
-}
-
-@test "${lib}/${base} - stdio_type detects interactive (terminal) I/O and other, sets stdio_{0,1,2}_type" {
-
-  # std bats IO...
-  stdio_type 0
-  test "$?" = "0"
-  case $(current_test_env) in jenkins )
-      test "$stdio_0_type" = "p" ;;
-    * )
-      test "$stdio_0_type" = "t" ;;
-  esac
-  stdio_type 1
-  test "$?" = "0"
-  case $(current_test_env) in jenkins )
-      test "$stdio_1_type" = "f" ;;
-    * )
-      test "$stdio_1_type" = "p" ;;
-  esac
-  stdio_type 2
-  test "$?" = "0"
-  case $(current_test_env) in * )
-      test "$stdio_2_type" = "f" ;;
-  esac
-}
-
-@test "${lib}/${base} - stdio_type detects interactive (terminal) I/O and other, sets stdio_{0,1,2}_type (cont'd)" {
-  #stdio_type 3
-  #test "$?" = "0"
-  #test "$stdio_3_type" = "p"
-
-  case $(current_test_env) in jenkins )
-      skip "TODO a bit more testing with stdio type detection at $(current_test_env)" ;;
-    * )
-      { echo foo | file /dev/fd/{0,1,2,3} > /tmp/1; }
-      echo >>/tmp/1
-#  { echo foo | file /dev/fd/0 >> /tmp/1; }
-#  { echo foo | stdio_type 0; echo "$stdio_0_type" > /tmp/1; test "$stdio_0_type" = "p"; }
-#  { echo foo | stdio_type 1; echo "$stdio_1_type" > /tmp/1; test "$stdio_1_type" = "p"; }
-#  { echo foo | stdio_type 2; echo "$stdio_2_type" > /tmp/1; test "$stdio_2_type" = "p"; }
-#  test "$stdio_0_type" = "p"
-      ;;
-  esac
-
-  tmpf
-  echo > $tmpf
-  stdio_type 0 < $tmpf
-  test "$stdio_0_type" = "f"
-
-# FIXME: test on Linux
-#  bash -c 'echo foo | stdio_type 0; echo x0=$stdio_0_type > /tmp/1'
-#  test "$stdio_0_type" = "p"
-}
 
 @test "${lib}/${base} - function should ..." {
   check_skipped_envs || \

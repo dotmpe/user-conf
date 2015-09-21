@@ -12,8 +12,6 @@ init
     test "${lines[*]}" = ""
 
     run bash -c '. '${lib}/${base}' && FOO_SKIP=1 is_skipped foo'
-    echo "${status}" >/tmp/1
-    bash -c '. '${lib}/${base}' && FOO_SKIP=1 is_skipped foo' >>/tmp/1
     test "${status}" = 0
     test "${lines[*]}" = ""
 
@@ -37,9 +35,11 @@ init
     test "${lines[*]}" = "" # No output
     test "${#lines[@]}" = "0" # No output
 
-    key=$(hostname -s | tr 'a-z-' 'A-Z_')
-    run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs '$(hostname -s | tr 'A-Z' 'a-z')' '$(whoami)
-    test "${status}" = 1 || test -z "Should have failed: envs (hostname -s | tr 'A-Z' 'a-z') and (whoami) should cover all envs"
+    key=$(hostname -s | tr 'a-z.-' 'A-Z__')
+    envs=$(hostname -s | tr 'A-Z' 'a-z')' '$(whoami)
+    run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs '$envs
+    test "${status}" = 1 || \
+      test -z "Should have failed: envs (hostname) and (whoami) should cover all envs"
     test "${lines[*]}" = ""
 
     run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs'

@@ -1,0 +1,5 @@
+alias vf='vimdiff ~/.conf/fs/`hostname -s`.tab /etc/fstab'
+alias vh='vimdiff ~/.conf/host/`hostname -s`.tab /etc/hosts'
+alias vn='vimdiff ~/.conf/network/`hostname -s`.interfaces /etc/network/interfaces'
+alias ve='vimdiff ~/.conf/export/`hostname -s`.tab /etc/exports'
+alias vv='vim ~/.vimrc ~/.conf/vim/filetype.vim'

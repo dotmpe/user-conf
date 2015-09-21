@@ -1,6 +1,6 @@
 #!/bin/sh
 
-base=uconf:script/test
+base=uconf:script/stat
 . ./script/lib.sh
-c_test
+c_stat
 
