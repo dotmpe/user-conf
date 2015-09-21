@@ -1,10 +1,9 @@
 #!/usr/bin/env bats
 
-load helper
 base=boilerplate
-
-init_lib
-init_bin
+load helper
+init
+#init_bin
 
 
 @test "${bin} -vv -n help" {
@@ -27,4 +26,3 @@ init_bin
   test ${status} -eq 0
 }
 
-# vim:et:ft=sh:
