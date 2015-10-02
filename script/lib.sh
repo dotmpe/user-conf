@@ -49,7 +49,7 @@ c_install()
       touch /tmp/uc-install-failed
     }
   done
-  test -e "/tmp/uc-install-failed" && {
+  test ! -e "/tmp/uc-stat-failed" || {
     rm -f /tmp/uc-install-failed
     err "failed directives" 1
   }
@@ -74,7 +74,7 @@ c_update()
       touch /tmp/uc-update-failed
     }
   done
-  test -e "/tmp/uc-update-failed" && {
+  test ! -e "/tmp/uc-stat-failed" || {
     rm -f /tmp/uc-update-failed
     err "failed directives" 1
   }
@@ -99,7 +99,7 @@ c_stat()
       touch /tmp/uc-stat-failed
     }
   done
-  test -e "/tmp/uc-stat-failed" && {
+  test ! -e "/tmp/uc-stat-failed" || {
     rm -f /tmp/uc-stat-failed
     err "failed directives" 1
   }
