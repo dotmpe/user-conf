@@ -16,3 +16,7 @@ try_exec_func()
   $func "$@" || return $?
 }
 
+noop()
+{
+  set --
+}
