@@ -39,8 +39,9 @@ c_install()
   req_conf
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive installer arguments_raw
   do
-    installer="$(echo $installer|tr 'a-z' 'A-Z')"
-    prep_dir_func $installer INSTALL || continue
+    test -n "$installer" || err "empty installer" 1
+    installer="$(echo "$installer"|tr 'a-z' 'A-Z')"
+    prep_dir_func "$installer" INSTALL || continue
     test -n "$arguments" || err "expected $installer packages" 1
     try_exec_func "$func_name" $(eval echo "$arguments") && {
       continue
@@ -49,7 +50,7 @@ c_install()
       touch /tmp/uc-install-failed
     }
   done
-  test ! -e "/tmp/uc-stat-failed" || {
+  test ! -e "/tmp/uc-install-failed" || {
     rm -f /tmp/uc-install-failed
     err "failed directives" 1
   }
@@ -165,7 +166,7 @@ d_SYMLINK_update()
         log "Updated symlink $1"
       }
     } || {
-      err "already exists and not a symlink: $1"
+      err "Path already exists and not a symlink: $1"
       return 2
     }
   } || {
@@ -183,14 +184,14 @@ d_SYMLINK_stat()
         return 0
       } || {
         rm "$2"
-        log "symlink changed: $2 $1: $(readlink "$2")"
+        log "Symlink changed: $2 $1: $(readlink "$2")"
       }
     } || {
       err "path exists and is not a symlink: $1"
       return 2
     }
   } || {
-    echo "symlink missing: $2 to $1"
+    echo "Symlink missing: $2 to $1"
   }
 }
 
@@ -263,11 +264,12 @@ req_conf() {
 }
 
 prep_dir_func() {
-  directive="$(echo $directive|tr 'a-z' 'A-Z')"
-  arguments=$(eval echo "$arguments_raw")
+  test -n "$directive" || err "empty directive" 1
+  directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
+  arguments="$(eval echo "$arguments_raw")"
   func_name="d_${directive}_$1"
-  test -z "$2" || {
-    case $directive in $2 ) return;; * ) return 1;; esac
+  test -z "$2" && return 0 || {
+    case "$directive" in $2 ) return 0;; * ) return 1;; esac
   }
 }
 
