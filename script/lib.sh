@@ -46,6 +46,7 @@ c_install()
       continue
     } || {
       err "install ret $? in $directive:$installer with '$arguments'"
+      touch /tmp/uc-install-failed
     }
   done
   test -e "/tmp/uc-install-failed" && {
@@ -69,9 +70,8 @@ c_update()
     try_exec_func "$func_name" $(eval echo "$arguments") && {
       continue
     } || {
-      local r=$?
-      failed=$r
       err "update ret $r in $directive with '$arguments'"
+      touch /tmp/uc-update-failed
     }
   done
   test -e "/tmp/uc-update-failed" && {
@@ -95,8 +95,8 @@ c_stat()
     try_exec_func "$func_name" $(eval echo "$arguments") && {
       continue
     } || {
-      local r=$?; touch /tmp/uc-stat-failed
-      err "stat ret $r in $directive with '$arguments'"
+      err "stat ret $? in $directive with '$arguments'"
+      touch /tmp/uc-stat-failed
     }
   done
   test -e "/tmp/uc-stat-failed" && {
@@ -147,6 +147,7 @@ c_test()
   ./test/*-spec.bats
 }
 
+
 ### Directive commands
 
 ## Symlink directive
@@ -159,14 +160,17 @@ d_SYMLINK_update()
       test "$(readlink "$2")" = "$1" && {
         return 0
       } || {
-        echo "rm symlink $2 and ln -s $1 $2"
+        rm "$2"
+        ln -s "$1" "$2"
+        log "Updated symlink $1"
       }
     } || {
       err "already exists and not a symlink: $1"
       return 2
     }
   } || {
-    echo "TODO ln -s $1 $2"
+    ln -s $1 $2
+    echo "New symlink $1 $2"
   }
 }
 
@@ -178,6 +182,7 @@ d_SYMLINK_stat()
       test "$(readlink "$2")" = "$1" && {
         return 0
       } || {
+        rm "$2"
         log "symlink changed: $2 $1: $(readlink "$2")"
       }
     } || {
@@ -207,7 +212,8 @@ d_COPY_update()
       return 2
     }
   } || {
-    echo "TODO cp $1 $2"
+    cp "$1" "$2"
+    echo "New copy $1 $2"
   }
 }
 
@@ -230,6 +236,7 @@ d_COPY_stat()
     echo "copy missing: $2 of $1"
   }
 }
+
 
 ## Installers
 
