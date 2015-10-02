@@ -1,0 +1,7 @@
+
+[include]
+	path = ~/.conf/git/config.boilerplate
+
+[include]
+	path = ~/.conf/git/config.user
+
