@@ -9,6 +9,7 @@ before_script:
 branches:
   only:
   - test
+  - dev
 
 script:
 - ./script/test.sh | tee ./build/test-result.tap
