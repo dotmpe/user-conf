@@ -2,7 +2,12 @@
 install: ./install-dependencies.sh
 
 before_script:
+- export PATH=$PATH:$PREFIX/bin
 - test -d build || mkdir build
+
+branches:
+  only:
+  - master
 
 script:
 - ./script/test.sh > ./build/test-result.tap
@@ -10,3 +15,5 @@ script:
 after_script:
 
 env:
+- ENV=
+
