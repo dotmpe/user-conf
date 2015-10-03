@@ -35,7 +35,7 @@ init
     test "${lines[*]}" = "" # No output
     test "${#lines[@]}" = "0" # No output
 
-    key=$(hostname -s | tr 'a-z.-' 'A-Z__')
+    key=$(hostname -s | tr 'a-z.-' 'A-Z__' | tr -s '_' '_')
     envs=$(hostname -s | tr 'A-Z' 'a-z')' '$(whoami)
     run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs '$envs
     test "${status}" = 1 || \
