@@ -26,9 +26,9 @@ test -n "$HOME" || err "no user dir" 100
 # config holds directives for current env/host,
 c_initialize()
 {
-  local conf=install/$hostname.conf
+  local conf=install/$hostname.u-c
   cd "$UCONF" || err "? cd $UCONF" 1
-  cp "install/default.conf" $conf
+  cp "install/default.u-c" $conf
 }
 
 c_install()
@@ -254,11 +254,17 @@ d_INSTALL_PIP()
   pip install "$@"
 }
 
+d_INSTALL_OPKG()
+{
+  opkg update >/dev/null
+  opkg install "$@"
+}
+
 
 # Misc. utils
 req_conf() {
-  conf=install/$hostname.conf
-  test -e "$conf" || err "no such install config $conf" 1
+  conf=install/$hostname.u-c
+  test -e "$conf" || err "no such user-config $conf" 1
 }
 
 prep_dir_func() {
