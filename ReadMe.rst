@@ -85,6 +85,9 @@ Dev
   programs, so that INSTALL can be a regular stat/update directive. \
   XXX: BIN directive.
 
+- TODO: more provision directives: git, web (curl).
+- TODO: new type of directives for configuration: cron, munin-node, hostname, hosts and fstab maybe.
+
 - TODO: make directives optional. Maybe stick an asterix or q-mark to the keyword.
 - TODO: badly want git clone directive, also submodule directive. Should be good enough for vim-pathogen. And many other things.
 - TODO: a source directive. As new directives are added it should be useful
