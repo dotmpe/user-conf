@@ -104,5 +104,6 @@ Dev
 - XXX: make directives optional. Maybe stick an asterix or q-mark to the keyword. Then
   expand init to initialize paths, and let stat and update only deal with
   existing paths and leave new-paths if the directive is optional?
-
+- XXX: at some point, replace cat $conf with something that handles SOURCE
+  directives. Current set up does seem to handle multilines using '\' trailer.
 
