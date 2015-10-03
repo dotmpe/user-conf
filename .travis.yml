@@ -1,5 +1,5 @@
 
-install:
+install: ./install-dependencies.sh
 
 before_script:
 - test -d build || mkdir build
