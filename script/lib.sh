@@ -199,6 +199,7 @@ d_COPY_update()
 {
   test -f "$1" || err "not a file: $1" 101
   test -e "$2" && {
+    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
       diff -bqr "$2" "$1" >/dev/null && {
         return 0
@@ -220,6 +221,7 @@ d_COPY_stat()
 {
   test -f "$1" || err "not a file: $1" 101
   test -e "$2" && {
+    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
       diff -bqr "$2" "$1" >/dev/null && {
         return 0
