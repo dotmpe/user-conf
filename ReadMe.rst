@@ -30,7 +30,7 @@ So I just wrote the minimal scripts to do it. And then started adding some
 generic configurations for `tmux`, `vim`, `bash` and others.
 
 There are some Bats tests for the shell lib functions. But not for the UC
-scripts themselfs. ``$UCONF/test.sh``.
+scripts themselves. ``$UCONF/test.sh``.
 
 This presents a File format called user-config, or u-c. With a vim-syntax file.
 Supports a limited set of initial directives: SYMLINK, COPY for config files,
