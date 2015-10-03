@@ -2,6 +2,7 @@
 install: ./install-dependencies.sh
 
 before_script:
+- mkdir $HOME/project
 - export PATH=$PATH:$PREFIX/bin
 - test -d build || mkdir build
 
@@ -15,5 +16,5 @@ script:
 after_script:
 
 env:
-- ENV=
+- ENV= PREFIX=$HOME/ SRC_PREFIX=$HOME/project
 
