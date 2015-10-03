@@ -88,9 +88,9 @@ Dev
 - TODO: make directives optional. Maybe stick an asterix or q-mark to the keyword.
 - TODO: badly want git clone directive, also submodule directive. Should be good enough for vim-pathogen. And many other things.
 - TODO: a source directive. As new directives are added it should be useful
-    create generic bits of ufile with var. directives and distribute ucfiles in bits.
+  create generic bits of ufile with var. directives and distribute ucfiles in bits.
 
 - XXX: an INIT directive, create customized per-host file from boilerplate
 - XXX: maybe use installer glob for INSTALL. But would need to map package names
-    then too. Should also be useful with SOURCE directive iot generalize.
+  then too. Should also be useful with SOURCE directive iot generalize.
 
