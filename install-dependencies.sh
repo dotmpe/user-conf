@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-sudo=sudo
+sudo=
 
 test -n "$SRC_PREFIX" || {
 SRC_PREFIX=$HOME
