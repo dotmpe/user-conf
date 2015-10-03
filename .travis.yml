@@ -16,5 +16,5 @@ script:
 after_script:
 
 env:
-- ENV= PREFIX=$HOME/ SRC_PREFIX=$HOME/project
+- ENV= PREFIX=$HOME/ SRC_PREFIX=$HOME/project TRAVIS_SKIP=1
 
