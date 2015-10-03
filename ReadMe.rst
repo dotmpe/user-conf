@@ -1,9 +1,21 @@
 User-Config
 ===========
+:Created: 2015-10-03
+:Project:
+
+  .. image:: https://secure.travis-ci.org/dotmpe/user-config.png
+    :target: https://travis-ci.org/dotmpe/user-config
+    :alt: Build
+
+  .. image:: https://badge.fury.io/gh/dotmpe%2Fuser-config.png
+    :target: http://badge.fury.io/gh/dotmpe%2Fuser-config
+    :alt: GIT
+
 A dotfile repository.
 
 
-.. image:: screen-shot.png
+.. figure:: screen-shot.png
+
 
 Intro
 -----
