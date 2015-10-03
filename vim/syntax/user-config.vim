@@ -5,6 +5,7 @@ syntax clear
 syn case ignore
 com! -nargs=+ HiLink hi def link <args>
 
+syn keyword ucInstaller apt brew pip opkg
 syn match ucVar "\$[A-Za-z_]\+"
 syn match ucInstallDirective "^INSTALL\ "
 syn match ucBaseDirective "^BASE\ "
@@ -14,6 +15,7 @@ syn case match
 syn keyword etTodo TODO FIXME XXX NOTE
 syn match unixComment  "#.\{-}$" contains=etTodo,@Spell
 
+HiLink ucInstaller Keyword
 HiLink ucIdentifier Identifier
 HiLink ucVar ucIdentifier
 
