@@ -3,6 +3,8 @@ User-Config
 A dotfile repository.
 
 
+.. image:: screen-shot.png
+
 Intro
 -----
 It was time to expand a little on my existing dotfile repo setup.
