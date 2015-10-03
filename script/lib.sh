@@ -43,7 +43,7 @@ c_install()
     installer="$(echo "$installer"|tr 'a-z' 'A-Z')"
     prep_dir_func "$installer" INSTALL || continue
     test -n "$arguments" || err "expected $installer packages" 1
-    try_exec_func "$func_name" $(eval echo "$arguments") && {
+    try_exec_func "$func_name" $arguments && {
       continue
     } || {
       err "install ret $? in $directive:$installer with '$arguments'"
@@ -68,7 +68,7 @@ c_update()
     prep_dir_func update
     case $directive in INSTALL | BASE ) continue ;; esac
 
-    try_exec_func "$func_name" $(eval echo "$arguments") && {
+    try_exec_func "$func_name" $arguments && {
       continue
     } || {
       err "update ret $r in $directive with '$arguments'"
@@ -92,8 +92,7 @@ c_stat()
   do
     prep_dir_func stat
     case $directive in INSTALL | BASE ) continue ;; esac
-    #$source $0
-    try_exec_func "$func_name" $(eval echo "$arguments") && {
+    try_exec_func "$func_name" $arguments && {
       continue
     } || {
       err "stat ret $? in $directive with '$arguments'"
@@ -171,7 +170,7 @@ d_SYMLINK_update()
     }
   } || {
     ln -s $1 $2
-    echo "New symlink $1 $2"
+    log "New symlink $1 $2"
   }
 }
 
@@ -183,7 +182,6 @@ d_SYMLINK_stat()
       test "$(readlink "$2")" = "$1" && {
         return 0
       } || {
-        rm "$2"
         log "Symlink changed: $2 $1: $(readlink "$2")"
       }
     } || {
@@ -191,7 +189,7 @@ d_SYMLINK_stat()
       return 2
     }
   } || {
-    echo "Symlink missing: $2 to $1"
+    log "Symlink missing: $2 to $1"
   }
 }
 
@@ -214,7 +212,7 @@ d_COPY_update()
     }
   } || {
     cp "$1" "$2"
-    echo "New copy $1 $2"
+    log "New copy $1 $2"
   }
 }
 
@@ -234,7 +232,7 @@ d_COPY_stat()
       return 2
     }
   } || {
-    echo "copy missing: $2 of $1"
+    log "copy missing: $2 of $1"
   }
 }
 
