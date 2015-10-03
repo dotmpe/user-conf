@@ -154,7 +154,7 @@ c_test()
 
 d_SYMLINK_update()
 {
-  test -f "$1" || err "not a file: $1" 101
+  test -f "$1" -o -d "$1" || err "not a file or directory: $1" 101
   test -e "$2" && {
     test -h "$2" && {
       test "$(readlink "$2")" = "$1" && {
@@ -176,7 +176,7 @@ d_SYMLINK_update()
 
 d_SYMLINK_stat()
 {
-  test -f "$1" || err "not a file: $1" 101
+  test -f "$1" -o -d "$1" || err "not a file or directory: $1" 101
   test -e "$2" && {
     test -h "$2" && {
       test "$(readlink "$2")" = "$1" && {
