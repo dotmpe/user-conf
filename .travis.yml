@@ -11,7 +11,7 @@ branches:
   - master
 
 script:
-- ./script/test.sh > ./build/test-result.tap
+- ./script/test.sh | tee ./build/test-result.tap
 
 after_script:
 
