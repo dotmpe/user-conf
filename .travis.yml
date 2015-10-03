@@ -2,7 +2,7 @@
 install: ./install-dependencies.sh
 
 before_script:
-- mkdir $HOME/project
+- mkdir -vp $HOME/project
 - export PATH=$PATH:$PREFIX/bin
 - test -d build || mkdir build
 
