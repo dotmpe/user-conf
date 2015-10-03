@@ -1,27 +1,42 @@
 " Vim syntax file
+" (last defined pattern has higher priority)
 
 syntax clear
 
 syn case ignore
+
 com! -nargs=+ HiLink hi def link <args>
 
-syn keyword ucInstaller apt brew pip opkg
-syn match ucVar "\$[A-Za-z_]\+"
-syn match ucInstallDirective "^INSTALL\ "
-syn match ucBaseDirective "^BASE\ "
-syn match ucDirective "^\(COPY\|SYMLINK\)\ "
-syn case match
+syn keyword ucProvisionDirective contained containedin=ucDirective INSTALL COPY SYMLINK WEB GIT SOURCE
+syn keyword ucMetaDirective contained containedin=ucDirective BASE SOURCE AGE ENV
+
+syn keyword ucInstaller containedin=ucParam apt brew pip opkg
+
+syn match ucParam "[^\ ]\+" contained contains=ucInstaller,ucVar
+syn match ucDecorator '[*?]' contained
+syn match ucVar "\$[A-Za-z_]\+" contained
+syn match ucDirective "^[A-Za-z_]\+[*?]*\ " containedin=ucFileDirective
+
+syn region ucFileDirective start="^[A-Za-z_]\+[*?]*\ " end="\n" contains=ucDirective,ucDecorator,ucParam
 
 syn keyword etTodo TODO FIXME XXX NOTE
-syn match unixComment  "#.\{-}$" contains=etTodo,@Spell
 
-HiLink ucInstaller Keyword
-HiLink ucIdentifier Identifier
+syn case match
+
+syn match unixComment "#.\{-}$" contains=etTodo,@Spell
+
+HiLink ucDecorator ucSpecial
+"HiLink ucDecorator ucOperator
+HiLink ucInstaller Type
 HiLink ucVar ucIdentifier
 
-HiLink ucInstallDirective ucDirective
-HiLink ucDirective Statement
-HiLink ucBaseDirective Constant
+HiLink ucProvisionDirective Statement
+HiLink ucMetaDirective Constant
+HiLink ucIdentifier Identifier
+HiLink ucKeyword Keyword
+HiLink ucOperator Operator
+HiLink ucSpecialChar SpecialChar
+HiLink ucSpecial Special
 
 HiLink unixComment Comment
 
