@@ -26,9 +26,15 @@ test -n "$HOME" || err "no user dir" 100
 # config holds directives for current env/host,
 c_initialize()
 {
+  test -n "$1" || set -- "default"
   local conf=install/$hostname.u-c
   cd "$UCONF" || err "? cd $UCONF" 1
-  cp "install/default.u-c" $conf
+  test -e "$conf" && {
+    note "already initialized: $conf"
+  } || {
+    cp "install/$1.u-c" $conf
+    note "initialized $hostname from $1: $conf"
+  }
 }
 
 c_install()
