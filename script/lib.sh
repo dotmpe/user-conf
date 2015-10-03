@@ -18,10 +18,11 @@ test -x "$uc_lib"/update.sh || exit 95
 . "$uc_lib"/std.lib.sh
 . "$uc_lib"/str.lib.sh
 . "$uc_lib"/match.lib.sh
+. "$uc_lib"/os.lib.sh
+. "$uc_lib"/date.lib.sh
 . "$uc_lib"/util.lib.sh
 
 test -n "$HOME" || err "no user dir" 100
-
 
 # config holds directives for current env/host,
 c_initialize()
@@ -47,7 +48,7 @@ c_install()
   do
     test -n "$installer" || err "empty installer" 1
     installer="$(echo "$installer"|tr 'a-z' 'A-Z')"
-    prep_dir_func "$installer" INSTALL || continue
+    prep_dir_func "$installer" || continue
     test -n "$arguments" || err "expected $installer packages" 1
     try_exec_func "$func_name" $arguments && {
       continue
@@ -62,7 +63,7 @@ c_install()
   }
 }
 
-# Update paths from config
+# Update host from provision and config directives
 c_update()
 {
   local conf= func_name= arguments=
@@ -71,9 +72,7 @@ c_update()
   req_conf
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
-    prep_dir_func update
-    case $directive in INSTALL | BASE ) continue ;; esac
-
+    prep_dir_func update || continue
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
@@ -87,7 +86,7 @@ c_update()
   }
 }
 
-# Compare config with paths
+# Compare host with provision and config directives
 c_stat()
 {
   local conf= func_name= arguments=
@@ -96,8 +95,7 @@ c_stat()
   req_conf
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
-    prep_dir_func stat
-    case $directive in INSTALL | BASE ) continue ;; esac
+    prep_dir_func stat || continue
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
@@ -123,7 +121,7 @@ c_add()
   basename="$(basename "$toadd")"
   basedir="$(dirname "$toadd")"
   match_grep_pattern_test "$basedir"
-  grep -q "^\s*BASE\ $p_\ " "$conf" && {
+  grep -iq "^BASE\ $p_\ " "$conf" && {
     ucbasedir_raw="$(grep "^\s*BASE\ $p_\ " "$conf" | cut -d ' ' -f 3 )"
     test -n "$ucbasedir_raw" || err "error parsing BASE directive for $basedir" 1
     note "Found customized rcbase $ucbasedir_raw"
@@ -145,7 +143,7 @@ c_add()
   git st
 }
 
-# Test the Sh library
+# Run tests, some unittests on the Sh library
 c_test()
 {
   cd $UCONF || err "? cd $UCONF" 1
@@ -245,6 +243,137 @@ d_COPY_stat()
 }
 
 
+## Web directive (cURL)
+
+d_WEB()
+{
+  test -n "$1" || err "expected url" 1
+  test -n "$2" || err "expected target path" 1
+  test -z "$4" || err "surplus params: '$4'" 1
+
+  test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
+    || err "target must be existing directory or a new name in one: $2" 1
+
+  test -d "$2" && {
+      test "$(basename "$1")" != "$1" \
+        || err "cannot get target basename from URL '$1', please provide full path" 1
+      set -- "$1" "$2/$(basename $1 .git)" "$3"
+  }
+
+  echo "TODO web $@"
+}
+
+d_WEB_update()
+{
+  RUN=update d_WEB "$@" || return $?
+}
+
+d_WEB_stat()
+{
+  RUN=stat d_WEB "$@" || return $?
+}
+
+
+## GIT directive
+
+d_GIT()
+{
+  test -n "$1" || err "expected url" 1
+  test -n "$2" || err "expected target path" 1
+  test -n "$3" || set -- "$1" "$2" "origin" "$4" "$5"
+  test -n "$4" || set -- "$1" "$2" "$3" "master" "$5"
+  test -n "$5" || set -- "$1" "$2" "$3" "$4" "clone"
+  test -z "$6" || err "surplus params: '$6'" 1
+
+  test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
+    || err "target must be existing directory or a new name in one: $2" 1
+
+  test ! -e "$2/.git" && url= || {
+    url="$(cd "$2"/;git config --get remote.$3.url)"
+    test "$url" = "$1" || {
+      err "Checkout exists at path $2 for <$url> not <$1>"
+      return 1
+    }
+  }
+
+  test ! -e "$2" -a -d "$(dirname "$2")" || {
+    test -e "$2/.git" && {
+      url="$(cd "$2"/;git config --get remote.$3.url)"
+      test "$url" = "$1" || {
+        err "Checkout exists at path $2 for <$url> not <$1>"
+        return 1
+      }
+    } || {
+      test "$(basename "$1" .git)" != "$1" \
+        || err "cannot get target basename from GIT '$1', please provide full checkout path" 1
+      set -- "$1" "$2/$(basename $1 .git)" "$3" "$4" "$5"
+    }
+  }
+
+  req_git_age
+
+  case "$5" in
+    clone )
+      test -e "$2/.git" && {
+        cd $2; git diff --quiet && {
+          younger_than $2/.git/FETCH_HEAD $GIT_AGE || {
+            info "Updating $2 from remote $3"
+            git fetch -q $3 2>/dev/null || { err "Error fetching remote $3 for $2"; return 1; }
+          }
+          git diff --quiet $3/$4 && {
+            info "Checkout $2 clean and up-to-date"
+          } || {
+            test "$4" = "master" \
+              && note "Updates for $2 remote $3" \
+              ||note "Updates for $2 remote $3 (at branch $4)"
+          }
+          #remote=$(git ls-remote $3 heads/$4)
+          #git rev-list --left-right ${local}...${remote} 
+        } || {
+          warn "Checkout at $2 looks dirty"
+          return 1
+        }
+      } || {
+        note "Checkout missing at $2"
+        #echo git $5 "$1" "$2" --origin $3 --branch $4 
+      } ;;
+    * ) err "Invalid GIT mode $5"; return 1 ;;
+  esac
+}
+
+d_GIT_stat()
+{
+  RUN=stat d_GIT "$@" || return $?
+}
+
+d_GIT_update()
+{
+  RUN=update d_GIT "$@" || return $?
+}
+
+
+## Meta
+
+d_ENV_set()
+{
+  export $@
+}
+
+d_AGE_set()
+{
+  test -n "$1" || err "expected additional property for age" 1
+  test -n "$2" || err "expected age" 1
+  test -z "$3" || err "surplus params: '$3'" 1
+  set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
+  case "$1" in
+    GIT )
+      GIT_AGE="$2"
+      note "Max. GIT remote ref age set to $GIT_AGE seconds"
+    ;;
+  esac
+}
+
+
 ## Installers
 
 d_INSTALL_APT()
@@ -279,9 +408,46 @@ prep_dir_func() {
   test -n "$directive" || err "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
   arguments="$(eval echo "$arguments_raw")"
-  func_name="d_${directive}_$1"
-  test -z "$2" && return 0 || {
-    case "$directive" in $2 ) return 0;; * ) return 1;; esac
+
+  case $directive in
+
+    # base and bin are global settings, not processed in sequence
+    BIN | BASE )
+      func_name=
+      return 1
+      ;;
+
+    # XXX install is not a provision directive yet
+    INSTALL )
+      case $1 in stat|update) return 1 ;; esac
+      func_name="d_${directive}_$1"
+      ;;
+
+    # provision directives support stat or update
+    COPY | SYMLINK | GIT | WEB )
+      func_name="d_${directive}_$1"
+      ;;
+
+    ENV | AGE ) # Update env; always updates
+      func_name="d_${directive}_set"
+      ;;
+
+    * ) err "Unknown directive $directive" 1 ;;
+
+  esac
+}
+
+req_git_age()
+{
+  #grep -qi '^AGE\ GIT\ ' && {
+  #  age_expr=$(echo $(grep -i '^AGE\ GIT\ ') | cut -d ' ' -f 3)
+  #  # TODO: parse some expression for age: 1h 5min 5m etc.
+  #  GIT_AGE="$age_expr"
+  #} || noop
+
+  test -n "$GIT_AGE" || {
+    GIT_AGE=$_5MIN
+    note "Max. GIT remote ref age set to $GIT_AGE seconds"
   }
 }
 
