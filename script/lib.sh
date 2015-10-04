@@ -21,6 +21,7 @@ test -x "$uc_lib"/update.sh || exit 95
 . "$uc_lib"/match.lib.sh
 . "$uc_lib"/os.lib.sh
 . "$uc_lib"/date.lib.sh
+. "$uc_lib"/vc.lib.sh
 . "$uc_lib"/util.lib.sh
 
 test -n "$HOME" || err "no user dir set" 100
@@ -356,7 +357,12 @@ d_GIT()
     clone )
       test -e "$2/.git" && {
         cd $2; git diff --quiet && {
-          younger_than $2/.git/FETCH_HEAD $GIT_AGE || {
+          gitdir="$(vc_gitdir)"
+          test -d "$gitdir" || err "cannot determine gitdir at '$2'" 1
+          {
+            test -e $gitdir/FETCH_HEAD \
+              && younger_than $gitdir/FETCH_HEAD $GIT_AGE
+          } || {
             info "Updating $2 from remote $3"
             ${PREF}git fetch -q $3 2>/dev/null || { 
               err "Error fetching remote $3 for $2"; return 1; }
