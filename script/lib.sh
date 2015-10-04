@@ -4,10 +4,11 @@ set -e
 
 test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
 test -n "$UCONF" || UCONF="$(dirname "$uc_lib")"
-test -n "$uname" || uname="$(uname)"
+test -n "$uname" || uname="$(uname -s)"
+test -n "$machine" || machine="$(uname -m)"
 test -n "$hostname" || hostname="$(hostname -s | tr -s 'A-Z.' 'a-z-')"
 
-# just a sanity check
+# more sanity checks
 test -s "$uc_lib"/lib.sh || exit 99
 test -x "$uc_lib"/install.sh || exit 97
 test -x "$uc_lib"/init.sh || exit 98
@@ -22,7 +23,8 @@ test -x "$uc_lib"/update.sh || exit 95
 . "$uc_lib"/date.lib.sh
 . "$uc_lib"/util.lib.sh
 
-test -n "$HOME" || err "no user dir" 100
+test -n "$HOME" || err "no user dir set" 100
+test -e "$HOME" || err "no user dir" 100
 
 # config holds directives for current env/host,
 c_initialize()
@@ -35,25 +37,25 @@ c_initialize()
     note "Already initialized: $conf"
     return
   }
-  local uname=$(uname -s) machine=$(uname -m) tpl=
+  local tpl=
   test -n "$1" || set -- "default"
-  for tag in $machine $uname $1
+  for tag in $machine $uname $hostname $1
   do
     tpl="install/boilerplate-$tag.u-c"
     test ! -e "$tpl" || {
-      cp $tpl $conf
-      note "Initialized $hostname from $tag: $conf"
+      cp -v $tpl $conf
+      note "Initialized $hostname"
       break
     }
     for path in install/boilerplate-$tag*.u-c
     do
       test -e "$path" || continue
-      echo "Found path for $tag: $path"
+      echo "Found path for tag '$tag': $path"
       printf "Use? [yN] " use
       read -r use
       case "$use" in Y|y)
-        cp $path $conf
-        note "Initialized $hostname from $tag: $conf"
+        cp -v $path $conf
+        note "Initialized $hostname"
         return
       esac
     done
