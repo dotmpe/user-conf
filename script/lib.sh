@@ -27,15 +27,34 @@ test -n "$HOME" || err "no user dir" 100
 # config holds directives for current env/host,
 c_initialize()
 {
-  test -n "$1" || set -- "default"
-  local conf=install/$hostname.u-c
   cd "$UCONF" || err "? cd $UCONF" 1
-  test -e "$conf" && {
-    note "already initialized: $conf"
-  } || {
-    cp "install/$1.u-c" $conf
-    note "initialized $hostname from $1: $conf"
+  local conf=install/$hostname.u-c
+  test ! -e "$conf" || {
+    note "Already initialized: $conf"
+    return
   }
+  local uname=$(uname -s) machine=$(uname -m) tpl=
+  test -n "$1" || set -- "default"
+  for tag in $machine $uname $1
+  do
+    tpl="install/boilerplate-$tag.u-c"
+    test ! -e "$tpl" || {
+      cp $tpl $conf
+      note "Initialized $hostname from $tag: $conf"
+      break
+    }
+    for path in install/boilerplate-$tag*.u-c
+    do
+      test -e "$path" || continue
+      echo "Found path for $tag: $path"
+      read -p "Use? [yN] " -n 1 use
+      case "$use" in Y|y)
+        cp $path $conf
+        note "Initialized $hostname from $tag: $conf"
+        break
+      esac
+    done
+  done
 }
 
 c_install()

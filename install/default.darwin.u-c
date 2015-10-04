@@ -1,3 +1,0 @@
-# customized rcbases
-BASE /Library/LaunchDaemons $UCONF/osx/daemons
-BASE /Library/LaunchAgents $UCONF/osx/agents

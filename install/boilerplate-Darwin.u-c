@@ -9,5 +9,8 @@ SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
 # change from symlink to copy to change boilerplate:
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/git/config.boilerplate $HOME/.gitconfig
-# TODO: init directive, to create config if not exists from boilerplate
+
+# customized rcbases
+BASE /Library/LaunchDaemons $UCONF/osx/daemons
+BASE /Library/LaunchAgents $UCONF/osx/agents
 
