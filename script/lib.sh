@@ -95,6 +95,15 @@ c_update()
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
     prep_dir_func update || continue
+    test -n "$gen_eval" && {
+      echo "gen_eval=$gen_eval $arguments"
+      eval "$($gen_eval "$arguments")" && {
+        continue
+      } || {
+        err "update ret $r in $directive with '$arguments'"
+        touch /tmp/uc-update-failed
+      }
+    } || noop
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
@@ -118,6 +127,14 @@ c_stat()
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
     prep_dir_func stat || continue
+    test -n "$gen_eval" && {
+      eval "$($gen_eval $arguments_raw)" && {
+        continue
+      } || {
+        err "stat ret $r in $directive with '$arguments'"
+        touch /tmp/uc-update-failed
+      }
+    } || noop
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
@@ -378,12 +395,12 @@ d_GIT_update()
 
 d_ENV_exec()
 {
-  export $@
+  echo export "$@"
 }
 
 d_SH_exec()
 {
-  eval $@
+  echo "$@"
 }
 
 d_AGE_exec()
@@ -394,8 +411,8 @@ d_AGE_exec()
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
     GIT )
-      GIT_AGE="$2"
-      note "Max. GIT remote ref age set to $GIT_AGE seconds"
+      echo GIT_AGE="$2"
+      note "Max. GIT remote ref age to $2 seconds"
     ;;
   esac
 }
@@ -435,6 +452,8 @@ prep_dir_func() {
   test -n "$directive" || err "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
   arguments="$(eval echo "$arguments_raw")"
+  func_name=
+  gen_eval=
 
   case $directive in
 
@@ -456,7 +475,7 @@ prep_dir_func() {
       ;;
 
     ENV | AGE | SH ) # Update env; always updates
-      func_name="d_${directive}_exec"
+      gen_eval="d_${directive}_exec"
       ;;
 
     * ) err "Unknown directive $directive" 1 ;;
