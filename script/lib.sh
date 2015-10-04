@@ -459,7 +459,6 @@ prep_dir_func() {
 
     # base and bin are global settings, not processed in sequence
     BIN | BASE )
-      func_name=
       return 1
       ;;
 
