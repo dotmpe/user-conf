@@ -10,7 +10,9 @@ SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
 # change from symlink to copy to change boilerplate:
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/git/config.boilerplate $HOME/.gitconfig
-SH touch $UCONF/git/config.user
+
+SH test -n "$domain" || domain=uc
+COPY $UCONF/git/config.$domain $UCONF/git/config.user
 
 # customized rcbases
 BASE /Library/LaunchDaemons $UCONF/osx/daemons
