@@ -3,6 +3,7 @@
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
 SYMLINK $UCONF/bash/alias $HOME/.alias
 SYMLINK $UCONF/vim/rc $HOME/.vimrc
+SH mkdir -vp $HOME/.vim/syntax
 SYMLINK $UCONF/vim/filetype.vim $HOME/.vim/filetype.vim
 SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
 
