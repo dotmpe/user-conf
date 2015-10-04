@@ -47,11 +47,12 @@ c_initialize()
     do
       test -e "$path" || continue
       echo "Found path for $tag: $path"
-      read -p "Use? [yN] " -n 1 use
+      printf "Use? [yN] " use
+      read -r use
       case "$use" in Y|y)
         cp $path $conf
         note "Initialized $hostname from $tag: $conf"
-        break
+        return
       esac
     done
   done
@@ -373,12 +374,17 @@ d_GIT_update()
 
 ## Meta
 
-d_ENV_set()
+d_ENV_exec()
 {
   export $@
 }
 
-d_AGE_set()
+d_SH_exec()
+{
+  eval $@
+}
+
+d_AGE_exec()
 {
   test -n "$1" || err "expected additional property for age" 1
   test -n "$2" || err "expected age" 1
@@ -447,8 +453,8 @@ prep_dir_func() {
       func_name="d_${directive}_$1"
       ;;
 
-    ENV | AGE ) # Update env; always updates
-      func_name="d_${directive}_set"
+    ENV | AGE | SH ) # Update env; always updates
+      func_name="d_${directive}_exec"
       ;;
 
     * ) err "Unknown directive $directive" 1 ;;

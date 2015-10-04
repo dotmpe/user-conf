@@ -8,7 +8,7 @@ syn case ignore
 com! -nargs=+ HiLink hi def link <args>
 
 syn keyword ucProvisionDirective contained containedin=ucDirective INSTALL COPY SYMLINK WEB GIT SOURCE
-syn keyword ucMetaDirective contained containedin=ucDirective BASE SOURCE AGE ENV
+syn keyword ucMetaDirective contained containedin=ucDirective BASE SOURCE AGE ENV SH
 
 syn keyword ucInstaller containedin=ucParam apt brew pip opkg
 
