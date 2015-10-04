@@ -298,6 +298,7 @@ d_WEB()
       set -- "$1" "$2/$(basename $1 .git)" "$3"
   }
 
+  case "$RUN" in update ) PREF= ;; stat ) PREF="echo '** DRY-RUN **: '" ;; esac
   echo "TODO web $@"
 }
 
@@ -350,7 +351,7 @@ d_GIT()
 
   req_git_age
 
-  case "$RUN" in update ) PREF= ;; stat ) PREF="echo " ;; esac
+  case "$RUN" in update ) PREF= ;; stat ) PREF="echo '** DRY-RUN **: '" ;; esac
 
   case "$5" in
 
