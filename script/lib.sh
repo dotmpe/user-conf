@@ -99,11 +99,10 @@ c_update()
   do
     prep_dir_func update || continue
     test -n "$gen_eval" && {
-      echo "gen_eval=$gen_eval $arguments"
-      eval "$($gen_eval "$arguments")" && {
+      eval "$($gen_eval $arguments_raw)" && {
         continue
       } || {
-        err "update ret $r in $directive with '$arguments'"
+        err "stat ret $r in $directive with '$arguments'"
         touch /tmp/uc-update-failed
       }
     } || noop
@@ -135,7 +134,7 @@ c_stat()
         continue
       } || {
         err "stat ret $r in $directive with '$arguments'"
-        touch /tmp/uc-update-failed
+        touch /tmp/uc-stat-failed
       }
     } || noop
     try_exec_func "$func_name" $arguments && {
