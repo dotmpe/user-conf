@@ -205,15 +205,15 @@ d_SYMLINK_update()
       } || {
         rm "$2"
         ln -s "$1" "$2"
-        log "Updated symlink $1"
+        log "Updated symlink '$2' -> '$1'"
       }
     } || {
-      err "Path already exists and not a symlink: $1"
+      err "Path already exists and not a symlink '$2'"
       return 2
     }
   } || {
     ln -s $1 $2
-    log "New symlink $1 $2"
+    log "New symlink '$2' -> '$1'"
   }
 }
 
@@ -225,20 +225,20 @@ d_SYMLINK_stat()
       test "$(readlink "$2")" = "$1" && {
         return 0
       } || {
-        log "Symlink changed: $2 $1: $(readlink "$2")"
+        log "Symlink changed '$2' -> {$1,$(readlink "$2")}"
       }
     } || {
-      err "path exists and is not a symlink: $1"
+      err "Path already exists and not a symlink '$2'"
       return 2
     }
   } || {
-    log "Symlink missing: $2 to $1"
+    log "Missing symlink '$2' -> '$1'"
   }
 }
 
 ## Copy directive
 
-d_COPY_update()
+d_COPY()
 {
   test -f "$1" || err "not a file: $1" 101
   test -e "$2" && {
@@ -247,38 +247,34 @@ d_COPY_update()
       diff -bqr "$2" "$1" >/dev/null && {
         return 0
       } || {
-        err "diffs in $2 $1"
+        err "Copy differences between '$2 $1'"
         return 1
       }
     } || {
-      err "already exists and not a file: $2"
+      err "Copy already exists and not a file '$2'"
       return 2
     }
   } || {
-    cp "$1" "$2"
-    log "New copy $1 $2"
+    case "$RUN" in
+      stat )
+        log "Missing copy of '$1' at '$2'"
+        ;;
+      update )
+        cp "$1" "$2"
+        log "New copy of '$1' at '$2'"
+        ;;
+    esac
   }
+}
+
+d_COPY_update()
+{
+  RUN=update d_COPY "$@" || return $?
 }
 
 d_COPY_stat()
 {
-  test -f "$1" || err "not a file: $1" 101
-  test -e "$2" && {
-    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
-    test -f "$2" && {
-      diff -bqr "$2" "$1" >/dev/null && {
-        return 0
-      } || {
-        err "diffs in $2 $1"
-        return 1
-      }
-    } || {
-      err "path already exists and not a file: $2"
-      return 2
-    }
-  } || {
-    log "copy missing: $2 of $1"
-  }
+  RUN=stat d_COPY "$@" || return $?
 }
 
 
@@ -351,32 +347,36 @@ d_GIT()
 
   req_git_age
 
+  case "$RUN" in update ) PREF= ;; stat ) PREF="echo " ;; esac
+
   case "$5" in
+
     clone )
       test -e "$2/.git" && {
         cd $2; git diff --quiet && {
           younger_than $2/.git/FETCH_HEAD $GIT_AGE || {
             info "Updating $2 from remote $3"
-            git fetch -q $3 2>/dev/null || { err "Error fetching remote $3 for $2"; return 1; }
+            ${PREF}git fetch -q $3 2>/dev/null || { 
+              err "Error fetching remote $3 for $2"; return 1; }
           }
           git diff --quiet $3/$4 && {
             info "Checkout $2 clean and up-to-date"
           } || {
             test "$4" = "master" \
               && note "Updates for $2 remote $3" \
-              ||note "Updates for $2 remote $3 (at branch $4)"
+              || note "Updates for $2 remote $3 (at branch $4)"
           }
-          #remote=$(git ls-remote $3 heads/$4)
-          #git rev-list --left-right ${local}...${remote} 
         } || {
           warn "Checkout at $2 looks dirty"
           return 1
         }
       } || {
         note "Checkout missing at $2"
-        #echo git $5 "$1" "$2" --origin $3 --branch $4 
+        ${PREF}git $5 "$1" "$2" --origin $3 --branch $4
       } ;;
+
     * ) err "Invalid GIT mode $5"; return 1 ;;
+
   esac
 }
 
