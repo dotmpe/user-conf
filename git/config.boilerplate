@@ -5,3 +5,5 @@
 [include]
 	path = ~/.conf/git/config.user
 
+
+# vim:ft=gitconfig"
