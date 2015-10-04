@@ -1,13 +1,7 @@
 
-[merge]
-  tool = vimdiff
-
-[color]
-  ui = true
-  status = auto
-  branch = auto
-  interactive = auto
-  diff = auto
+[core]
+  excludesfile = $HOME/.gitignore-global
+  editor = vim
 
 [alias]
   stat = status
@@ -29,11 +23,40 @@
   tree = log --graph --full-history --all --color --date=short --pretty=format:\"%x1b[31m%h%x09%x1b[0m%x20%ad%x1b[32m%d%x1b[0m %aN: %s\"
   undo-commit = reset --soft HEAD^
 
+[color]
+  ui = true
+  status = auto
+  branch = auto
+  interactive = auto
+  diff = auto
+
 [push]
   default = matching
 # simple
 
-[core]
-  excludesfile = $HOME/.gitignore_global
+[diff]
+#	diff = git_diff_wrapper
+#	dictdiff = dictdiff
+
+[difftool "dictdiff-yaml"]
+	cmd = ~/bin/dictdiff-yaml.php $LOCAL $BASE $REMOTE $MERGED
+
+[difftool "dictdiff"]
+	cmd = ~/bin/dictdiff.php $LOCAL $BASE $REMOTE $MERGED
+
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+
+[merge]
+  tool = vimdiff
+
+#[mergetool "sourcetree"]
+#	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+#	trustExitCode = true
+
+[pager]
+  diff =
+
 
 

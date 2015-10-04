@@ -1,20 +1,19 @@
 
 #INSTALL apt munin munin-node tmux vim telnet git
 
+SH test -n "$domain" || domain=$hostname
+
 # directives for rc files: source, symlink
-SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
 SYMLINK $UCONF/bash/alias $HOME/.alias
-SYMLINK $UCONF/vim/rc $HOME/.vimrc
+SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
+SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
 SH mkdir -vp $HOME/.vim/syntax
 SYMLINK $UCONF/vim/filetype.vim $HOME/.vim/filetype.vim
 SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
-
-# change from symlink to copy to change boilerplate:
-SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
+SYMLINK $UCONF/vim/rc $HOME/.vimrc
 SYMLINK $UCONF/git/config.boilerplate $HOME/.gitconfig
-
-SH test -n "$domain" || domain=uc
-COPY $UCONF/git/config.$domain $UCONF/git/config.user
+SYMLINK $UCONF/git/ignore-global $HOME/.gitignore-global
+SYMLINK $UCONF/git/config.$domain $HOME/.gitconfig-user
 
 WEB https://raw.github.com/perception101/pisense/master/pisense_ /etc/munin/plugins
 

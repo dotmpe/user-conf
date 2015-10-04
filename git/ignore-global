@@ -1,0 +1,13 @@
+
+# Git ignore: 
+# files excluded from versioning or cleaning.
+# Other files: git clean -df
+
+
+# Generic
+
+*~
+.DS_Store
+.*.sw[a-p]
+
+
