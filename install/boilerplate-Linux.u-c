@@ -2,7 +2,7 @@
 # directives for rc files: source, symlink
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
 SYMLINK $UCONF/bash/alias $HOME/.alias
-SH mkdir $UCONF/vim
+SH mkdir $HOME/vim
 SYMLINK $UCONF/vim/rc $HOME/.vimrc
 SYMLINK $UCONF/vim/filetype.vim $HOME/.vim/filetype.vim
 SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
