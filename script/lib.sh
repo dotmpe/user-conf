@@ -29,7 +29,9 @@ c_initialize()
 {
   cd "$UCONF" || err "? cd $UCONF" 1
   local conf=install/$hostname.u-c
-  test ! -e "$conf" || {
+  test ! -e "$conf" && {
+    note "Initializing $hostname: $conf"
+  } || {
     note "Already initialized: $conf"
     return
   }
