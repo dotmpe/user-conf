@@ -160,7 +160,7 @@ c_add()
     echo "COPY $ucbasedir_raw/$basename $toadd" >> "$conf"
   }
   git add "$conf"
-  git st
+  git status
 }
 
 # Run tests, some unittests on the Sh library
