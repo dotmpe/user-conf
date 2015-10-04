@@ -102,14 +102,14 @@ c_update()
       eval "$($gen_eval $arguments_raw)" && {
         continue
       } || {
-        err "stat ret $r in $directive with '$arguments'"
+        err "stat ret $? in $directive with '$arguments'"
         touch /tmp/uc-update-failed
       }
     } || noop
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
-      err "update ret $r in $directive with '$arguments'"
+      err "update ret $? in $directive with '$arguments'"
       touch /tmp/uc-update-failed
     }
   done
@@ -133,7 +133,7 @@ c_stat()
       eval "$($gen_eval $arguments_raw)" && {
         continue
       } || {
-        err "stat ret $r in $directive with '$arguments'"
+        err "stat ret $? in $directive with '$arguments'"
         touch /tmp/uc-stat-failed
       }
     } || noop
