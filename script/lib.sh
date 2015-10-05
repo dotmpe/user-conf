@@ -27,6 +27,7 @@ test -x "$uc_lib"/update.sh || exit 95
 test -n "$HOME" || err "no user dir set" 100
 test -e "$HOME" || err "no user dir" 100
 
+
 # config holds directives for current env/host,
 c_initialize()
 {
@@ -95,9 +96,11 @@ c_update()
   rm -f /tmp/uc-update-failed
   cd "$UCONF" || err "? cd $UCONF" 1
   req_conf
+
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
     prep_dir_func update || continue
+
     test -n "$gen_eval" && {
       eval "$($gen_eval $arguments_raw)" && {
         continue
@@ -106,13 +109,16 @@ c_update()
         touch /tmp/uc-update-failed
       }
     } || noop
+
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
       err "update ret $? in $directive with '$arguments'"
       touch /tmp/uc-update-failed
     }
+
   done
+
   test ! -e "/tmp/uc-stat-failed" || {
     rm -f /tmp/uc-update-failed
     err "failed directives" 1
@@ -126,9 +132,11 @@ c_stat()
   rm -f /tmp/uc-stat-failed
   cd "$UCONF" || err "? cd $UCONF" 1
   req_conf
+
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
     prep_dir_func stat || continue
+
     test -n "$gen_eval" && {
       eval "$($gen_eval $arguments_raw)" && {
         continue
@@ -137,13 +145,16 @@ c_stat()
         touch /tmp/uc-stat-failed
       }
     } || noop
+
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
       err "stat ret $? in $directive with '$arguments'"
       touch /tmp/uc-stat-failed
     }
+
   done
+
   test ! -e "/tmp/uc-stat-failed" || {
     rm -f /tmp/uc-stat-failed
     err "failed directives" 1
@@ -326,22 +337,10 @@ d_GIT()
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
     || err "target must be existing directory or a new name in one: $2" 1
 
-  test ! -e "$2/.git" && url= || {
-    url="$(cd "$2"/;git config --get remote.$3.url)"
-    test "$url" = "$1" || {
-      err "Checkout exists at path $2 for <$url> not <$1>"
-      return 1
-    }
-  }
+  test ! -e "$2/.git" || req_git_remote_branch "$2" "$3"
 
   test ! -e "$2" -a -d "$(dirname "$2")" || {
-    test -e "$2/.git" && {
-      url="$(cd "$2"/;git config --get remote.$3.url)"
-      test "$url" = "$1" || {
-        err "Checkout exists at path $2 for <$url> not <$1>"
-        return 1
-      }
-    } || {
+    test -e "$2/.git" && req_git_remote_branch "$2" "$3" || {
       test "$(basename "$1" .git)" != "$1" \
         || err "cannot get target basename from GIT '$1', please provide full checkout path" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3" "$4" "$5"
@@ -363,23 +362,32 @@ d_GIT()
             test -e $gitdir/FETCH_HEAD \
               && younger_than $gitdir/FETCH_HEAD $GIT_AGE
           } || {
-            info "Updating $2 from remote $3"
-            ${PREF}git fetch -q $3 2>/dev/null || { 
+            info "Fetching $2 branch $4 from remote $3"
+            ${PREF}git fetch -q $3 $4 2>/dev/null || { 
               err "Error fetching remote $3 for $2"; return 1; }
           }
+          info "Comparing $2 branch $4 with remote $3 ref"
           git diff --quiet $3/$4 && {
-            info "Checkout $2 clean and up-to-date"
-          } || {
             test "$4" = "master" \
-              && note "Updates for $2 remote $3" \
-              || note "Updates for $2 remote $3 (at branch $4)"
+              && info "Checkout $2 clean and up-to-date" \
+              || info "Checkout $2 clean and up-to-date at branch $4"
+          } || {
+            ${PREF}git co $4
+            ${PREF}git pull $3 $4
+            test "$4" = "master" \
+              && note "Updated $2 from remote $3" \
+              || note "Updated $2 from remote $3 (at branch $4)"
           }
         } || {
-          warn "Checkout at $2 looks dirty"
+          test "$4" = "master" \
+            && warn "Checkout at $2 looks dirty" \
+            || warn "Checkout of $4 at $2 looks dirty"
           return 1
         }
       } || {
-        note "Checkout missing at $2"
+        test "$4" = "master" \
+          && note "Checkout missing at $2" \
+          || note "Checkout of $4 missing at $2"
         ${PREF}git $5 "$1" "$2" --origin $3 --branch $4
       } ;;
 
@@ -504,3 +512,17 @@ req_git_age()
   }
 }
 
+req_git_remote()
+{
+  test -n "$1" || err "expected url" 1
+  test -d "$2" || err "expected checkout dir '$2'" 1
+  test -n "$3" || set -- "$1" "$2" "origin"
+  test -z "$4" || err "req-git-remote surplus arguments" 1
+
+  gitdir="$(vc_gitdir "$2")"
+  url="$(vc_gitremote "$2" "$3")"
+  test "$url" = "$1" || {
+    err "Checkout exists at path $2 for <$url> not <$1>"
+    return 1
+  }
+}
