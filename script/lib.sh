@@ -337,10 +337,10 @@ d_GIT()
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
     || err "target must be existing directory or a new name in one: $2" 1
 
-  test ! -e "$2/.git" || req_git_remote_branch "$2" "$3"
+  test ! -e "$2/.git" || req_git_remote "$2" "$3"
 
   test ! -e "$2" -a -d "$(dirname "$2")" || {
-    test -e "$2/.git" && req_git_remote_branch "$2" "$3" || {
+    test -e "$2/.git" && req_git_remote "$2" "$3" || {
       test "$(basename "$1" .git)" != "$1" \
         || err "cannot get target basename from GIT '$1', please provide full checkout path" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3" "$4" "$5"
