@@ -30,9 +30,10 @@ test -n "$hostname" || {
     hostname=$(cat $HOME/.domain | sed 's/^\([^\.]*\)\..*$/\1/g')
     domain=$(cat $HOME/.domain | sed 's/^[^\.]*\.//g')
   } || {
-    hostname="$(hostname -s | tr -s 'A-Z.' 'a-z-')"
+    hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
   }
 }
+
 
 # config holds directives for current env/host,
 c_initialize()
