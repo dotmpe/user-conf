@@ -31,5 +31,7 @@ inoremap <tab> <c-r>=InsertTabWrapper()<cr>
 
 " }}} Autocompletion using the TAB key
 
-set list lcs=trail:·,tab:\|\ ,eol:$
+"set list lcs=trail:·,tab:\|\ ,eol:$
+
+" vim:ft=vim:
 
