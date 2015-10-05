@@ -22,8 +22,7 @@ filemtime()
       stat -L -f '%m' "$1" || return 1
       ;;
     Linux )
-        err "TODO linux" 254
-      stat -L -c '%s' "$1" || return 1
+      stat -L -c '%Y' "$1" || return 1
       ;;
   esac
 }
