@@ -239,6 +239,7 @@ d_SYMLINK_stat()
         return 0
       } || {
         log "Symlink changed '$2' -> {$1,$(readlink "$2")}"
+        return 1
       }
     } || {
       err "Path already exists and not a symlink '$2'"
