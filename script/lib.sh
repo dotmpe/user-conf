@@ -419,6 +419,11 @@ d_SH_exec()
   echo "$@"
 }
 
+d_BASH_exec()
+{
+  echo bash -c "$@"
+}
+
 d_AGE_exec()
 {
   test -n "$1" || err "expected additional property for age" 1
