@@ -9,7 +9,7 @@ com! -nargs=+ HiLink hi def link <args>
 
 syn keyword ucProvisionDirective contained containedin=ucDirective INSTALL COPY SYMLINK WEB GIT SOURCE
 syn keyword ucMetaDirective contained containedin=ucDirective BASE BIN
-syn keyword ucExecDirective containedin containedin=ucDirective SOURCE AGE ENV SH BASH
+syn keyword ucExecDirective contained containedin=ucDirective SOURCE AGE ENV SH BASH
 
 syn keyword ucInstaller containedin=ucParam apt brew pip opkg
 
