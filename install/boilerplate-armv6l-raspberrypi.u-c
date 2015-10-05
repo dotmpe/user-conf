@@ -15,7 +15,7 @@ SYMLINK $UCONF/git/config.boilerplate $HOME/.gitconfig
 SYMLINK $UCONF/git/ignore-global $HOME/.gitignore-global
 SYMLINK $UCONF/git/config.$domain $HOME/.gitconfig-user
 
-GIT git@github.com:dotmpe/script.mpe.git $HOME/bin origin dev
+GIT https://github.com/dotmpe/script.mpe.git $HOME/bin origin dev
 
 WEB https://raw.github.com/perception101/pisense/master/pisense_ /etc/munin/plugins
 
