@@ -1,0 +1,35 @@
+
+set nobomb
+
+set hlsearch
+
+
+" set up unicode editing
+runtime scripts/set_utf8.vim
+
+" {{{ Command mappings
+
+setlocal cindent
+inoremap jj <ESC>
+
+" }}}
+" {{{ Autocompletion using the TAB key
+
+" This function determines, wether we are on the start of the line text (then tab indents) or
+" if we want to try autocompletion
+function! InsertTabWrapper()
+    let col = col('.') - 1
+    if !col || getline('.')[col - 1] !~ '\k'
+        return "\<tab>"
+    else
+        return "\<c-p>"
+    endif
+endfunction
+
+" Remap the tab key to select action with InsertTabWrapper
+inoremap <tab> <c-r>=InsertTabWrapper()<cr>
+
+" }}} Autocompletion using the TAB key
+
+set list lcs=trail:·,tab:\|\ ,eol:$
+
