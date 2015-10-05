@@ -2,12 +2,6 @@
 
 set -e
 
-test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
-test -n "$UCONF" || UCONF="$(dirname "$uc_lib")"
-test -n "$uname" || uname="$(uname -s)"
-test -n "$machine" || machine="$(uname -m)"
-test -n "$hostname" || hostname="$(hostname -s | tr -s 'A-Z.' 'a-z-')"
-
 # more sanity checks
 test -s "$uc_lib"/lib.sh || exit 99
 test -x "$uc_lib"/install.sh || exit 97
@@ -27,10 +21,26 @@ test -x "$uc_lib"/update.sh || exit 95
 test -n "$HOME" || err "no user dir set" 100
 test -e "$HOME" || err "no user dir" 100
 
+test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
+test -n "$UCONF" || UCONF="$(dirname "$uc_lib")"
+test -n "$uname" || uname="$(uname -s)"
+test -n "$machine" || machine="$(uname -m)"
+test -n "$hostname" || {
+  test -e $HOME/.domain &&  {
+    hostname=$(cat $HOME/.domain | sed 's/^\([^\.]*\)\..*$/\1/g')
+    domain=$(cat $HOME/.domain | sed 's/^[^\.]*\.//g')
+  } || {
+    hostname="$(hostname -s | tr -s 'A-Z.' 'a-z-')"
+  }
+}
 
 # config holds directives for current env/host,
 c_initialize()
 {
+  test "$hostname.$domain" = "$(hostname)" || {
+    echo "$hostname.$domain" > $HOME/.domain
+  }
+
   cd "$UCONF" || err "? cd $UCONF" 1
   local conf=install/$hostname.u-c
   test ! -e "$conf" && {
