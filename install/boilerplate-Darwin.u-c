@@ -2,6 +2,7 @@
 SH test -n "$domain" || domain=$hostname
 
 # directives for rc files: source, symlink
+SYMLINK $UCONF/bash/rc $HOME/.bashrc
 SYMLINK $UCONF/bash/alias $HOME/.alias
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
