@@ -247,6 +247,7 @@ d_SYMLINK_stat()
     }
   } || {
     log "Missing symlink '$2' -> '$1'"
+    return 1
   }
 }
 
@@ -272,6 +273,7 @@ d_COPY()
     case "$RUN" in
       stat )
         log "Missing copy of '$1' at '$2'"
+        return 1
         ;;
       update )
         cp "$1" "$2"
