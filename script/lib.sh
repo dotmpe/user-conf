@@ -40,8 +40,7 @@ c_initialize()
     return
   }
   local tpl=
-  test -n "$1" || set -- "default"
-  for tag in $machine $uname $hostname $1
+  for tag in $machine $uname $hostname default
   do
     tpl="install/boilerplate-$tag.u-c"
     test ! -e "$tpl" || {
