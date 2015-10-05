@@ -119,7 +119,7 @@ c_update()
 
   done
 
-  test ! -e "/tmp/uc-stat-failed" || {
+  test ! -e "/tmp/uc-update-failed" || {
     rm -f /tmp/uc-update-failed
     err "failed directives" 1
   }
@@ -494,7 +494,7 @@ prep_dir_func() {
       func_name="d_${directive}_$1"
       ;;
 
-    ENV | AGE | SH ) # Update env; always updates
+    ENV | AGE | SH | BASH ) # Update env; always updates
       gen_eval="d_${directive}_exec"
       ;;
 
