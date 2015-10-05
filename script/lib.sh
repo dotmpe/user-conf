@@ -366,7 +366,7 @@ d_GIT()
             ${PREF}git fetch -q $3 $4 2>/dev/null || { 
               err "Error fetching remote $3 for $2"; return 1; }
           }
-          info "Comparing $2 branch $4 with remote $3 ref"
+          debug "Comparing $2 branch $4 with remote $3 ref"
           git diff --quiet $3/$4 && {
             test "$4" = "master" \
               && info "Checkout $2 clean and up-to-date" \
