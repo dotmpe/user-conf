@@ -102,73 +102,13 @@ c_install()
 # Update host from provision and config directives
 c_update()
 {
-  local conf= func_name= arguments=
-  rm -f /tmp/uc-update-failed
-  cd "$UCONF" || err "? cd $UCONF" 1
-  req_conf
-
-  cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
-  do
-    prep_dir_func update || continue
-
-    test -n "$gen_eval" && {
-      eval "$($gen_eval $arguments_raw)" && {
-        continue
-      } || {
-        err "stat ret $? in $directive with '$arguments'"
-        touch /tmp/uc-update-failed
-      }
-    } || noop
-
-    try_exec_func "$func_name" $arguments && {
-      continue
-    } || {
-      err "update ret $? in $directive with '$arguments'"
-      touch /tmp/uc-update-failed
-    }
-
-  done
-
-  test ! -e "/tmp/uc-update-failed" || {
-    rm -f /tmp/uc-update-failed
-    err "failed directives" 1
-  }
+  exec_dirs update
 }
 
 # Compare host with provision and config directives
 c_stat()
 {
-  local conf= func_name= arguments=
-  rm -f /tmp/uc-stat-failed
-  cd "$UCONF" || err "? cd $UCONF" 1
-  req_conf
-
-  cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
-  do
-    prep_dir_func stat || continue
-
-    test -n "$gen_eval" && {
-      eval "$($gen_eval $arguments_raw)" && {
-        continue
-      } || {
-        err "stat ret $? in $directive with '$arguments'"
-        touch /tmp/uc-stat-failed
-      }
-    } || noop
-
-    try_exec_func "$func_name" $arguments && {
-      continue
-    } || {
-      err "stat ret $? in $directive with '$arguments'"
-      touch /tmp/uc-stat-failed
-    }
-
-  done
-
-  test ! -e "/tmp/uc-stat-failed" || {
-    rm -f /tmp/uc-stat-failed
-    err "failed directives" 1
-  }
+  exec_dirs stat
 }
 
 # Add a new path to config (COPY directive only)
@@ -180,6 +120,9 @@ c_add()
   req_conf
   test -e "$1" && toadd=$1 || toadd=$pwd/$1
   test -e "$conf" || err "no such install config $conf" 1
+
+  exec_dirs base
+
   basename="$(basename "$toadd")"
   basedir="$(dirname "$toadd")"
   match_grep_pattern_test "$basedir"
@@ -350,7 +293,7 @@ d_GIT()
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
     || err "target must be existing directory or a new name in one: $2" 1
 
-  test ! -e "$2/.git" || req_git_remote "$1" "$2" "$3"
+  test ! -e "$2/.git" || req_git_remote "$1" "$2" "$3" || return $?
 
   test ! -e "$2" -a -d "$(dirname "$2")" || {
     test -e "$2/.git" && req_git_remote "$1" "$2" "$3" || {
@@ -514,6 +457,41 @@ prep_dir_func() {
     * ) err "Unknown directive $directive" 1 ;;
 
   esac
+}
+
+exec_dirs()
+{
+  local conf= func_name= arguments=
+  rm -f /tmp/uc-$1-failed
+  cd "$UCONF" || err "? cd $UCONF" 1
+  req_conf
+
+  cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
+  do
+    prep_dir_func $1 || continue
+
+    test -n "$gen_eval" && {
+      eval "$($gen_eval $arguments_raw)" && {
+        continue
+      } || {
+        err "$1 ret $? in $directive with '$arguments'"
+        touch /tmp/uc-$1-failed
+      }
+    } || noop
+
+    try_exec_func "$func_name" $arguments && {
+      continue
+    } || {
+      err "$1 ret $? in $directive with '$arguments'"
+      touch /tmp/uc-$1-failed
+    }
+
+  done
+
+  test ! -e "/tmp/uc-$1-failed" || {
+    rm -f /tmp/uc-$1-failed
+    err "failed directives" 1
+  }
 }
 
 req_git_age()
