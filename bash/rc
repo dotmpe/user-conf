@@ -1,0 +1,17 @@
+#!/bin/bash
+# ~/.bashrc: executed by bash(1) for non-login shells.
+
+
+# Include .profile if it exists and has not been loaded
+#if test "$MPE_CONF_ENV" != "1"
+#then
+	source ~/.conf/bash/env
+#fi
+
+# Command aliases
+if [ -e ~/.alias ]
+then
+	source ~/.alias
+fi
+
+
