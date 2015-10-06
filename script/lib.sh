@@ -164,6 +164,10 @@ c_test()
 d_SYMLINK_update()
 {
   test -f "$1" -o -d "$1" || err "not a file or directory: $1" 101
+  test ! -h "$2" -o -e "$2" || {
+    rm "$2"
+    info "removed broken symlink"
+  }
   test -e "$2" && {
     test -h "$2" && {
       test "$(readlink "$2")" = "$1" && {
