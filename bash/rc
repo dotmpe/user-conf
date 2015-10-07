@@ -1,17 +1,61 @@
 #!/bin/bash
 # ~/.bashrc: executed by bash(1) for non-login shells.
+# 2006--2015  Berend van Berkum <berend_dotmpe_com>
 
 
-# Include .profile if it exists and has not been loaded
-#if test "$MPE_CONF_ENV" != "1"
-#then
-	source ~/.conf/bash/env
-#fi
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
 
-# Command aliases
+### Auto-completion
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+  . /etc/bash_completion
+fi
+
+# enable readline autocompletion for GIT names
+source ~/.conf/bash/git-completion.bash
+
+if [ -x "$(which grunt)" ]
+then
+# Tab completion for Gruntfiles
+  eval "$(grunt --completion=bash)"
+fi
+
+if [ "$(uname -s)" = "Darwin" ]
+then
+
+  if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  #  source $(brew --prefix)/share/bash-completion/bash_completion
+ 
+    # Define functions, and source files from BASH_COMPLETION_DIR
+    # Latter contains 195 files on my OSC-ML/Bash 4 env.
+    source $(brew --prefix)/etc/bash_completion
+
+  fi
+
+  # Bash completion has been installed to:
+  #BASH_COMPLETION_DIR=/usr/local/etc/bash_completion.d
+  # There is also another dir with a few but same files:
+  # $(brew --prefix)/share/bash-completion/completions
+
+fi
+
+
+### Command aliases
 if [ -e ~/.alias ]
 then
-	source ~/.alias
+  source ~/.alias
 fi
+
+if [ -e ~/.conf/bash/lib.sh ]
+then
+  . ~/.conf/bash/lib.sh
+fi
+
+# More per host and generic env
+source ~/.conf/bash/env
 
 
