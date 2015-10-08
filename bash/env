@@ -5,6 +5,7 @@ test ! -e "$HOME/bin/" || {
 	export PATH=$PATH:$HOME/bin
 }
 
+test -n "$uname" || uname=$(uname -s)
 test ! -d $HOME/.conf/path/$uname || {
   export PATH=~/.conf/path/$uname:$PATH
 }
