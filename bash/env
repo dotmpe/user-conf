@@ -1,17 +1,22 @@
 #!/bin/bash
 
 # set PATH so it includes user's private bin if it exists
-[ ! -e "$HOME/bin/" ] || {
-	PATH=$PATH:$HOME/bin
+test ! -e "$HOME/bin/" || {
+	export PATH=$PATH:$HOME/bin
 }
 
-if [ -e "$HOME/bin" ] ; then
-		export PATH="$HOME/bin:$PATH"
-fi
+test ! -d $HOME/.conf/path/$uname || {
+  export PATH=~/.conf/path/$uname:$PATH
+}
+
+test ! -d $HOME/.conf/path/Generic || {
+  export PATH=~/.conf/path/Generic:$PATH
+}
+
 
 # XXX or init from env
 test -n "$DEFAULT_UCONFDIR" \
-			 || export DEFAULT_UCONFDIR=$HOME/.conf
+				|| export DEFAULT_UCONFDIR=$HOME/.conf
 
 init_user_env()
 {
@@ -44,9 +49,13 @@ init_uconfdir_path()
 	done
 }
 
-case "$(hostname -s)" in
+
+# Per host (override)
+test -n "$hostname" || hostname=$(hostname -s | tr 'A-Z' 'a-z')
+case "$hostname" in
 
 	* )
+		note "Using generic bash/env"
 		init_user_env
 		init_uconfdir_path
 #		export USER_EMAIL='@brixcrm.nl'

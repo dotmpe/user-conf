@@ -22,6 +22,8 @@
   ign = ls-files -o -i --exclude-standard
   tree = log --graph --full-history --all --color --date=short --pretty=format:\"%x1b[31m%h%x09%x1b[0m%x20%ad%x1b[32m%d%x1b[0m %aN: %s\"
   undo-commit = reset --soft HEAD^
+  # List git aliases
+  aliases = config --get-regex alias.*
   # List untracked files (that would be added with add .)
   untracked = ls-files --other --exclude-standard
   # List excluded files

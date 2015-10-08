@@ -6,6 +6,7 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+
 ### Auto-completion
 
 # enable programmable completion features (you don't need to enable
