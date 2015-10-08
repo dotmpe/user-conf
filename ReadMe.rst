@@ -14,7 +14,7 @@ User-Config
 A dotfile repository.
 
 
-.. figure:: screen-shot.png
+.. figure:: doc/screen-shot.png
 
 
 Intro
