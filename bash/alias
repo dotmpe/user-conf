@@ -3,6 +3,9 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ......='cd ../../../../..'
+alias cr='clear;reset'
+
+
 ### Often edited/sourced files
 alias vv='vim ~/.vimrc ~/.conf/vim/filetype.vim'
 alias vf='vimdiff ~/.conf/fs/`hostname -s`.tab /etc/fstab'
