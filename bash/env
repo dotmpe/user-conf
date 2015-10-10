@@ -56,7 +56,7 @@ test -n "$hostname" || hostname=$(hostname -s | tr 'A-Z' 'a-z')
 case "$hostname" in
 
 	* )
-		note "Using generic bash/env"
+		echo "Using generic bash/env"
 		init_user_env
 		init_uconfdir_path
 #		export USER_EMAIL='@brixcrm.nl'
