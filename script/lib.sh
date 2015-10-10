@@ -215,13 +215,12 @@ git_diff()
   test -n "$1" || err "expected src" 1
   test -n "$2" || err "expected trgt" 1
 
-  target_sha1=$(git hash-object $2)
-  co_path="$(git rev-list --objects --all | grep $target_sha1 | cut -d ' ' -f 2)"
-  test -n "$co_path" || err "no path $co_path" 1
-  test "$1" = "$UCONF/$co_path" && {
+  target_sha1="$(git hash-object "$2")"
+  co_path="$(cd $UCONF;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
+  test -n "$co_path" -a "$1" = "$UCONF/$co_path" && {
     return 0
   } || {
-    err "unknown state for path $2"
+    error "unknown state for path $2"
     return 1
   }
 }
@@ -233,8 +232,12 @@ d_COPY()
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
       git_diff "$1" "$2" || return $?
-      diff -bqr "$2" "$1" >/dev/null \
-        && cp "$1" "$2"
+      diff -bqr "$2" "$1" >/dev/null || {
+        case "$RUN" in
+          stat ) log "Updates for copy of '$1' at '$2'" ;;
+          update ) cp "$1" "$2" ;;
+        esac
+      }
     } || {
       err "Copy target path already exists and not a file '$2'"
       return 2
