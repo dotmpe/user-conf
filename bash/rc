@@ -16,9 +16,6 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
   . /etc/bash_completion
 fi
 
-# enable readline autocompletion for GIT names
-source ~/.conf/bash/git-completion.bash
-
 if [ -x "$(which grunt)" ]
 then
 # Tab completion for Gruntfiles
