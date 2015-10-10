@@ -228,8 +228,8 @@ git_diff()
 d_COPY()
 {
   test -f "$1" || err "not a file: $1" 101
+  test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
   test -e "$2" && {
-    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
       git_diff "$1" "$2" || return $?
       diff -bqr "$2" "$1" >/dev/null || {
@@ -241,7 +241,7 @@ d_COPY()
     } || {
       err "Copy target path already exists and not a file '$2'"
       return 2
-    }
+    } 
   } || {
     case "$RUN" in
       stat )
