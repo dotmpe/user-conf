@@ -59,7 +59,6 @@ case "$hostname" in
 		echo "Using generic bash/env"
 		init_user_env
 		init_uconfdir_path
-#		export USER_EMAIL='@brixcrm.nl'
 		;;
 
 esac
