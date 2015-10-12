@@ -1,9 +1,9 @@
 
 [include]
-	path = ~/.conf/git/config.default
+  path = ~/.conf/git/config.default
 
 [include]
-	path = ~/.conf/git/config.user
+  path = ~/.conf/git/config.user
 
 
 # vim:ft=gitconfig"
