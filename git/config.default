@@ -17,6 +17,7 @@
   ps = push
   rs = reset
   mt = mergetool
+  caa = commit -a --amend -C HEAD
   last = log -1 HEAD
   vimdiff = difftool -y -t vimdiff
   ign = ls-files -o -i --exclude-standard
