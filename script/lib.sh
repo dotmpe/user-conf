@@ -228,8 +228,8 @@ git_diff()
 d_COPY()
 {
   test -f "$1" || err "not a file: $1" 101
-  test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
   test -e "$2" && {
+    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
       git_diff "$1" "$2" || return $?
       diff -bqr "$2" "$1" >/dev/null || {
@@ -241,7 +241,7 @@ d_COPY()
     } || {
       err "Copy target path already exists and not a file '$2'"
       return 2
-    } 
+    }
   } || {
     case "$RUN" in
       stat )
@@ -419,7 +419,7 @@ d_AGE_exec()
 
 d_INSTALL_APT()
 {
-  sudo apt-get install "$@"
+  sudo apt-get install -qq -y "$@"
 }
 
 d_INSTALL_BREW()
@@ -536,9 +536,9 @@ req_git_remote()
   test -z "$4" || err "req-git-remote surplus arguments" 1
 
   gitdir="$(vc_gitdir "$2")"
-  url="$(vc_gitremote "$2" "$3")"
+  url="$(cd "$2"; git config remote.${3}.url)"
   test "$url" = "$1" || {
-    err "Checkout exists at path $2 for <$url> not <$1>"
+    err "Checkout exists at path $2 for $3 <$url> not <$1>"
     return 1
   }
 }
