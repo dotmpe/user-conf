@@ -21,8 +21,6 @@ test -n "$DEFAULT_UCONFDIR" \
 
 init_user_env()
 {
-  test -n "$DEFAULT_UCONFDIR" || DEFAULT_UCONFDIR=$HOME/.config
-
   local key= value=
   for key in UCONFDIR HTDIR
   do
