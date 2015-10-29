@@ -60,7 +60,14 @@ let g:tmuxline_preset = {
       \'y'    : ['%R', '%a', '%Y'],
       \'z'    : '#H'}
 
+if "$VIM_THEME" == ""
+  let $VIM_THEME="mustang"
+endif
 colorscheme $VIM_THEME
+
+if "$VIM_AIRLINE_THEME" == ""
+  let $VIM_AIRLINE_THEME="ubaryd"
+endif
 let g:airline_theme = $VIM_AIRLINE_THEME
-  
+
 " vim:ft=vim:
