@@ -210,28 +210,13 @@ d_SYMLINK_stat()
 
 ## Copy directive
 
-git_diff()
-{
-  test -n "$1" || err "expected src" 1
-  test -n "$2" || err "expected trgt" 1
-
-  target_sha1="$(git hash-object "$2")"
-  co_path="$(cd $UCONF;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
-  test -n "$co_path" -a "$1" = "$UCONF/$co_path" && {
-    return 0
-  } || {
-    error "unknown state for path $2"
-    return 1
-  }
-}
-
 d_COPY()
 {
   test -f "$1" || err "not a file: $1" 101
   test -e "$2" && {
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
-      git_diff "$1" "$2" || return $?
+      GITDIR=$UCONF vc_gitdiff "$1" "$2" || return $?
       diff -bqr "$2" "$1" >/dev/null || {
         case "$RUN" in
           stat ) log "Updates for copy of '$1' at '$2'" ;;
@@ -339,7 +324,7 @@ d_GIT()
               && younger_than $gitdir/FETCH_HEAD $GIT_AGE
           } || {
             info "Fetching $2 branch $4 from remote $3"
-            ${PREF}git fetch -q $3 $4 2>/dev/null || { 
+            ${PREF}git fetch -q $3 $4 2>/dev/null || {
               err "Error fetching remote $3 for $2"; return 1; }
           }
           debug "Comparing $2 branch $4 with remote $3 ref"
