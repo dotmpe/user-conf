@@ -5,7 +5,7 @@ See the Specification for details regarding the syntax and available directives.
 
 Actions
 -------
-The following actions are supported in script/*.sh
+The following actions are supported in script/\*.sh
 
 Init
   Create a new user-config file for local host.
@@ -14,6 +14,7 @@ Update
 Stat
   Run the rules but only check for changes, don't apply.
 Diff
+
   TODO: Run the rules interactively, to consolidate changes.
 Add
   TODO: Add a new rule, and consolidate a new file.

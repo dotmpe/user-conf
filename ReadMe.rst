@@ -11,7 +11,8 @@ User-Config
     :target: http://badge.fury.io/gh/dotmpe%2Fuser-config
     :alt: GIT
 
-A dotfile repository.
+A dotfile repository, with shell scripts for misc. provisioning and
+configuration tasks.
 
 
 .. figure:: doc/screen-shot.png
@@ -20,39 +21,31 @@ A dotfile repository.
 Intro
 -----
 It was time to expand a little on my existing dotfile repo setup.
-There's probably many out there. But not too many templates or seed projects.
+There's probably many out there. But this was not about example dotfiles,
+but a way to deal with copies and checkouts spread over different hosts.
 
-Looked at only a couple and decided I wanted nothing more than bare basics,
-so that it would work everywhere: GIT and Sh. Some scripts, maybe some
-git-hooks. That's Bourne shell, not ``*sh``.
+Simplicity meant using GIT, and a Bourne shell as the only requirements.
+BATS is optional for testing the core libraries.
 
-So I just wrote the minimal scripts to do it. And then started adding some
-generic configurations for `tmux`, `vim`, `bash` and others.
-
-There are some Bats tests for the shell lib functions. But not for the UC
-scripts themselves. ``$UCONF/test.sh``.
-
-This presents a File format called user-config, or u-c. With a vim-syntax file.
-Supports a limited set of initial directives: SYMLINK, COPY for config files,
-and INSTALL for binaries.
+To provision or configure a host there is one config file per host.
+There is no real frontend (yet), but the commands are in scripts/<cmd>.sh
 
 
 Install
 -------
 ::
 
+  # something to put in your shell profile script
   export UCONF=$HOME/.conf
-  git clone --origin tpl git@github.com:dotmpe/user-config.git $UCONF
 
-  cd $UCONF
-  htd git-init-remote # git clone bare, rsync, git remote add ...
+  git clone --origin tpl git@github.com:dotmpe/user-config.git $UCONF
 
 
 Guide
 ------
 Each host::
 
-  $UCONF/init.sh
+  cd $UCONF; ./script/init.sh
 
 Add file copies using script::
 
@@ -70,8 +63,7 @@ Or to dry-run::
 
   $UCONF/script/stat.sh
 
-The standard directives support ``stat`` and ``update``.
-`BASE` and `INSTALL` excepted.
+See Manual_ and Specification_ for user documentation.
 
 
 Dev
@@ -85,9 +77,12 @@ Dev
   programs, so that INSTALL can be a regular stat/update directive. \
   XXX: BIN directive.
 
-- TODO: more provision directives: git, web (curl).
-- TODO: badly want git clone directive, also submodule directive. Should be good enough for vim-pathogen. And many other things.
-- TODO: new type of directives for configuration: cron, munin-node, hostname, hosts and fstab maybe.
+- TODO: more provision directives: web (curl).
+
+- TODO: git directive submodule mode
+
+- TODO: new type of directives for configuration: cron, munin-node,
+  hostname, hosts and fstab maybe. XXX: first try to use LINE for this.
 
 - TODO: add some interactive resolving off differences.
 - TODO: add a simple frontend script to put in $PATH
@@ -104,6 +99,11 @@ Dev
 - XXX: make directives optional. Maybe stick an asterix or q-mark to the keyword. Then
   expand init to initialize paths, and let stat and update only deal with
   existing paths and leave new-paths if the directive is optional?
+
 - XXX: at some point, replace cat $conf with something that handles SOURCE
   directives. Current set up does seem to handle multilines using '\' trailer.
+
+
+.. _Specification: Specification.rst
+.. _Manual: Manual.rst
 
