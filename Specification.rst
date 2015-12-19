@@ -63,7 +63,43 @@ COPY
 
 
 GIT
-  ..
+  - Requires two arguments, takes at most five arguments.
+
+    - First argument is a GIT url.
+    - Second argument should be a target path.
+
+    The use of the second argument, and the function of the directive depends
+    on the following optional arguments.
+
+    - Third argument is the name for the remote, defaults to origin.
+    - Fourth argument is the branch to checkout and for remote tracking.
+      Defaults to master.
+    - Fourth is the mode of the target. This defaults to 'clone',
+      and can also be 'submodule' or kkk
+
+  - Only the target basepath needs to be provided if `basename <url> .git`
+    provides the correct checkout directory name.
+
+    In that case the target path is an existing directory, and not
+    a GIT checkout, and it is used as basedir for a new clone.
+
+    A custom path can also be given.
+
+  - A checkout is created if it does not exist. If the path does exist
+    is should be a checkout with matching URL and remote name.
+
+  - An existing checkout should be clean. On stat or update each is checked
+    for modifications or cruft.
+
+  - XXX: for consolidation git can be used, no need to improve there?
+
+  - If mode is submodule instead of clone, then the second argument
+    should be an existing GIT checkout of which this directive specifies
+    a submodule. The same update rules are applied.
+
+
+ANNEX
+  TODO: exactly like git.
 
 
 LINE
