@@ -1,5 +1,14 @@
 #!/bin/sh
 
+set -e
+
+# No-Op(eration)
+noop()
+{
+  . /dev/null # source empty file
+  #echo -n # echo nothing
+  #set -- # clear arguments (XXX set nothing?)
+}
 
 func_exists()
 {
@@ -16,7 +25,3 @@ try_exec_func()
   $func "$@" || return $?
 }
 
-noop()
-{
-  set --
-}
