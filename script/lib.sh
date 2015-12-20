@@ -274,7 +274,7 @@ d_WEB()
 
   test -e "$2" && {
     tmpf=/tmp/$(uuidgen)
-    curl $1 -o $tmpf
+    curl -sq $1 -o $tmpf
     diff -bq $2 $tmpf && {
       info "Up to date with web at $2"
     } || {
@@ -283,7 +283,7 @@ d_WEB()
       case "$RUN" in update ) ;; * ) return 1 ;; esac
     }
   } || {
-    ${PREF}curl $1 -o $2
+    ${PREF}curl -sq $1 -o $2
     note "New path $2 from $1"
     case "$RUN" in update ) ;; * ) return 1 ;; esac
   }

@@ -127,7 +127,7 @@ WEB::
 
     WEB <url> <destpath>
 
-  TODO: fetch, update file from URL.
+  Fetch, update file from URL.
 
 
 DIR::
