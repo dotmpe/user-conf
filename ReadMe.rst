@@ -101,6 +101,13 @@ Dev
 - XXX: at some point, replace cat $conf with something that handles SOURCE
   directives. Current set up does seem to handle multilines using '\' trailer.
 
+- XXX: DIR directive, and consolidation asks for kind of interaction
+  that makes scripts complex. Not sure wether to include that here.
+
+  Also GIT does not take note of cruft (yet). If that is made an option,
+  then maybe other tooling would be obsolete. Until then, ~/bin is to support.
+
+
 
 .. _Specification: Specification.rst
 .. _Manual: Manual.rst
