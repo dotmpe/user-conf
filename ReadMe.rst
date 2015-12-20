@@ -77,15 +77,13 @@ Dev
   programs, so that INSTALL can be a regular stat/update directive. \
   XXX: BIN directive.
 
-- TODO: more provision directives: web (curl).
-
 - TODO: git directive submodule mode
 
-- TODO: new type of directives for configuration: cron, munin-node,
+- XXX: maybe new type of directives for configuration: cron, munin-node,
   hostname, hosts and fstab maybe. XXX: first try to use LINE for this.
 
-- TODO: add some interactive resolving off differences.
-- TODO: add a simple frontend script to put in $PATH
+- TODO: add some interactive resolving maybe.. somehow.
+- TODO: add a simple frontend script to put in $PATH.
 
 - TODO: handling of sudo. Can determine wether paths are writable, and do auto
   root. Maybe stick a decorator to directive to always run with sudo.
@@ -93,9 +91,9 @@ Dev
 - TODO: a source directive. As new directives are added it should be useful
   create generic bits of ufile with var. directives and distribute ucfiles in bits.
 
-- XXX: an INIT directive, create customized per-host file from boilerplate
 - XXX: maybe use installer glob for INSTALL. But would need to map package names
-  then too. Should also be useful with SOURCE directive iot generalize.
+  then too.
+
 - XXX: make directives optional. Maybe stick an asterix or q-mark to the keyword. Then
   expand init to initialize paths, and let stat and update only deal with
   existing paths and leave new-paths if the directive is optional?
