@@ -2,7 +2,7 @@
 
 set -e
 
-# more sanity checks
+# some sanity checks
 test -s "$uc_lib"/lib.sh || exit 99
 test -x "$uc_lib"/install.sh || exit 97
 test -x "$uc_lib"/init.sh || exit 98
@@ -33,6 +33,7 @@ test -n "$hostname" || {
     hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
   }
 }
+test -n "$verbosity" || verbosity=4
 
 
 # config holds directives for current env/host,
@@ -270,7 +271,22 @@ d_WEB()
   }
 
   case "$RUN" in update ) PREF= ;; stat ) PREF="echo '** DRY-RUN **: '" ;; esac
-  echo "TODO web $@"
+
+  test -e "$2" && {
+    tmpf=/tmp/$(uuidgen)
+    curl $1 -o $tmpf
+    diff -bq $2 $tmpf && {
+      info "Up to date with web at $2"
+    } || {
+      ${PREF}cp $tmpf $2
+      note "Updated $2 from $1"
+      case "$RUN" in update ) ;; * ) return 1 ;; esac
+    }
+  } || {
+    ${PREF}curl $1 -o $2
+    note "New path $2 from $1"
+    case "$RUN" in update ) ;; * ) return 1 ;; esac
+  }
 }
 
 d_WEB_update()
@@ -298,7 +314,9 @@ d_GIT()
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
     || err "target must be existing directory or a new name in one: $2" 1
 
-  test ! -e "$2/.git" || req_git_remote "$1" "$2" "$3" || return $?
+  test ! -e "$2/.git" || {
+    req_git_remote "$1" "$2" "$3" || return $?
+  }
 
   test ! -e "$2" -a -d "$(dirname "$2")" || {
     test -e "$2/.git" && req_git_remote "$1" "$2" "$3" || {
@@ -320,24 +338,35 @@ d_GIT()
           gitdir="$(vc_gitdir)"
           test -d "$gitdir" || err "cannot determine gitdir at '$2'" 1
           {
-            test -e $gitdir/FETCH_HEAD \
-              && younger_than $gitdir/FETCH_HEAD $GIT_AGE
+            test -e $gitdir/FETCH_HEAD && {
+              younger_than $gitdir/FETCH_HEAD $GIT_AGE
+            } || {
+              note "No FETCH_HEAD in $2"
+            }
           } || {
             info "Fetching $2 branch $4 from remote $3"
             ${PREF}git fetch -q $3 $4 2>/dev/null || {
               err "Error fetching remote $3 for $2"; return 1; }
           }
           debug "Comparing $2 branch $4 with remote $3 ref"
-          git diff --quiet $3/$4 && {
-            test "$4" = "master" \
-              && info "Checkout $2 clean and up-to-date" \
-              || info "Checkout $2 clean and up-to-date at branch $4"
+          git diff --quiet && {
+            git diff --quiet $3/$4..HEAD && {
+              test "$4" = "master" \
+                && info "Checkout $2 clean and up-to-date" \
+                || info "Checkout $2 clean and up-to-date at branch $4"
+            } || {
+              test "$4" = "master" \
+                && warn "Checkout $2 clean but ahead of $3" \
+                || warn "Checkout $2 clean but ahead of $3 at branch $4"
+              return 1
+            }
           } || {
             ${PREF}git co $4
             ${PREF}git pull $3 $4
             test "$4" = "master" \
               && note "Updated $2 from remote $3" \
               || note "Updated $2 from remote $3 (at branch $4)"
+            case "$RUN" in update ) ;; * ) return 1 ;; esac
           }
         } || {
           test "$4" = "master" \
@@ -350,6 +379,7 @@ d_GIT()
           && note "Checkout missing at $2" \
           || note "Checkout of $4 missing at $2"
         ${PREF}git $5 "$1" "$2" --origin $3 --branch $4
+        case "$RUN" in update ) ;; * ) return 1 ;; esac
       } ;;
 
     * ) err "Invalid GIT mode $5"; return 1 ;;
@@ -522,8 +552,27 @@ req_git_remote()
 
   gitdir="$(vc_gitdir "$2")"
   url="$(cd "$2"; git config remote.${3}.url)"
+  test -n "$url" || {
+    case "$RUN" in
+      update ) git remote add $3 $1; note "New remote $3 for $2";;
+      stat ) err "No remote $3 at $2"; return 1;;
+    esac
+  }
   test "$url" = "$1" || {
     err "Checkout exists at path $2 for $3 <$url> not <$1>"
     return 1
   }
 }
+
+c_commit()
+{
+  test "$(pwd)" = "$UCONF" || cd $UCONF
+  git diff --quiet && {
+    git commit -m "At $hostname"
+    git pull
+    git push
+  } || {
+    error "dir looks dirty"
+  }
+}
+

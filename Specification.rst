@@ -123,9 +123,9 @@ INSTALL::
   The commands requested are listed as parameters. If a command does not exit normally when used without arguments or options, an entry with BIN should be made.
 
 
-URL::
+WEB::
 
-    URL <url> <destpath>
+    WEB <url> <destpath>
 
   TODO: fetch, update file from URL.
 
