@@ -1,0 +1,10 @@
+
+# Install using apt-get, brew, or others
+INSTALL apt tmux git
+
+# Copy and symlink files from the repo
+COPY $UCONF/amce/gizmo.conf /etc/acme/gizmo.conf
+SYMLINK $UCONF/top/rc $HOME/.toprc
+
+# Use $UCONF/script/stat.sh and $UCONF/script/update.sh to process Ucfile
+
