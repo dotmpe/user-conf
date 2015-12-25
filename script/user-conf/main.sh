@@ -3,7 +3,7 @@
 
 scriptname=uc
 
-test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$(realpath "$0")")")"
+test -n "$uc_lib" || uc_lib="$(dirname "$(realpath "$0")")"
 
 . "$uc_lib"/lib.sh
 
