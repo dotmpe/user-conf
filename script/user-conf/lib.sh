@@ -10,19 +10,22 @@ test -x "$uc_lib"/add.sh || exit 97
 test -x "$uc_lib"/stat.sh || exit 96
 test -x "$uc_lib"/update.sh || exit 95
 
-. "$uc_lib"/std.lib.sh
-. "$uc_lib"/str.lib.sh
-. "$uc_lib"/match.lib.sh
-. "$uc_lib"/os.lib.sh
-. "$uc_lib"/date.lib.sh
-. "$uc_lib"/vc.lib.sh
-. "$uc_lib"/util.lib.sh
+test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
+
+. "$sh_lib"/std.lib.sh
+. "$sh_lib"/str.lib.sh
+. "$sh_lib"/match.lib.sh
+. "$sh_lib"/os.lib.sh
+. "$sh_lib"/date.lib.sh
+. "$sh_lib"/vc.lib.sh
+. "$sh_lib"/util.lib.sh
+
+test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 
 test -n "$HOME" || err "no user dir set" 100
 test -e "$HOME" || err "no user dir" 100
 
-test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
-test -n "$UCONF" || UCONF="$(dirname "$uc_lib")"
+
 test -n "$uname" || uname="$(uname -s)"
 test -n "$machine" || machine="$(uname -m)"
 test -n "$hostname" || {
@@ -113,6 +116,7 @@ c_stat()
 }
 
 # Add a new path to config (COPY directive only)
+# XXX: looks like bashisms
 c_add()
 {
   test -f "$1" || err "? expected file argument" 1
@@ -152,6 +156,7 @@ c_add()
 # Run tests, some unittests on the Sh library
 c_test()
 {
+  test -n "$UCONF" || err "? $UCONF=" 1
   cd $UCONF || err "? cd $UCONF" 1
   # Test script: run Bats tests
   ./test/*-spec.bats
