@@ -106,13 +106,39 @@ c_install()
 # Update host from provision and config directives
 c_update()
 {
-  exec_dirs update
+  test -z "$@" && {
+    exec_dirs update
+    return $?
+  }
+
+  case "$1" in [0-1] )
+      warn "TODO: execute rule update at index" 1 ;;
+    * )
+      func=d_$(echo $1 | tr 'a-z' 'A-Z')_update
+      shift 1
+      type $func &>/dev/null && {
+        $func "$@"
+      } ;;
+  esac
 }
 
 # Compare host with provision and config directives
 c_stat()
 {
-  exec_dirs stat
+  test -z "$@" && {
+    exec_dirs stat
+    return $?
+  }
+
+  case "$1" in [0-1] )
+      warn "TODO: execute rule stat at index" 1 ;;
+    * )
+      func=d_$(echo $1 | tr 'a-z' 'A-Z')_stat
+      shift 1
+      type $func &>/dev/null && {
+        $func "$@"
+      } ;;
+  esac
 }
 
 # Add a new path to config (COPY directive only)
