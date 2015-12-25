@@ -106,7 +106,7 @@ c_install()
 # Update host from provision and config directives
 c_update()
 {
-  test -z "$@" && {
+  test -z "$1" && {
     exec_dirs update
     return $?
   }
@@ -125,7 +125,7 @@ c_update()
 # Compare host with provision and config directives
 c_stat()
 {
-  test -z "$@" && {
+  test -z "$1" && {
     exec_dirs stat
     return $?
   }
