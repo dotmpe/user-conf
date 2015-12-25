@@ -28,7 +28,8 @@ Simplicity meant using GIT, and a Bourne shell as the only requirements.
 BATS is optional for testing the core libraries.
 
 To provision or configure a host there is one config file per host.
-There is no real frontend (yet), but the commands are in scripts/<cmd>.sh
+There is no real frontend (yet), but the commands are in scripts/user-conf/<cmd>.sh
+and there is a little guide and some other docs.
 
 
 Install
@@ -45,23 +46,23 @@ Guide
 ------
 Each host::
 
-  cd $UCONF; ./script/init.sh
+  cd $UCONF; ./script/user-conf/init.sh
 
 Add file copies using script::
 
   cd /etc/acme
-  $UCONF/script/add.sh gizmo.conf
+  $UCONF/script/user-conf/add.sh gizmo.conf
 
 Or edit ``$UCONF/install/$hostname.conf`` by hand to create symlinks,
 and to supply other directives.
 
 To run the directives::
 
-  $UCONF/script/update.sh
+  $UCONF/script/user-conf/update.sh
 
 Or to dry-run::
 
-  $UCONF/script/stat.sh
+  $UCONF/script/user-conf/stat.sh
 
 See Manual_ and Specification_ for user documentation.
 

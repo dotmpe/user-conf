@@ -12,7 +12,7 @@ branches:
   - dev
 
 script:
-- ./script/test.sh | tee ./build/test-result.tap
+- ./script/user-conf/test.sh | tee ./build/test-result.tap
 
 after_script:
 
