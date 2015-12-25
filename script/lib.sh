@@ -398,6 +398,32 @@ d_GIT_update()
 }
 
 
+## LINE directive
+
+d_LINE()
+{
+  test -f "$1" || err "expected file path" 1
+  test -n "$2" || err "expected one ore more lines" 1
+
+  shift 1
+  for line in "$@"
+  do
+    echo $line
+  done
+}
+
+d_LINE_stat()
+{
+  RUN=stat d_LINE "$@" || return $?
+}
+
+d_LINE_update()
+{
+  RUN=update d_LINE "$@" || return $?
+}
+
+
+
 ## Meta
 
 d_ENV_exec()
@@ -423,7 +449,7 @@ d_AGE_exec()
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
     GIT )
-      echo GIT_AGE="$2"
+      GIT_AGE="$2"
       note "Max. GIT remote ref age to $2 seconds"
     ;;
   esac
@@ -480,8 +506,8 @@ prep_dir_func() {
       func_name="d_${directive}_$1"
       ;;
 
-    # provision directives support stat or update
-    COPY | SYMLINK | GIT | WEB )
+    # provision/config directives support stat or update
+    COPY | SYMLINK | GIT | WEB | LINE )
       func_name="d_${directive}_$1"
       ;;
 
@@ -529,8 +555,10 @@ exec_dirs()
   }
 }
 
+# Get or set default GIT age
 req_git_age()
 {
+  # XXX AGE is eval'd in sequence, seems convenient for some meta dirs
   #grep -qi '^AGE\ GIT\ ' && {
   #  age_expr=$(echo $(grep -i '^AGE\ GIT\ ') | cut -d ' ' -f 3)
   #  # TODO: parse some expression for age: 1h 5min 5m etc.
