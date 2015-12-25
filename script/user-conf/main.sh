@@ -26,7 +26,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
 
         # invoke with function name first argument,
         cmd=$1
-        [ -n "$def_func" -a -z "$cmd" ] \
+        test -n "$def_func" -a -z "$func" \
           && func=$def_func \
           || func=$(echo c_$cmd | tr '-' '_')
 
