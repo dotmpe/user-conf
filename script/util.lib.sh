@@ -51,7 +51,7 @@ file_insert_at()
   echo "${line_number}a
 $1
 .
-w" | ed $file_name $tmpf
+w" | ed $file_name >/dev/null
 }
 
 file_replace_at()
@@ -76,7 +76,7 @@ file_replace_at()
   note "Removing line $file_name:$line_number"
   echo "${line_number}d
 .
-w" | ed $file_name $tmpf
+w" | ed $file_name >/dev/null
 
   file_insert_at $file_name:$(( $line_number - 1 )) "$1"
 }
