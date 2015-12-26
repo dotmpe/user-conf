@@ -19,6 +19,7 @@ test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
 . "$sh_lib"/date.lib.sh
 . "$sh_lib"/vc.lib.sh
 . "$sh_lib"/util.lib.sh
+. "$sh_lib"/conf.lib.sh
 
 test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 
@@ -433,13 +434,14 @@ d_GIT_update()
 
 d_LINE()
 {
-  test -f "$1" || err "expected file path" 1
-  test -n "$2" || err "expected one ore more lines" 1
+  test -f "$1" || error "expected file path '$1'" 1
+  test -n "$2" || error "expected one ore more lines" 1
 
+  file=$1
   shift 1
   for line in "$@"
   do
-    echo $line
+    enable_setting $file "$line"
   done
 }
 
