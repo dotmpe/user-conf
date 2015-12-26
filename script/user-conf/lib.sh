@@ -23,8 +23,8 @@ test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
 
 test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 
-test -n "$HOME" || err "no user dir set" 100
-test -e "$HOME" || err "no user dir" 100
+test -n "$HOME" || error "no user dir set" 100
+test -e "$HOME" || error "no user dir" 100
 
 
 test -n "$uname" || uname="$(uname -s)"
@@ -47,7 +47,7 @@ c_initialize()
     echo "$hostname.$domain" > $HOME/.domain
   }
 
-  cd "$UCONF" || err "? cd $UCONF" 1
+  cd "$UCONF" || error "? cd $UCONF" 1
   local conf=install/$hostname.u-c
   test ! -e "$conf" && {
     note "Initializing $hostname: $conf"
@@ -83,24 +83,24 @@ c_install()
 {
   local conf= func_name= arguments=
   rm -f /tmp/uc-install-failed
-  cd "$UCONF" || err "? cd $UCONF" 1
+  cd "$UCONF" || error "? cd $UCONF" 1
   req_conf
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive installer arguments_raw
   do
-    test -n "$installer" || err "empty installer" 1
+    test -n "$installer" || error "empty installer" 1
     installer="$(echo "$installer"|tr 'a-z' 'A-Z')"
     prep_dir_func "$installer" || continue
-    test -n "$arguments" || err "expected $installer packages" 1
+    test -n "$arguments" || error "expected $installer packages" 1
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
-      err "install ret $? in $directive:$installer with '$arguments'"
+      error "install ret $? in $directive:$installer with '$arguments'"
       touch /tmp/uc-install-failed
     }
   done
   test ! -e "/tmp/uc-install-failed" || {
     rm -f /tmp/uc-install-failed
-    err "failed directives" 1
+    error "failed directives" 1
   }
 }
 
@@ -146,12 +146,12 @@ c_stat()
 # XXX: looks like bashisms
 c_add()
 {
-  test -f "$1" || err "? expected file argument" 1
+  test -f "$1" || error "? expected file argument" 1
   local pwd=$(pwd) conf=
-  cd $UCONF || err "? cd $UCONF" 1
+  cd $UCONF || error "? cd $UCONF" 1
   req_conf
   test -e "$1" && toadd=$1 || toadd=$pwd/$1
-  test -e "$conf" || err "no such install config $conf" 1
+  test -e "$conf" || error "no such install config $conf" 1
 
   exec_dirs base
 
@@ -160,7 +160,7 @@ c_add()
   match_grep_pattern_test "$basedir"
   grep -iq "^BASE\ $p_\ " "$conf" && {
     ucbasedir_raw="$(grep "^\s*BASE\ $p_\ " "$conf" | cut -d ' ' -f 3 )"
-    test -n "$ucbasedir_raw" || err "error parsing BASE directive for $basedir" 1
+    test -n "$ucbasedir_raw" || error "error parsing BASE directive for $basedir" 1
     note "Found customized rcbase $ucbasedir_raw"
     ucbasedir=$(eval echo "$ucbasedir_raw")
   } || {
@@ -183,8 +183,8 @@ c_add()
 # Run tests, some unittests on the Sh library
 c_test()
 {
-  test -n "$UCONF" || err "? $UCONF=" 1
-  cd $UCONF || err "? cd $UCONF" 1
+  test -n "$UCONF" || error "? $UCONF=" 1
+  cd $UCONF || error "? cd $UCONF" 1
   # Test script: run Bats tests
   ./test/*-spec.bats
 }
@@ -196,7 +196,7 @@ c_test()
 
 d_SYMLINK_update()
 {
-  test -f "$1" -o -d "$1" || err "not a file or directory: $1" 101
+  test -f "$1" -o -d "$1" || error "not a file or directory: $1" 101
   test ! -h "$2" -o -e "$2" || {
     rm "$2"
     info "removed broken symlink"
@@ -211,7 +211,7 @@ d_SYMLINK_update()
         log "Updated symlink '$2' -> '$1'"
       }
     } || {
-      err "Path already exists and not a symlink '$2'"
+      error "Path already exists and not a symlink '$2'"
       return 2
     }
   } || {
@@ -222,7 +222,7 @@ d_SYMLINK_update()
 
 d_SYMLINK_stat()
 {
-  test -f "$1" -o -d "$1" || err "not a file or directory: $1" 101
+  test -f "$1" -o -d "$1" || error "not a file or directory: $1" 101
   test -e "$2" && {
     test -h "$2" && {
       test "$(readlink "$2")" = "$1" && {
@@ -232,7 +232,7 @@ d_SYMLINK_stat()
         return 1
       }
     } || {
-      err "Path already exists and not a symlink '$2'"
+      error "Path already exists and not a symlink '$2'"
       return 2
     }
   } || {
@@ -245,7 +245,7 @@ d_SYMLINK_stat()
 
 d_COPY()
 {
-  test -f "$1" || err "not a file: $1" 101
+  test -f "$1" || error "not a file: $1" 101
   test -e "$2" && {
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
@@ -257,8 +257,10 @@ d_COPY()
         esac
       }
     } || {
-      err "Copy target path already exists and not a file '$2'"
-      return 2
+      test -e "$2" && {
+        error "Copy target path already exists and not a file '$2'"
+        return 2
+      } || noop
     }
   } || {
     case "$RUN" in
@@ -289,16 +291,16 @@ d_COPY_stat()
 
 d_WEB()
 {
-  test -n "$1" || err "expected url" 1
-  test -n "$2" || err "expected target path" 1
-  test -z "$4" || err "surplus params: '$4'" 1
+  test -n "$1" || error "expected url" 1
+  test -n "$2" || error "expected target path" 1
+  test -z "$4" || error "surplus params: '$4'" 1
 
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
-    || err "target must be existing directory or a new name in one: $2" 1
+    || error "target must be existing directory or a new name in one: $2" 1
 
   test -d "$2" && {
       test "$(basename "$1")" != "$1" \
-        || err "cannot get target basename from URL '$1', please provide full path" 1
+        || error "cannot get target basename from URL '$1', please provide full path" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3"
   }
 
@@ -336,15 +338,15 @@ d_WEB_stat()
 
 d_GIT()
 {
-  test -n "$1" || err "expected url" 1
-  test -n "$2" || err "expected target path" 1
+  test -n "$1" || error "expected url" 1
+  test -n "$2" || error "expected target path" 1
   test -n "$3" || set -- "$1" "$2" "origin" "$4" "$5"
   test -n "$4" || set -- "$1" "$2" "$3" "master" "$5"
   test -n "$5" || set -- "$1" "$2" "$3" "$4" "clone"
-  test -z "$6" || err "surplus params: '$6'" 1
+  test -z "$6" || error "surplus params: '$6'" 1
 
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
-    || err "target must be existing directory or a new name in one: $2" 1
+    || error "target must be existing directory or a new name in one: $2" 1
 
   test ! -e "$2/.git" || {
     req_git_remote "$1" "$2" "$3" || return $?
@@ -353,7 +355,7 @@ d_GIT()
   test ! -e "$2" -a -d "$(dirname "$2")" || {
     test -e "$2/.git" && req_git_remote "$1" "$2" "$3" || {
       test "$(basename "$1" .git)" != "$1" \
-        || err "cannot get target basename from GIT '$1', please provide full checkout path" 1
+        || error "cannot get target basename from GIT '$1', please provide full checkout path" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3" "$4" "$5"
     }
   }
@@ -368,7 +370,7 @@ d_GIT()
       test -e "$2/.git" && {
         cd $2; git diff --quiet && {
           gitdir="$(vc_gitdir)"
-          test -d "$gitdir" || err "cannot determine gitdir at '$2'" 1
+          test -d "$gitdir" || error "cannot determine gitdir at '$2'" 1
           {
             test -e $gitdir/FETCH_HEAD && {
               younger_than $gitdir/FETCH_HEAD $GIT_AGE
@@ -378,7 +380,7 @@ d_GIT()
           } || {
             info "Fetching $2 branch $4 from remote $3"
             ${PREF}git fetch -q $3 $4 2>/dev/null || {
-              err "Error fetching remote $3 for $2"; return 1; }
+              error "Error fetching remote $3 for $2"; return 1; }
           }
           debug "Comparing $2 branch $4 with remote $3 ref"
           git diff --quiet && {
@@ -414,7 +416,7 @@ d_GIT()
         case "$RUN" in update ) ;; * ) return 1 ;; esac
       } ;;
 
-    * ) err "Invalid GIT mode $5"; return 1 ;;
+    * ) error "Invalid GIT mode $5"; return 1 ;;
 
   esac
 }
@@ -476,9 +478,9 @@ d_BASH_exec()
 
 d_AGE_exec()
 {
-  test -n "$1" || err "expected additional property for age" 1
-  test -n "$2" || err "expected age" 1
-  test -z "$3" || err "surplus params: '$3'" 1
+  test -n "$1" || error "expected additional property for age" 1
+  test -n "$2" || error "expected age" 1
+  test -z "$3" || error "surplus params: '$3'" 1
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
     GIT )
@@ -516,11 +518,11 @@ d_INSTALL_OPKG()
 # Misc. utils
 req_conf() {
   conf=install/$hostname.u-c
-  test -e "$conf" || err "no such user-config $conf" 1
+  test -e "$conf" || error "no such user-config $conf" 1
 }
 
 prep_dir_func() {
-  test -n "$directive" || err "empty directive" 1
+  test -n "$directive" || error "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
   arguments="$(eval echo "$arguments_raw")"
   func_name=
@@ -548,7 +550,7 @@ prep_dir_func() {
       gen_eval="d_${directive}_exec"
       ;;
 
-    * ) err "Unknown directive $directive" 1 ;;
+    * ) error "Unknown directive $directive" 1 ;;
 
   esac
 }
@@ -557,7 +559,7 @@ exec_dirs()
 {
   local conf= func_name= arguments=
   rm -f /tmp/uc-$1-failed
-  cd "$UCONF" || err "? cd $UCONF" 1
+  cd "$UCONF" || error "? cd $UCONF" 1
   req_conf
 
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
@@ -568,7 +570,7 @@ exec_dirs()
       eval "$($gen_eval $arguments_raw)" && {
         continue
       } || {
-        err "$1 ret $? in $directive with '$arguments'"
+        error "$1 ret $? in $directive with '$arguments'"
         touch /tmp/uc-$1-failed
       }
     } || noop
@@ -576,7 +578,7 @@ exec_dirs()
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
-      err "$1 ret $? in $directive with '$arguments'"
+      error "$1 ret $? in $directive with '$arguments'"
       touch /tmp/uc-$1-failed
     }
 
@@ -584,7 +586,7 @@ exec_dirs()
 
   test ! -e "/tmp/uc-$1-failed" || {
     rm -f /tmp/uc-$1-failed
-    err "failed directives" 1
+    error "failed directives" 1
   }
 }
 
@@ -606,21 +608,21 @@ req_git_age()
 
 req_git_remote()
 {
-  test -n "$1" || err "expected url" 1
-  test -d "$2" || err "expected checkout dir '$2'" 1
+  test -n "$1" || error "expected url" 1
+  test -d "$2" || error "expected checkout dir '$2'" 1
   test -n "$3" || set -- "$1" "$2" "origin"
-  test -z "$4" || err "req-git-remote surplus arguments" 1
+  test -z "$4" || error "req-git-remote surplus arguments" 1
 
   gitdir="$(vc_gitdir "$2")"
   url="$(cd "$2"; git config remote.${3}.url)"
   test -n "$url" || {
     case "$RUN" in
       update ) git remote add $3 $1; note "New remote $3 for $2";;
-      stat ) err "No remote $3 at $2"; return 1;;
+      stat ) error "No remote $3 at $2"; return 1;;
     esac
   }
   test "$url" = "$1" || {
-    err "Checkout exists at path $2 for $3 <$url> not <$1>"
+    error "Checkout exists at path $2 for $3 <$url> not <$1>"
     return 1
   }
 }
