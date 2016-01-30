@@ -3,7 +3,7 @@
 
 scriptname=uc
 
-test -n "$uc_lib" || uc_lib="$(dirname "$(realpath "$0")")"
+test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
 
 . "$uc_lib"/lib.sh
 
@@ -26,7 +26,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
 
         # invoke with function name first argument,
         cmd=$1
-        test -n "$def_func" -a -z "$func" \
+        test -n "$def_func" -a -z "$cmd" \
           && func=$def_func \
           || func=$(echo c_$cmd | tr '-' '_')
 
