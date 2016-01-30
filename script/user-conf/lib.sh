@@ -199,9 +199,19 @@ d_SYMLINK()
   test -f "$1" -o -d "$1" || error "not a file or directory: $1" 101
   # target is either existing dir or non-existing filename in dir
   test -e "$2" && {
-    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
+    test -h "$2" || {
+      test -d "$2" && {
+        set -- "$1" "$2/$(basename $1)"
+      } || {
+        error "expected directory or symlink"
+        return 1
+      }
+    }
   } || {
-    test -d "$(dirname $2)" || error "no parent dir for target path $2" 1
+    test -d "$(dirname $2)" || {
+      error "no parent dir for target path $2"
+      return 1
+    }
   }
   # remove broken link first
   test ! -h "$2" -o -e "$2" || {
