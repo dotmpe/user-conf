@@ -1,6 +1,41 @@
 #!/bin/sh
 
 
+stdio_type()
+{
+  local io= pid=
+  test -n "$1" && io=$1 || io=1
+  test -n "$uname" || uname=$(uname)
+  case "$uname" in
+
+    Linux )
+        test -n "$2" && pid=$2 || pid=$$
+
+        test -e /proc/$pid/fd/${io} || error "No $uname FD $io"
+        if readlink /proc/$pid/fd/$io | grep -q "^pipe:"; then
+          export stdio_${io}_type=p
+        elif file $( readlink /proc/$pid/fd/$io ) | grep -q 'character.special'; then
+          export stdio_${io}_type=t
+        else
+          export stdio_${io}_type=f
+        fi
+      ;;
+
+    Darwin )
+
+        test -e /dev/fd/${io} || error "No $uname FD $io"
+        if file /dev/fd/$io | grep -q 'named.pipe'; then
+          export stdio_${io}_type=p
+        elif file /dev/fd/$io | grep -q 'character.special'; then
+          export stdio_${io}_type=t
+        else
+          export stdio_${io}_type=f
+        fi
+      ;;
+
+  esac
+}
+
 var_log_key()
 {
   test -n "$log_key" || {
@@ -11,6 +46,8 @@ var_log_key()
         log_key=$base.sh
       }
     }
+    # add stdin/out/err type symbol
+    log_key=$log_key:$stdio_0_type/$stdio_1_type/$stdio_2_type
   }
 }
 
