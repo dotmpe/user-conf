@@ -28,6 +28,9 @@ vc_gitremote()
   git config --get remote.$2.url
 }
 
+# Given COPY src and trgt file from user-conf repo,
+# see if target path is of a known version for src-path in repo,
+# and that its the currently checked out version.
 vc_gitdiff()
 {
   test -n "$1" || err "vc-gitdiff expected src" 1

@@ -83,7 +83,7 @@ c_install()
 {
   local conf= func_name= arguments=
   rm -f /tmp/uc-install-failed
-  cd "$UCONF" || error "? cd $UCONF" 1
+  #cd "$UCONF" || error "? cd $UCONF" 1
   req_conf
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive installer arguments_raw
   do
@@ -107,39 +107,13 @@ c_install()
 # Update host from provision and config directives
 c_update()
 {
-  test -z "$1" && {
-    exec_dirs update
-    return $?
-  }
-
-  case "$1" in [0-1] )
-      warn "TODO: execute rule update at index" 1 ;;
-    * )
-      func=d_$(echo $1 | tr 'a-z' 'A-Z')_update
-      shift 1
-      type $func &>/dev/null && {
-        $func "$@"
-      } ;;
-  esac
+  exec_dirs update $1 || return $?
 }
 
 # Compare host with provision and config directives
 c_stat()
 {
-  test -z "$1" && {
-    exec_dirs stat
-    return $?
-  }
-
-  case "$1" in [0-1] )
-      warn "TODO: execute rule stat at index" 1 ;;
-    * )
-      func=d_$(echo $1 | tr 'a-z' 'A-Z')_stat
-      shift 1
-      type $func &>/dev/null && {
-        $func "$@"
-      } ;;
-  esac
+  exec_dirs stat "$1" || return $?
 }
 
 # Add a new path to config (COPY directive only)
@@ -148,7 +122,7 @@ c_add()
 {
   test -f "$1" || error "? expected file argument" 1
   local pwd=$(pwd) conf=
-  cd $UCONF || error "? cd $UCONF" 1
+  #cd $UCONF || error "? cd $UCONF" 1
   req_conf
   test -e "$1" && toadd=$1 || toadd=$pwd/$1
   test -e "$conf" || error "no such install config $conf" 1
@@ -278,7 +252,14 @@ d_COPY()
   test -e "$2" && {
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
-      GITDIR=$UCONF vc_gitdiff "$1" "$2" || return $?
+      # Check existing COPY version
+      GITDIR=$UCONF vc_gitdiff "$1" "$2" || {
+        trueish $choice_interactive && {
+          vimdiff "$1" "$2"
+        }
+        return $?
+      }
+
       diff -bqr "$2" "$1" >/dev/null || {
         case "$RUN" in
           stat ) log "Updates for copy of '$1' at '$2'" ;;
@@ -492,12 +473,12 @@ d_LINE_update()
 
 d_ENV_exec()
 {
-  echo export "$@"
+  printf -- export "$@"
 }
 
 d_SH_exec()
 {
-  echo "$@"
+  echo sh -c "$@"
 }
 
 d_BASH_exec()
@@ -546,14 +527,18 @@ d_INSTALL_OPKG()
 
 # Misc. utils
 req_conf() {
+  test -e Ucfile && conf=Ucfile \
+    || test -e Userconf && conf=Userconf \
+    || conf=install/$hostname.u-c
+  test -e $conf && return
+  cd $UCONF
   conf=install/$hostname.u-c
-  test -e "$conf" || error "no such user-config $conf" 1
+  test -e $conf || error "no such user-config $conf" 1
 }
 
 prep_dir_func() {
   test -n "$directive" || error "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
-  arguments="$(eval echo "$arguments_raw")"
   func_name=
   gen_eval=
 
@@ -572,6 +557,7 @@ prep_dir_func() {
 
     # provision/config directives support stat or update
     COPY | SYMLINK | GIT | WEB | LINE )
+      #arguments="$(eval echo $arguments_raw)"
       func_name="d_${directive}_$1"
       ;;
 
@@ -586,17 +572,26 @@ prep_dir_func() {
 
 exec_dirs()
 {
-  local conf= func_name= arguments=
+  local conf= func_name= arguments= diridx=0
   rm -f /tmp/uc-$1-failed
-  cd "$UCONF" || error "? cd $UCONF" 1
   req_conf
 
   cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
   do
+    diridx=$(( $diridx + 1 ))
+
+    # look for funtion or skip
     prep_dir_func $1 || continue
 
+    test -z "$2" || {
+      # Skip if diridx requested
+      test $diridx -lt $2 \
+        && continue || test $2 -eq $diridx || return
+    }
+
     test -n "$gen_eval" && {
-      eval "$($gen_eval $arguments_raw)" && {
+      eval $($gen_eval "'$arguments_raw'") && {
+        note "executed $directive $arguments_raw"
         continue
       } || {
         error "$1 ret $? in $directive with '$arguments'"
@@ -604,6 +599,7 @@ exec_dirs()
       }
     } || noop
 
+    echo func_name=$func_name
     try_exec_func "$func_name" $arguments && {
       continue
     } || {
