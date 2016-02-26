@@ -127,7 +127,7 @@ c_add()
   test -e "$1" && toadd=$1 || toadd=$pwd/$1
   test -e "$conf" || error "no such install config $conf" 1
 
-  exec_dirs base
+  #exec_dirs base
 
   basename="$(basename "$toadd")"
   basedir="$(dirname "$toadd")"
@@ -254,10 +254,13 @@ d_COPY()
     test -f "$2" && {
       # Check existing COPY version
       GITDIR=$UCONF vc_gitdiff "$1" "$2" || {
-        trueish $choice_interactive && {
-          vimdiff "$1" "$2"
-        }
         return $?
+        #trueish $choice_interactive && {
+        #  #echo | read -p 'Resolve using vimdiff?' resolve
+        #  #case "$resolve" in y )
+        #      vimdiff "$1" "$2"
+        #  #esac
+        #} || return 1
       }
 
       diff -bqr "$2" "$1" >/dev/null || {
@@ -473,21 +476,22 @@ d_LINE_update()
 
 d_ENV_exec()
 {
-  printf -- export "$@"
+  printf -- "export $@"
 }
 
 d_SH_exec()
 {
-  echo sh -c "$@"
+  echo sh -c "'$@'"
 }
 
 d_BASH_exec()
 {
-  echo bash -c "$@"
+  echo bash -c "'$@'"
 }
 
 d_AGE_exec()
 {
+  set -- $@
   test -n "$1" || error "expected additional property for age" 1
   test -n "$2" || error "expected age" 1
   test -z "$3" || error "surplus params: '$3'" 1
@@ -539,6 +543,7 @@ req_conf() {
 prep_dir_func() {
   test -n "$directive" || error "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
+  arguments="$(eval echo "'$arguments_raw'")"
   func_name=
   gen_eval=
 
@@ -557,7 +562,6 @@ prep_dir_func() {
 
     # provision/config directives support stat or update
     COPY | SYMLINK | GIT | WEB | LINE )
-      #arguments="$(eval echo $arguments_raw)"
       func_name="d_${directive}_$1"
       ;;
 
@@ -590,8 +594,8 @@ exec_dirs()
     }
 
     test -n "$gen_eval" && {
-      eval $($gen_eval "'$arguments_raw'") && {
-        note "executed $directive $arguments_raw"
+      eval $($gen_eval "$arguments_raw") && {
+        note "evaluated $directive $arguments_raw"
         continue
       } || {
         error "$1 ret $? in $directive with '$arguments'"
@@ -599,8 +603,8 @@ exec_dirs()
       }
     } || noop
 
-    echo func_name=$func_name
     try_exec_func "$func_name" $arguments && {
+      note "executed $directive $arguments_raw"
       continue
     } || {
       error "$1 ret $? in $directive with '$arguments'"
