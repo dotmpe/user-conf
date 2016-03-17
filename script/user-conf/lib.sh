@@ -37,17 +37,30 @@ test -n "$hostname" || {
     hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
   }
 }
-test -n "$verbosity" || verbosity=4
+test -n "$verbosity" || verbosity=5
+
+stdio_type 0
+stdio_type 1
+stdio_type 2
+
+# setup default options
+test -n "$choice_interactive" || {
+  case "$stdio_1_type" in t )
+    choice_interactive=true ;;
+  esac
+}
 
 
-# config holds directives for current env/host,
+# User-config holds directives for current env/host, make a copy to
+# install/$hostname.u-c of the first existing path in
+# boilerplate-{$machine,$uname,$domain,default}.u-c
 c_initialize()
 {
   test "$hostname.$domain" = "$(hostname)" || {
     echo "$hostname.$domain" > $HOME/.domain
   }
-
-  cd "$UCONF" || error "? cd $UCONF" 1
+  test -n "$UCONF" || echo "? $UCONF" 1
+  cd "$UCONF" || echo "? cd $UCONF" 1
   local conf=install/$hostname.u-c
   test ! -e "$conf" && {
     note "Initializing $hostname: $conf"
@@ -81,27 +94,7 @@ c_initialize()
 
 c_install()
 {
-  local conf= func_name= arguments=
-  rm -f /tmp/uc-install-failed
-  #cd "$UCONF" || error "? cd $UCONF" 1
-  req_conf
-  cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive installer arguments_raw
-  do
-    test -n "$installer" || error "empty installer" 1
-    installer="$(echo "$installer"|tr 'a-z' 'A-Z')"
-    prep_dir_func "$installer" || continue
-    test -n "$arguments" || error "expected $installer packages" 1
-    try_exec_func "$func_name" $arguments && {
-      continue
-    } || {
-      error "install ret $? in $directive:$installer with '$arguments'"
-      touch /tmp/uc-install-failed
-    }
-  done
-  test ! -e "/tmp/uc-install-failed" || {
-    rm -f /tmp/uc-install-failed
-    error "failed directives" 1
-  }
+  exec_dirs install $1 || return $?
 }
 
 # Update host from provision and config directives
@@ -321,7 +314,15 @@ d_WEB()
 
   test -e "$2" && {
     tmpf=/tmp/$(uuidgen)
-    curl -sq $1 -o $tmpf
+    curl -sq $1 -o $tmpf || {
+      error "Unable to fetch '$1' to $tmpf"
+      return 1
+    }
+    test -e "$tmpf" || {
+      error "Failed to fetch '$1' to $tmpf"
+      return 1
+    }
+
     diff -bq $2 $tmpf && {
       info "Up to date with web at $2"
     } || {
@@ -389,6 +390,7 @@ d_GIT()
               younger_than $gitdir/FETCH_HEAD $GIT_AGE
             } || {
               note "No FETCH_HEAD in $2"
+              test # break to '||' and do first-time fetch
             }
           } || {
             info "Fetching $2 branch $4 from remote $3"
@@ -402,13 +404,11 @@ d_GIT()
                 && info "Checkout $2 clean and up-to-date" \
                 || info "Checkout $2 clean and up-to-date at branch $4"
             } || {
-              test "$4" = "master" \
-                && warn "Checkout $2 clean but ahead of $3" \
-                || warn "Checkout $2 clean but ahead of $3 at branch $4"
-              return 1
+              warn "Checkout $2 clean but not in sync with $3 at branch $4"
+              test # break and to co/pull
             }
           } || {
-            ${PREF}git co $4
+            ${PREF}git checkout $4
             ${PREF}git pull $3 $4
             test "$4" = "master" \
               && note "Updated $2 from remote $3" \
@@ -476,12 +476,13 @@ d_LINE_update()
 
 d_ENV_exec()
 {
-  printf -- "export $@"
+  set -- $@
+  printf -- "export $@\n"
 }
 
 d_SH_exec()
 {
-  echo sh -c "'$@'"
+  printf -- "$@\n"
 }
 
 d_BASH_exec()
@@ -498,7 +499,7 @@ d_AGE_exec()
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
     GIT )
-      GIT_AGE="$2"
+      printf "export GIT_AGE=$2"
       note "Max. GIT remote ref age to $2 seconds"
     ;;
   esac
@@ -519,7 +520,7 @@ d_INSTALL_BREW()
 
 d_INSTALL_PIP()
 {
-  pip install "$@"
+  pip install $@
 }
 
 d_INSTALL_OPKG()
@@ -543,7 +544,7 @@ req_conf() {
 prep_dir_func() {
   test -n "$directive" || error "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
-  arguments="$(eval echo "'$arguments_raw'")"
+  arguments="$arguments_raw"
   func_name=
   gen_eval=
 
@@ -554,15 +555,19 @@ prep_dir_func() {
       return 1
       ;;
 
-    # XXX install is not a provision directive yet
     INSTALL )
       case $1 in stat|update) return 1 ;; esac
-      func_name="d_${directive}_$1"
+      packager=$(echo $arguments_raw | awk '{print $1}')
+      func_name="d_${directive}_$(echo $packager | tr 'a-z' 'A-Z')"
+      arguments="$(eval echo "$arguments_raw")"
+      arguments="$(expr substr "$arguments" $(( 1 + ${#packager} )) ${#arguments} )"
       ;;
 
     # provision/config directives support stat or update
     COPY | SYMLINK | GIT | WEB | LINE )
+      case $1 in install) return 1 ;; esac
       func_name="d_${directive}_$1"
+      arguments="$(eval echo "$arguments_raw")"
       ;;
 
     ENV | AGE | SH | BASH ) # Update env; always updates
@@ -584,8 +589,10 @@ exec_dirs()
   do
     diridx=$(( $diridx + 1 ))
 
+    #printf -- "'$directive' '$arguments_raw'\n"
     # look for funtion or skip
     prep_dir_func $1 || continue
+    #printf -- "'$directive' '$arguments_raw' '$arguments'\n"
 
     test -z "$2" || {
       # Skip if diridx requested
@@ -594,17 +601,19 @@ exec_dirs()
     }
 
     test -n "$gen_eval" && {
-      eval $($gen_eval "$arguments_raw") && {
-        note "evaluated $directive $arguments_raw"
+      gen=$($gen_eval "$arguments")
+      eval $gen && {
+        info "evaluated $directive $arguments_raw"
         continue
       } || {
         error "$1 ret $? in $directive with '$arguments'"
         touch /tmp/uc-$1-failed
       }
+
     } || noop
 
-    try_exec_func "$func_name" $arguments && {
-      note "executed $directive $arguments_raw"
+    $func_name $arguments && {
+      debug "executed $directive $arguments_raw"
       continue
     } || {
       error "$1 ret $? in $directive with '$arguments'"
@@ -644,15 +653,18 @@ req_git_remote()
 
   gitdir="$(vc_gitdir "$2")"
   url="$(cd "$2"; git config remote.${3}.url)"
-  test -n "$url" || {
+  test -n "$url" && {
+    test "$url" = "$1" || {
+      error "Checkout exists at path $2 for $3 <$url> not <$1>"
+      return 1
+    }
+  } || {
     case "$RUN" in
-      update ) git remote add $3 $1; note "New remote $3 for $2";;
+      update )
+        ( cd $2; git remote add $3 $1 ; git fetch --all )
+        note "New remote $3 for $2";;
       stat ) error "No remote $3 at $2"; return 1;;
     esac
-  }
-  test "$url" = "$1" || {
-    error "Checkout exists at path $2 for $3 <$url> not <$1>"
-    return 1
   }
 }
 
