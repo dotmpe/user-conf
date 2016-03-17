@@ -3,20 +3,42 @@
 AGE git 86400
 
 
-SH test -n "$domain" || domain=$hostname
+SH test -n "$domain" || domain=default
 
-# directives for rc files: source, symlink
+SH echo Provisioning Host: $hostname.$domain
+
+# Shell
 SYMLINK $UCONF/bash/rc $HOME/.bashrc
 SYMLINK $UCONF/bash/alias $HOME/.alias
+COPY $UCONF/bash/logout $HOME/.bash_logout
+SH mkdir -vp $HOME/.ssh
+# TODO: init ssh user config
+#SYMLINK $UCONF/ssh/$domain.config $HOME/.ssh/config
+
+# tmux
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
+SYMLINK $UCONF/tmuxinator $HOME/.tmuxinator
 
-SYMLINK $UCONF/git/config.boilerplate $HOME/.gitconfig
+# git
+SYMLINK $UCONF/git/default-boilerplate.gitconfig $HOME/.gitconfig
 SYMLINK $UCONF/git/ignore-global $HOME/.gitignore-global
-SYMLINK $UCONF/git/config.$domain $HOME/.gitconfig-user
+# TODO: init gitconfig-user
+SYMLINK $UCONF/git/$domain.gitconfig-user $HOME/.gitconfig-user
 
 
+### User repositories
+
+#GIT https://github.com/dotmpe/user-conf.git $HOME/.conf uc-seed master
 GIT https://github.com/dotmpe/script.mpe.git $HOME/bin origin dev
+
+
+### User projects
+
+SH mkdir -vp $UCONF/project/$hostname
+# FIXME: proper init for projectdir document
+SH test -e $UCONF/project/$hostname/projects.yaml || echo "repositories: {}" > $UCONF/project/$hostname/projects.yaml
+SYMLINK $UCONF/project/$hostname/projects.yaml $HOME/project/
 
 
 ### VIM
@@ -31,40 +53,52 @@ SYMLINK $UCONF/vim/filetype.vim $HOME/.vim/filetype.vim
 #SYMLINK $UCONF/vim/ftdetect $HOME/.vim/ftdetect
 #SYMLINK $UCONF/vim/ftplugin $HOME/.vim/ftplugin
 #SYMLINK $UCONF/vim/indent $HOME/.vim/indent
-SYMLINK $UCONF/vim/rc $HOME/.vimrc
+SYMLINK $UCONF/vim/rc.$domain $HOME/.vimrc
 #SYMLINK $UCONF/vim/scripts $HOME/.vim/scripts
 #SYMLINK $UCONF/vim/spell $HOME/.vim/spell
 SYMLINK $UCONF/vim/syntax $HOME/.vim/syntax
-#SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
 #SYMLINK $UCONF/vim/tools $HOME/.vim/tools
+
+# Install pathogen and some vim things
+# XXX: ASSERT-DIR $HOME/.vim/autoload $HOME/.vim/bundle
+SH mkdir -p ~/.vim/autoload ~/.vim/bundle
+SH rm -f ~/.vim/autoload/pathogen.vim
+SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
 GIT git@github.com:scrooloose/syntastic.git $HOME/.vim/bundle
 GIT git@github.com:trapd00r/vimpoint.git $HOME/.vim/bundle
-GIT git@github.com:scrooloose/nerdtree.git $HOME/.vim/bundle/nerdtree
-GIT git@github.com:vim-scripts/vis.git $HOME/.vim/bundle/vis
-GIT git@github.com:croaker/mustang-vim.git $HOME/.vim/bundle/mustang-vim
-GIT git@github.com:kien/ctrlp.vim.git $HOME/.vim/bundle/ctrlp.vim
-GIT git@github.com:edkolev/tmuxline.vim.git $HOME/.vim/bundle/tmuxline.vim
-GIT git@github.com:bling/vim-airline.git $HOME/.vim/bundle/vim-airline
-
-GIT git@github.com:dotmpe/vim-bats.git $HOME/.vim/bundle/vim-bats
-#!GIT https://github.com/markcornick/vim-bats.git $HOME/.vim/bundle/vim-bats original
-
-GIT git@github.com:trapd00r/vimpoint.git $HOME/.vim/bundle/vimpoint
-GIT git@github.com:tpope/vim-fugitive.git $HOME/.vim/bundle/vim-fugitive
-
-GIT git://github.com/mikewest/vimroom.git $HOME/.vim/bundle/vimroom
-GIT git://github.com/airblade/vim-gitgutter.git $HOME/.vim/bundle/vim-gitgutter
+GIT git@github.com:scrooloose/nerdtree.git $HOME/.vim/bundle
+GIT git@github.com:vim-scripts/vis.git $HOME/.vim/bundle
+GIT git@github.com:croaker/mustang-vim.git $HOME/.vim/bundle
+GIT git@github.com:kien/ctrlp.vim.git $HOME/.vim/bundle
+GIT git@github.com:edkolev/tmuxline.vim.git $HOME/.vim/bundle
+GIT git@github.com:bling/vim-airline.git $HOME/.vim/bundle
+GIT https://github.com/vim-airline/vim-airline-themes.git $HOME/.vim/bundle
+GIT git@github.com:dotmpe/vim-bats.git $HOME/.vim/bundle
+#!GIT https://github.com/markcornick/vim-bats.git $HOME/.vim/bundle original
+GIT git@github.com:tpope/vim-fugitive.git $HOME/.vim/bundle
+GIT git://github.com/airblade/vim-gitgutter.git $HOME/.vim/bundle
+GIT git://github.com/mikewest/vimroom.git $HOME/.vim/bundle
 GIT git://github.com/altercation/vim-colors-solarized.git $HOME/.vim/bundle/
 
-WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/rng.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/autoswap_mac.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/vmath.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/SWTC.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/betterdigraphs.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/dragvisuals.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/hudigraphs.vim $HOME/.vim/plugin
-WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/listtrans.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/rng.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/autoswap_mac.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/vmath.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/SWTC.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/betterdigraphs.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/dragvisuals.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/hudigraphs.vim $HOME/.vim/plugin
+#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/listtrans.vim $HOME/.vim/plugin
+
+
+### Python libs
+
+SH mkdir -vp $HOME/lib/py
+SYMLINK $HOME/bin $HOME/lib/py/script_mpe
+
+# docopt-mpe FIXME: should put this in install somehow
+GIT https://github.com/dotmpe/docopt-mpe.git /src/ dotmpe-gh 0.6.x
+SH python /src/docopt-mpe/setup.py install
 
 
 ### Darwin launchd
@@ -73,4 +107,11 @@ BASE /Library/LaunchDaemons $UCONF/osx/daemons
 BASE /Library/LaunchAgents $UCONF/osx/agents
 BASE $HOME/Library/LaunchDaemons $UCONF/osx/user/daemons
 BASE $HOME/Library/LaunchAgents $UCONF/osx/user/agents
+
+
+### Munin
+
+#COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
+#COPY $UCONF/munin/$hostname.conf /etc/munin/munin.conf
+
 
