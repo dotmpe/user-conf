@@ -3,12 +3,12 @@ User-Config
 :Created: 2015-10-03
 :Project:
 
-  .. image:: https://secure.travis-ci.org/dotmpe/user-config.png
-    :target: https://travis-ci.org/dotmpe/user-config
+  .. image:: https://secure.travis-ci.org/dotmpe/user-conf.png
+    :target: https://travis-ci.org/dotmpe/user-conf
     :alt: Build
 
-  .. image:: https://badge.fury.io/gh/dotmpe%2Fuser-config.png
-    :target: http://badge.fury.io/gh/dotmpe%2Fuser-config
+  .. image:: https://badge.fury.io/gh/dotmpe%2Fuser-conf.png
+    :target: http://badge.fury.io/gh/dotmpe%2Fuser-conf
     :alt: GIT
 
 A dotfile repository, with shell scripts for misc. provisioning and
@@ -39,7 +39,7 @@ Install
   # something to put in your shell profile script
   export UCONF=$HOME/.conf
 
-  git clone --origin tpl git@github.com:dotmpe/user-config.git $UCONF
+  git clone --origin tpl git@github.com:dotmpe/user-conf.git $UCONF
 
 
 Guide
