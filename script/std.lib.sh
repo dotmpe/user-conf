@@ -10,7 +10,6 @@ stdio_type()
 
     Linux )
         test -n "$2" && pid=$2 || pid=$$
-
         test -e /proc/$pid/fd/${io} || error "No $uname FD $io"
         if readlink /proc/$pid/fd/$io | grep -q "^pipe:"; then
           export stdio_${io}_type=p
@@ -73,6 +72,8 @@ stderr()
   esac
 }
 
+# std-v <level>
+# if verbosity is defined, return non-zero if <level> is below verbosity treshold
 std_v()
 {
   test -z "$verbosity" && return || {

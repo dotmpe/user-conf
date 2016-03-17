@@ -13,24 +13,22 @@ init
   cd $TMPDIR
 
   # Test using 3 SH directives
-  echo "SH echo 1 | tee /tmp/1" > Userconf
-  echo "SH echo foo | tee -a /tmp/1" >> Userconf
-  echo "SH echo bar | tee -a /tmp/1" >> Userconf
-
-  test ! -e /tmp/1 || rm /tmp/1
+  echo "SH echo 1 | tee $TMPDIR/1" > Userconf
+  echo "SH echo foo | tee -a $TMPDIR/1" >> Userconf
+  echo "SH echo bar | tee -a $TMPDIR/1" >> Userconf
 
   $scriptdir/user-conf/update.sh
-  test "$(echo $(wc -l /tmp/1))" = "3 /tmp/1"
+  test "$(echo $(wc -l $TMPDIR/1))" = "3 $TMPDIR/1"
 
   $scriptdir/user-conf/update.sh 2
-  test "$(echo $(wc -l /tmp/1))" = "4 /tmp/1"
+  test "$(echo $(wc -l $TMPDIR/1))" = "4 $TMPDIR/1"
   $scriptdir/user-conf/update.sh 2
-  test "$(echo $(wc -l /tmp/1))" = "5 /tmp/1"
+  test "$(echo $(wc -l $TMPDIR/1))" = "5 $TMPDIR/1"
 
   $scriptdir/user-conf/update.sh 1
-  test "$(echo $(wc -l /tmp/1))" = "1 /tmp/1"
+  test "$(echo $(wc -l $TMPDIR/1))" = "1 $TMPDIR/1"
 
-  rm -rf /tmp/1 $TMPDIR
+  rm -rf $TMPDIR
 }
 
 @test "2. u-c update - processes ENV directives, and by index number" {
@@ -38,18 +36,17 @@ init
   scriptdir=$(pwd)/script
   TMPDIR=/tmp/uc-spec-2-update
   mkdir -vp $TMPDIR
+  test ! -e $TMPDIR/2 || rm $TMPDIR/2
   cd $TMPDIR
 
   # Test using 3 SH directives
   echo "ENV domain=example" > Userconf
-  echo 'SH echo $domain | tee /tmp/2' >> Userconf
-
-  test ! -e /tmp/2 || rm /tmp/2
+  echo 'SH echo $domain | tee '$TMPDIR'/2' >> Userconf
 
   $scriptdir/user-conf/update.sh
-  test "$(echo $(wc -l /tmp/2))" = "1 /tmp/2"
-  test "$(cat /tmp/2)" = "example"
+  test "$(echo $(wc -l $TMPDIR/2))" = "1 $TMPDIR/2"
+  test "$(cat $TMPDIR/2)" = "example"
 
-  rm -rf /tmp/2 $TMPDIR
+  rm -rf $TMPDIR
 }
 
