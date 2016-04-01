@@ -43,4 +43,3 @@ test -x "$(which bats)" || {
 bats --version
 
 # Id: git-versioning/0.0.27-test install-dependencies.sh
-
