@@ -47,12 +47,6 @@ install_docopt()
   ( cd $SRC_PREFIX/docopt-mpe && git checkout 0.6.x && python /src/docopt-mpe/setup.py install )
 }
 
-install_ditaa()
-{
-  git clone https://github.com/dotmpe/docopt-mpe.git $SRC_PREFIX/docopt-mpe
-  ( cd $SRC_PREFIX/docopt-mpe && git checkout 0.6.x && python /src/docopt-mpe/setup.py install )
-}
-
 
 main_entry()
 {
@@ -60,14 +54,6 @@ main_entry()
 
   case "$1" in '*'|project|git )
       git --version >/dev/null || { echo "Sorry, GIT is a pre-requisite"; exit 1; }
-    ;; esac
-
-  case "$1" in '*'|project|ditaa )
-      # TODO: setup curl to do raw install,
-      #http://downloads.sourceforge.net/project/ditaa/ditaa/0.9/ditaa0_9.zip
-      # And: u-c to do via brew or apt or whatever
-      # FIXME: Darwin only..
-      test -x "$(which ditaa)" || brew install ditaa
     ;; esac
 
   case "$1" in '*'|build|test|sh-test|bats )
@@ -78,8 +64,17 @@ main_entry()
       test -x "$(which git-versioning)" || install_git_versioning || return $?
     ;; esac
 
+  case "$1" in '*'|project|docopt )
+      pip --version >/dev/null || { echo "Sorry, PIP is a pre-requisite"; exit 1; }
+      pip list | grep -q '^docopt' || {
+        #pip install docopt-mpe
+        install_docopt
+      }
+    ;; esac
+
+
   case "$1" in '*'|project|dev|build|test|check|\
-      sh-test|git|git-versioning|ditaa|bats ) ;;
+      sh-test|git|git-versioning|bats|python|docopt ) ;;
     *)
       echo "No such known dependency '$1'"
       exit 2
