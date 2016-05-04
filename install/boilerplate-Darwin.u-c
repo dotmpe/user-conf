@@ -98,7 +98,7 @@ SYMLINK $HOME/bin $HOME/lib/py/script_mpe
 
 # docopt-mpe FIXME: should put this in install somehow
 GIT https://github.com/dotmpe/docopt-mpe.git /src/ dotmpe-gh 0.6.x
-SH python /src/docopt-mpe/setup.py install
+SH python -c "import docopt" || python /src/docopt-mpe/setup.py install
 
 
 ### Darwin launchd
