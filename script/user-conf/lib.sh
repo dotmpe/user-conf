@@ -94,13 +94,13 @@ c_initialize()
 
 c_install()
 {
-  exec_dirs install $1 || return $?
+  exec_dirs install "$1" || return $?
 }
 
 # Update host from provision and config directives
 c_update()
 {
-  exec_dirs update $1 || return $?
+  exec_dirs update "$1" || return $?
 }
 
 # Compare host with provision and config directives
@@ -115,7 +115,6 @@ c_add()
 {
   test -f "$1" || error "? expected file argument" 1
   local pwd=$(pwd) conf=
-  #cd $UCONF || error "? cd $UCONF" 1
   req_conf
   test -e "$1" && toadd=$1 || toadd=$pwd/$1
   test -e "$conf" || error "no such install config $conf" 1
@@ -134,17 +133,30 @@ c_add()
     ucbasedir="$UCONF/$(basename "$basedir")"
     ucbasedir_raw="\$UCONF/$(basename "$basedir")"
   }
+
   log "Adding $toadd to $ucbasedir_raw"
   test -d "$ucbasedir" || mkdir -vp "$ucbasedir"
   cp "$toadd" "$ucbasedir"
   git add "$ucbasedir/$basename"
+
   test "${1:0:${#HOME}}" = "$HOME" && {
-    echo "COPY $ucbasedir_raw/$basename \$HOME/${1:$(( ${#HOME} + 1))}" >> "$conf"
+    echo "$1 $ucbasedir_raw/$basename \$HOME/${1:$(( ${#HOME} + 1))}" >> "$conf"
   } || {
-    echo "COPY $ucbasedir_raw/$basename $toadd" >> "$conf"
+    echo "$1 $ucbasedir_raw/$basename $toadd" >> "$conf"
   }
+  # Add file to index and show state
   git add "$conf"
-  git status
+
+  git -c color.status=always status
+}
+
+c_copy()
+{
+  c_add COPY "$1"
+}
+c_symlink()
+{
+  c_add SYMLINK "$1"
 }
 
 # Run tests, some unittests on the Sh library
@@ -153,7 +165,7 @@ c_test()
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
   # Test script: run Bats tests
-  ./test/*-spec.bats
+  bats ./test/*-spec.bats
 }
 
 
@@ -163,7 +175,10 @@ c_test()
 
 d_SYMLINK()
 {
-  test -f "$1" -o -d "$1" || error "not a file or directory: $1" 101
+  test -f "$1" -o -d "$1" || {
+    error "not a file or directory: $1"
+    return 1
+  }
   # target is either existing dir or non-existing filename in dir
   test -e "$2" && {
     test -h "$2" || {
@@ -241,7 +256,10 @@ d_SYMLINK_stat()
 
 d_COPY()
 {
-  test -f "$1" || error "not a file: $1" 101
+  test -f "$1" || {
+    error "not a file: $1"
+    return 1
+  }
   test -e "$2" && {
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
@@ -508,6 +526,43 @@ d_AGE_exec()
 
 ## Installers
 
+# print missing/mismatching packages
+d_INSTALL_list_APT()
+{
+  out=/tmp/bin-apt-installed.list
+  dpkg-query -l >$out
+  for pack in $@
+  do
+    grep -q '^ii\s*'$pack'\>' $out || echo $pack
+  done
+}
+
+d_INSTALL_list_BREW()
+{
+  echo $@
+}
+
+d_INSTALL_list_PIP()
+{
+  out=/tmp/bin-pip-installed.list
+  pip list >$out
+  for pack in $@
+  do
+    grep -qi '^'$pack'\>\ ' $out || echo $pack
+  done
+}
+
+d_INSTALL_list_OPKG()
+{
+  echo $@
+}
+
+d_INSTALL_list_BIN()
+{
+  echo $@
+}
+
+# install using package manager
 d_INSTALL_APT()
 {
   sudo apt-get install -qq -y "$@"
@@ -531,6 +586,8 @@ d_INSTALL_OPKG()
 
 
 # Misc. utils
+
+# get conf env, and chdir to user-conf repo-checkout dir.
 req_conf() {
   test -e Ucfile && conf=Ucfile \
     || test -e Userconf && conf=Userconf \
@@ -558,9 +615,25 @@ prep_dir_func() {
     INSTALL )
       case $1 in stat|update) return 1 ;; esac
       packager=$(echo $arguments_raw | awk '{print $1}')
-      func_name="d_${directive}_$(echo $packager | tr 'a-z' 'A-Z')"
       arguments="$(eval echo "$arguments_raw")"
       arguments="$(expr substr "$arguments" $(( 1 + ${#packager} )) ${#arguments} )"
+      test "$packager" = "*" && {
+        for packager in APT BREW PIP OPKG
+        do
+          func_name="d_INSTALL_$packager"
+          d_INSTALL_list_$packager "$arguments"
+        done
+      } || {
+        packager="$(echo $packager | tr 'a-z' 'A-Z')"
+        func_name="d_INSTALL_$packager"
+        arguments="$(d_INSTALL_list_$packager "$arguments")"
+      }
+      test -n "$arguments" && {
+        note "#$diridx $packager missing packages: $arguments"
+      } || {
+        info "Nothing to install for #$diridx $packager"
+        return 1
+      }
       ;;
 
     # provision/config directives support stat or update
@@ -600,6 +673,7 @@ exec_dirs()
         && continue || test $2 -eq $diridx || return
     }
 
+    # Evaluate before function
     test -n "$gen_eval" && {
       gen=$($gen_eval "$arguments")
       eval $gen && {
@@ -609,14 +683,14 @@ exec_dirs()
         error "$1 ret $? in $directive with '$arguments'"
         touch /tmp/uc-$1-failed
       }
-
     } || noop
 
+    # Execute directive
     $func_name $arguments && {
       debug "executed $directive $arguments_raw"
       continue
     } || {
-      error "$1 ret $? in $directive with '$arguments'"
+      error "$1 returned $? in $directive with '$arguments'"
       touch /tmp/uc-$1-failed
     }
 
