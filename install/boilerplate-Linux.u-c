@@ -11,7 +11,7 @@ SH echo Provisioning Host: $hostname.$domain
 # Shell
 SYMLINK $UCONF/bash/rc $HOME/.bashrc
 SYMLINK $UCONF/bash/alias $HOME/.alias
-COPY $UCONF/bash/logout $HOME/.bash_logout
+#COPY $UCONF/bash/logout $HOME/.bash_logout
 SH mkdir -vp $HOME/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config $HOME/.ssh/config
@@ -19,7 +19,7 @@ SH mkdir -vp $HOME/.ssh
 # tmux
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
-SYMLINK $UCONF/tmuxinator $HOME/.tmuxinator
+#SYMLINK $UCONF/tmuxinator $HOME/.tmuxinator
 
 # git
 SYMLINK $UCONF/git/default-boilerplate.gitconfig $HOME/.gitconfig
