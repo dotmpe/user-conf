@@ -163,7 +163,10 @@ c_test()
 
 d_SYMLINK()
 {
-  test -f "$1" -o -d "$1" || error "not a file or directory: $1" 101
+  test -f "$1" -o -d "$1" || {
+    error "not a file or directory: $1"
+    return 1
+  }
   # target is either existing dir or non-existing filename in dir
   test -e "$2" && {
     test -h "$2" || {
@@ -241,7 +244,10 @@ d_SYMLINK_stat()
 
 d_COPY()
 {
-  test -f "$1" || error "not a file: $1" 101
+  test -f "$1" || {
+    error "not a file: $1"
+    return 1
+  }
   test -e "$2" && {
     test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
     test -f "$2" && {
@@ -616,9 +622,7 @@ exec_dirs()
       debug "executed $directive $arguments_raw"
       continue
     } || {
-      r=$?
-      test $r -gt 100 || r=0
-      error "$1 ret $? in $directive with '$arguments'" $r
+      error "$1 returned $? in $directive with '$arguments'"
       touch /tmp/uc-$1-failed
     }
 
