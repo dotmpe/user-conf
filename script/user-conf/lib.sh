@@ -616,7 +616,9 @@ exec_dirs()
       debug "executed $directive $arguments_raw"
       continue
     } || {
-      error "$1 ret $? in $directive with '$arguments'"
+      r=$?
+      test $r -gt 100 || r=0
+      error "$1 ret $? in $directive with '$arguments'" $r
       touch /tmp/uc-$1-failed
     }
 
