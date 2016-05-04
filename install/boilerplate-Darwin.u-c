@@ -10,7 +10,7 @@ SH echo Provisioning Host: $hostname.$domain
 # Shell
 SYMLINK $UCONF/bash/rc $HOME/.bashrc
 SYMLINK $UCONF/bash/alias $HOME/.alias
-COPY $UCONF/bash/logout $HOME/.bash_logout
+#COPY $UCONF/bash/logout $HOME/.bash_logout
 SH mkdir -vp $HOME/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config $HOME/.ssh/config
