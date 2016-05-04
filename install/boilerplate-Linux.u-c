@@ -2,11 +2,13 @@
 # Fetch remote refs each 24hr
 AGE git 86400
 
-#INSTALL * vim git curl tmux tidy
 
 SH test -n "$domain" || domain=default
 
 SH echo Provisioning Host: $hostname.$domain
+
+
+#INSTALL * vim git curl tmux tidy
 
 # Shell
 SYMLINK $UCONF/bash/rc $HOME/.bashrc
@@ -19,7 +21,7 @@ SH mkdir -vp $HOME/.ssh
 # tmux
 SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
 SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
-SYMLINK $UCONF/tmuxinator $HOME/.tmuxinator
+#SYMLINK $UCONF/tmuxinator $HOME/.tmuxinator
 
 # git
 SYMLINK $UCONF/git/default-boilerplate.gitconfig $HOME/.gitconfig
@@ -99,7 +101,7 @@ SYMLINK $HOME/bin $HOME/lib/py/script_mpe
 
 # docopt-mpe FIXME: should put this in install somehow
 GIT https://github.com/dotmpe/docopt-mpe.git /src/ dotmpe-gh 0.6.x
-SH python /src/docopt-mpe/setup.py install
+SH python -c "import docopt" || python /src/docopt-mpe/setup.py install
 
 
 ### Munin
