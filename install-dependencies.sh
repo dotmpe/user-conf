@@ -28,23 +28,28 @@ test -d $PREFIX || ${sudo} mkdir -vp $PREFIX
 install_bats()
 {
   echo "Installing bats"
-  pushd $SRC_PREFIX
-  git clone https://github.com/sstephenson/bats.git
+  local pwd=$(pwd)
+  mkdir -vp $SRC_PREFIX
+  cd $SRC_PREFIX
+  git clone https://github.com/dotmpe/bats.git
   cd bats
   ${sudo} ./install.sh $PREFIX
-  popd
+  cd $pwd
 }
 
 install_git_versioning()
 {
   git clone https://github.com/dotmpe/git-versioning.git $SRC_PREFIX/git-versioning
-  ( cd $SRC_PREFIX/git-versioning && ./configure.sh $HOME/.local && ENV=production ./install.sh )
+  ( cd $SRC_PREFIX/git-versioning && ./configure.sh $PREFIX && ENV=production ./install.sh )
 }
 
 install_docopt()
 {
+  test -n "$sudo" || install_f="--user"
   git clone https://github.com/dotmpe/docopt-mpe.git $SRC_PREFIX/docopt-mpe
-  ( cd $SRC_PREFIX/docopt-mpe && git checkout 0.6.x && python /src/docopt-mpe/setup.py install )
+  ( cd $SRC_PREFIX/docopt-mpe \
+      && git checkout 0.6.x \
+      && $sudo python ./setup.py install $install_f )
 }
 
 
@@ -53,23 +58,23 @@ main_entry()
   test -n "$1" || set -- '*'
 
   case "$1" in '*'|project|git )
-      git --version >/dev/null || { echo "Sorry, GIT is a pre-requisite"; exit 1; }
+      git --version >/dev/null || {
+        echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
 
   case "$1" in '*'|build|test|sh-test|bats )
-      test -x "$(which bats)" || install_bats || return $?
+      test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
 
   case "$1" in '*'|dev|build|check|test|git-versioning )
-      test -x "$(which git-versioning)" || install_git_versioning || return $?
+      test -x "$(which git-versioning)" || {
+        install_git_versioning || return $?; }
     ;; esac
 
-  case "$1" in '*'|project|docopt )
+  case "$1" in '*'|python|project|docopt)
       pip --version >/dev/null || { echo "Sorry, PIP is a pre-requisite"; exit 1; }
-      pip list | grep -q '^docopt' || {
-        #pip install docopt-mpe
-        install_docopt
-      }
+      # Using import seems more robust than scanning pip list
+      python -c 'import docopt' || { install_docopt || return $?; }
     ;; esac
 
 
@@ -84,7 +89,11 @@ main_entry()
 }
 
 test "$(basename $0)" = "install-dependencies.sh" && {
-  main_entry $@ || exit $?
-}
+  while test -n "$1"
+  do
+    main_entry "$1" || exit $?
+    shift
+  done
+} || printf ""
 
 # Id: user-conf
