@@ -1,0 +1,41 @@
+
+- '{name}-free-git':
+
+    name: user-conf
+    defaults: std-freestyle-job
+
+    title: 'User Conf - Install'
+    htmlDescription: ""
+    build-summary-image: 'ws/logo.png'
+    disabled: true
+    concurrent: false
+
+    project-src: '*.rst,*.styl,*.yaml,*.js'
+    email-individuals: false
+    email-to:
+    fail-on-error: true
+    unstable-on-warning: true
+    publish-on-error: True
+
+    git-url: git@github.com:dotmpe/user-conf.git
+
+    browser: githubweb
+
+    branch: master
+    git-recursive-init: False
+    credentials-id: ''
+
+    parameters: []
+    metadata: []
+    properties: []
+
+    builders:
+      - shell: |
+          pip install --user \
+            ordereddict 'six>=1.5.2' PyYAML 'python-jenkins>=0.4.1' 'pbr>=0.8.2,<2.0'
+      - shell: './install-dependencies.sh install_jjb'
+      - shell: './install-dependencies.sh install_bats'
+
+    publishers: []
+
+
