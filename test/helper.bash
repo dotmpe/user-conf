@@ -9,11 +9,11 @@ hostname_init()
 {
   hostnameid="$(hostname -s | tr -s 'A-Z.-' 'a-z__')"
   local hostname_vid=$(echo ${hostnameid}|tr 'a-z' 'A-Z')
-  local val=$(eval echo "\$${hostname_vid}_SKIP")
-  test -z "$val" && {
-    export ${hostname_vid}_SKIP=1
-    printf "# Exported ${hostname_vid}_SKIP=1\n"
-  } || set --
+#  local val=$(eval echo "\$${hostname_vid}_SKIP")
+#  test -z "$val" && {
+#    export ${hostname_vid}_SKIP=1
+#    printf "# Exported ${hostname_vid}_SKIP=1\n"
+#  } || set --
 }
 
 init_bin()
