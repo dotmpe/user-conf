@@ -165,7 +165,7 @@ c_test()
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
   # Test script: run Bats tests
-  bats ./test/*-spec.bats || return $?
+  ( bats ./test/*-spec.bats ) || return $?
 }
 
 
