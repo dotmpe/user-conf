@@ -6,7 +6,7 @@ mkdir -vp build
 
 (
 
-  . /script/user-conf/test.sh || r=$?
+  . ./script/user-conf/test.sh || r=$?
   echo r=$r rr=$rr
 
 ) | tee ./build/test-results.tap
