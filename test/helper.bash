@@ -7,7 +7,7 @@ test_init()
 
 hostname_init()
 {
-  hostnameid="$(hostname -s | tr -s 'A-Z.-' 'a-z__')"
+  hostnameid="$(hostname -s | tr 'A-Z.-' 'a-z__')"
 #  local hostname_vid=$(echo ${hostnameid}|tr 'a-z' 'A-Z')
 #  local val=$(eval echo "\$${hostname_vid}_SKIP")
 #  test -z "$val" && {
