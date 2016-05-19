@@ -35,7 +35,6 @@ init
     test "${lines[*]}" = "" # No output
     test "${#lines[@]}" = "0" # No output
 
-
     run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs'
     test "${status}" = 1 || test -z "Should have failed: default envs is all envs"
     test "${lines[*]}" = ""
