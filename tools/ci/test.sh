@@ -2,12 +2,12 @@
 
 set -e
 
-exec 3> ./build/test-results.tap
+#exec 3> ./build/test-results.tap
 
-uc_lib=./script/user-conf
+pwd
 ./script/user-conf/test.sh  1>&3 || result=$?
 
-exec 3<&-
+#exec 3<&-
 
 echo test.sh=$result
 
