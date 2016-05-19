@@ -12,12 +12,9 @@ branches:
 script:
 - set -e
 - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
-- mkdir -vp build
 - ./tools/ci/test.sh
-- ./script/user-conf/test.sh | tee ./build/test-results.tap
-- bats --version
 
 #after_script: []
 env:
-  - Build_Deps_Default_Paths=1 TRAVIS_SKIP=1
+  - Build_Deps_Default_Paths=1
 
