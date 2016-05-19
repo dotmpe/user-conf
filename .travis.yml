@@ -13,7 +13,7 @@ branches:
 
 # XXX: exit is needed for Jenkins plugin
 script:
-- { ./script/user-conf/test.sh || exit $?; } | tee ./build/test-result.tap
+- '{ ./script/user-conf/test.sh || exit $?; } | tee ./build/test-result.tap'
 
 after_script:
 
