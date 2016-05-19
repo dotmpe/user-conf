@@ -7,12 +7,12 @@ test_init()
 
 hostname_init()
 {
-  hostname="$(hostname -s | tr 'A-Z.-' 'a-z__')"
+  hostname="$(hostname -s | tr -s 'A-Z.-' 'a-z__')"
   local hostname_vid=$(echo ${hostname}|tr 'a-z' 'A-Z')
   local val=$(eval echo "\$${hostname_vid}_SKIP")
   test -z "$val" && {
     export ${hostname_vid}_SKIP=1
-    printf "# Exported ${hostname_vid}_SKIP=1" >/tmp/2
+    printf "# Exported ${hostname_vid}_SKIP=1"
   } || set --
 }
 
@@ -50,6 +50,8 @@ current_test_env()
   test -n "$hostname" || hostname_init
   case "$hostname" in
     simza | brix* | jenkins ) echo $hostname;;
+    *travis* ) echo travis;;
+    *jenkins* ) echo jenkins;;
     * ) whoami ;;
   esac
 }
