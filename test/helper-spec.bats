@@ -35,8 +35,8 @@ init
     test "${lines[*]}" = "" # No output
     test "${#lines[@]}" = "0" # No output
 
-    key=$(hostname -s | tr 'a-z.-' 'A-Z__' | tr -s '_' '_')
-    envs=$(hostname -s | tr 'A-Z' 'a-z')' '$(whoami)
+    key=$(hostname -s | tr -s 'a-z.-' 'A-Z__')
+    envs=$(hostname -s | tr 'A-Z' 'a-z')' '$(whoami | tr 'A-Z' 'a-z')
     run bash -c '. '${lib}/${base}' && '$key'_SKIP=1 check_skipped_envs '$envs
     test "${status}" = 1 || \
       test -z "Should have failed: envs (hostname) and (whoami) should cover all envs"
