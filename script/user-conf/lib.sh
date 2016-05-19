@@ -168,7 +168,7 @@ c_test()
   # Test script: run Bats tests
   bats ./test/*-spec.bats || ret=$?
   echo ret=$ret
-  return $ret
+  exit $ret
 }
 
 
