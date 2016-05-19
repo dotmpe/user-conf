@@ -57,7 +57,7 @@ main_entry()
 {
   test -n "$1" || set -- '*'
 
-  case "$1" in '*'|project|git )
+  case "$1" in '*'|project|test|git )
       git --version >/dev/null || {
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
