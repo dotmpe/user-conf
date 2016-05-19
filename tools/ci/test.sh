@@ -3,8 +3,7 @@
 set -e
 
 
-bats ./test/*-spec.bats || r=$?
-
+( ./script/user-conf/test.sh || r=$? ) | tee ./build/test-results.tap
 echo r=$r
 
 mkdir -vp build
