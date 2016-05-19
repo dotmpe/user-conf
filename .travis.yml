@@ -1,10 +1,8 @@
 
 install: ./install-dependencies.sh
 
-before_script:
-- mkdir -vp $HOME/project
+before_script: []
 #- export PATH=$PATH:$PREFIX/bin
-- test -d build || mkdir build
 
 branches:
   only:
@@ -12,11 +10,10 @@ branches:
   - dev
 
 script:
+- ./tools/ci/test.sh
 - bats --version
-- ( ./script/user-conf/test.sh || exit $? ) | tee ./build/test-result.tap
 
-after_script:
+after_script: []
 
-env:
-- ENV= PREFIX=$HOME/ SRC_PREFIX=$HOME/project TRAVIS_SKIP=1
+env: []
 
