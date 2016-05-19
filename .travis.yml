@@ -17,5 +17,5 @@ script:
 
 #after_script: []
 env:
-  - Build_Deps_Default_Paths=1
+  - Build_Deps_Default_Paths=1 TRAVIS_SKIP=1
 
