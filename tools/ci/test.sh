@@ -3,8 +3,8 @@
 set -e
 
 
-( ./script/user-conf/test.sh || r=$? ) | tee ./build/test-results.tap
-echo r=$r
+( ./script/user-conf/test.sh || r=$? ) | tee ./build/test-results.tap || rr=$?
+echo r=$r rr=$rr
 
 mkdir -vp build
 
