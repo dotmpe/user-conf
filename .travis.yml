@@ -10,6 +10,7 @@ branches:
   - dev
 
 script:
+- set -e
 - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
 - mkdir -vp build
 - ./tools/ci/test.sh
