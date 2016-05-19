@@ -5,10 +5,9 @@ set -e
 . ./test/helper.bash
 
 current_test_env
-
+echo hostname=$hostname
 check_skipped_envs $(current_test_env)
 
-scriptname=$0
 
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh
