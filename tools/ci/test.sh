@@ -4,17 +4,6 @@ set -e
 
 hostnameid=
 
-. ./test/helper.bash
-
-current_test_env
-
-echo hostname=$hostnameid
-echo JENKINS_SERVER_AC_SKIP=$JENKINS_SERVER_AC_SKIP
-
-
-#check_skipped_envs $(current_test_env)
-
-
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh
 
