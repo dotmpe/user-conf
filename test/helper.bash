@@ -12,7 +12,7 @@ hostname_init()
   local val=$(eval echo "\$${hostname_vid}_SKIP")
   test -z "$val" && {
     export ${hostname_vid}_SKIP=1
-    printf "# Exported ${hostname_vid}_SKIP=1"
+    printf "# Exported ${hostname_vid}_SKIP=1\n"
   } || set --
 }
 
