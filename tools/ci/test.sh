@@ -5,7 +5,7 @@ set -e
 . ./test/helper.bash
 
 current_test_env
-echo hostname=$hostname
+echo hostname=$hostnameid
 check_skipped_envs $(current_test_env)
 
 

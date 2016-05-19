@@ -47,10 +47,10 @@ is_skipped()
 
 current_test_env()
 {
-  test -n "$hostname" || hostname_init
-  echo hostname=$hostname
-  case "$hostname" in
-    simza | brix* | jenkins ) echo $hostname;;
+  test -n "$hostnameid" || hostname_init
+  echo hostname=$hostnameid
+  case "$hostnameid" in
+    simza | brix* | jenkins ) echo $hostnameid;;
     *travis* ) echo travis;;
     *jenkins* ) echo jenkins;;
     * ) whoami ;;
@@ -61,8 +61,8 @@ check_skipped_envs()
 {
   # XXX hardcoded envs
   local skipped=0
-  test -n "$hostname" || hostname_init
-  test -n "$1" && envs="$*" || envs="$hostname $(whoami)"
+  test -n "$hostnameid" || hostname_init
+  test -n "$1" && envs="$*" || envs="$hostnameid $(whoami)"
   cur_env="$(current_test_env)"
   for env in $envs
   do
