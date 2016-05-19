@@ -7,6 +7,7 @@ test -z "$Build_Debug" || set -x
 test -z "$Build_Deps_Default_Paths" || {
   test -n "$SRC_PREFIX" || SRC_PREFIX=$HOME/build
   test -n "$PREFIX" || PREFIX=$HOME/.local
+  mkdir -vp $SRC_PREFIX $PREFIX
 }
 
 test -n "$sudo" || sudo=
