@@ -2,7 +2,7 @@
 
 set -e
 
-scriptname=tools/ci/test.sh
+scriptname=$0
 
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh
@@ -10,6 +10,7 @@ uc_lib=script/user-conf
 rm ./build/test-results.tap || printf ""
 
 log "Hostname: $(hostname)"
+echo $(echo $hostname | tr -s 'a-z.-' 'A-Z__')_SKIP=1
 export $(echo $hostname | tr -s 'a-z.-' 'A-Z__')_SKIP=1
 
 mkdir -vp build
