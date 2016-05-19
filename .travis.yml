@@ -12,7 +12,7 @@ branches:
 script:
 - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
 - mkdir -vp build
-- ( ./script/user-conf/test.sh || exit $? )
+- ./script/user-conf/test.sh || exit $?
 - ./script/user-conf/test.sh | tee ./build/test-results.tap
 - bats --version
 
