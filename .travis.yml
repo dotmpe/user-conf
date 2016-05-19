@@ -6,7 +6,6 @@ install: ./install-dependencies.sh project test
 
 branches:
   only:
-  - master
   - test
   - dev
 
