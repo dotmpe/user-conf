@@ -5,7 +5,7 @@ tret=
 
 {
 
-  ./script/user-conf/test.sh || r=$tret
+  ./script/user-conf/test.sh || tret=$tret
   echo tret=$tret
   test -z "$tret" || exit $tret
 
