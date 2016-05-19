@@ -14,5 +14,6 @@ script:
 - bats --version
 
 #after_script: []
-#env: []
+env:
+  - Build_Deps_Default_Paths=1
 
