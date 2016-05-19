@@ -1,5 +1,5 @@
 
-install: ./install-dependencies.sh
+install: ./install-dependencies.sh project test
 
 #before_script: []
 #- export PATH=$PATH:$PREFIX/bin
