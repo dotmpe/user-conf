@@ -2,20 +2,13 @@
 
 set -e
 
-tret=
+exec 3> ./build/test-results.tap
 
-{
+./script/user-conf/test.sh  1>&3 || result=$?
 
-  set -e
+exec 3<&-
 
-  echo test.sh
+echo test.sh=$result
 
-  uc_lib=./script/user-conf
-  . ./script/user-conf/test.sh
-
-  echo test.sh=$?
-
-} | tee ./build/test-results.tap
-
-
+exit $result
 
