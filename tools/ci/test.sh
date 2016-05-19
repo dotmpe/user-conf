@@ -2,6 +2,8 @@
 
 set -e
 
+scriptname=tools/ci/test.sh
+
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh
 
