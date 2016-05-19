@@ -1,0 +1,23 @@
+
+- '{name}-gh-travis':
+
+    name: user-conf
+    disabled: true
+    title: 'User Conf'
+    build-summary-image: 'ws/logo.png'
+    htmlDescription: |
+      Build Travis test for user-conf. Jenkins plugin does not support
+      install. 
+
+    vendor-repo: github
+    vendor-path: dotmpe/user-conf
+    branch: master
+    project-src: '*.rst,*.styl,*.yaml,*.js'
+    email-individuals: false
+    email-to:
+
+    publishers:
+      - tap:
+          results: build/test-results.tap
+
+
