@@ -48,6 +48,7 @@ is_skipped()
 current_test_env()
 {
   test -n "$hostname" || hostname_init
+  echo hostname=$hostname
   case "$hostname" in
     simza | brix* | jenkins ) echo $hostname;;
     *travis* ) echo travis;;
