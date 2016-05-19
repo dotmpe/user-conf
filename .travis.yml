@@ -3,7 +3,7 @@ install: ./install-dependencies.sh
 
 before_script:
 - mkdir -vp $HOME/project
-- export PATH=$PATH:$PREFIX/bin
+#- export PATH=$PATH:$PREFIX/bin
 - test -d build || mkdir build
 
 branches:
@@ -11,8 +11,9 @@ branches:
   - test
   - dev
 
+# XXX: exit is needed for Jenkins plugin
 script:
-- ./script/user-conf/test.sh | tee ./build/test-result.tap
+- ./script/user-conf/test.sh | tee ./build/test-result.tap || exit $?
 
 after_script:
 
