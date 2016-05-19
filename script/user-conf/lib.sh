@@ -152,11 +152,11 @@ c_add()
 
 c_copy()
 {
-  c_add COPY "$1"
+  c_add COPY "$1" || return $?
 }
 c_symlink()
 {
-  c_add SYMLINK "$1"
+  c_add SYMLINK "$1" || return $?
 }
 
 # Run tests, some unittests on the Sh library
@@ -165,7 +165,7 @@ c_test()
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
   # Test script: run Bats tests
-  bats ./test/*-spec.bats
+  bats ./test/*-spec.bats || return $?
 }
 
 
