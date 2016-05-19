@@ -2,11 +2,17 @@
 
 set -e
 
+hostnameid=
+
 . ./test/helper.bash
 
 current_test_env
+
 echo hostname=$hostnameid
-check_skipped_envs $(current_test_env)
+echo JENKINS_SERVER_AC_SKIP=$JENKINS_SERVER_AC_SKIP
+
+
+#check_skipped_envs $(current_test_env)
 
 
 uc_lib=script/user-conf
@@ -15,8 +21,6 @@ uc_lib=script/user-conf
 rm ./build/test-results.tap || printf ""
 
 log "Hostname: $(hostname)"
-echo $(echo $hostname | tr -s 'a-z.-' 'A-Z__')_SKIP=1
-export $(echo $hostname | tr -s 'a-z.-' 'A-Z__')_SKIP=1
 
 mkdir -vp build
 
