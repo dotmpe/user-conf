@@ -48,9 +48,8 @@ is_skipped()
 current_test_env()
 {
   test -n "$hostnameid" || hostname_init
-  echo hostname=$hostnameid
   case "$hostnameid" in
-    simza | brix* | jenkins ) echo $hostnameid;;
+    simza | brix* | *jenkins* ) echo $hostnameid;;
     *travis* ) echo travis;;
     *jenkins* ) echo jenkins;;
     * ) whoami ;;
