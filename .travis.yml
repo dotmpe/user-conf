@@ -10,7 +10,8 @@ branches:
   - dev
 
 script:
-- test !- ~/.conf/bash/env || . ~/.conf/bash/env
+- test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
+- ./script/user-conf/test.sh | tee ./build/test-results.tap
 - ./tools/ci/test.sh
 - bats --version
 
