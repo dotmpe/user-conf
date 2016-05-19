@@ -25,7 +25,7 @@ init
 
     run current_test_env
     test "${status}" = 0
-    test "${lines[0]}" = "$(hostname | tr 'A-Z.-' 'a-z__')" || test "${lines[0]}" = "$(whoami)"
+    test "${lines[0]}" = "$hostnameid" || test "${lines[0]}" = "$(whoami)"
 }
 
 @test "${lib}/${base} - check_skipped_envs: returns 0 or 1, no output" {
@@ -49,6 +49,7 @@ init
 
 @test "${lib}/${base} - check_skipped_envs: check current env" {
     run check_skipped_envs
-    test "${status}" = 1 || test -z "Should have set {ENV}_SKIP=1 for proper test! do it now. "
+    test "${status}" = 1 || \
+      fail "Should have set {ENV}_SKIP=1 for proper test! do it now. "
 }
 
