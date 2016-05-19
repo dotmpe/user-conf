@@ -6,7 +6,7 @@ mkdir -vp build
 
 (
 
-  ./script/user-conf/test.sh || exit $?
+  ./script/user-conf/test.sh | tee ./build/test-results.tap
 
-) | tee ./build/test-results.tap
+) || exit $?
 
