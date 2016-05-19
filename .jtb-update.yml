@@ -1,0 +1,42 @@
+
+- '{name}-free-git':
+
+    name: user-conf
+    defaults: std-freestyle-job
+
+    title: 'User Conf - Run'
+    htmlDescription: "Init (first time), stat and update. "
+    build-summary-image: 'ws/logo.png'
+    disabled: true
+    concurrent: false
+
+    project-src: '*.rst,*.styl,*.yaml,*.js'
+    email-individuals: false
+    email-to:
+    fail-on-error: true
+    unstable-on-warning: true
+    publish-on-error: True
+
+    git-url: http://github.com/dotmpe/user-conf.git
+
+    browser: githubweb
+
+    branch: master
+    git-recursive-init: False
+    credentials-id: ''
+
+    parameters: []
+    metadata: []
+    properties: []
+
+    builders:
+      - shell: |
+          ./script/user-conf/init.sh
+          ./script/user-conf/stat.sh || {{
+            ./script/user-conf/update.sh
+          }}
+
+    publishers: []
+
+
+

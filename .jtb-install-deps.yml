@@ -17,7 +17,7 @@
     unstable-on-warning: true
     publish-on-error: True
 
-    git-url: git@github.com:dotmpe/user-conf.git
+    git-url: http://github.com/dotmpe/user-conf.git
 
     browser: githubweb
 
