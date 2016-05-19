@@ -2,6 +2,11 @@
 
 set -e
 
+
+bats ./test/*-spec.bats || r=$?
+
+echo r=$r
+
 mkdir -vp build
 
 (
