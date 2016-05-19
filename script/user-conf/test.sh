@@ -9,6 +9,5 @@ export $(echo $hostname | tr -s '-' '_')_SKIP=1
 c_test "$@" || {
   ret2=$?
   echo ret2=$ret2
-  exit $ret2
+  exit 1
 }
-exit 1
