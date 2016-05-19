@@ -12,6 +12,7 @@ branches:
   - dev
 
 script:
+- bats --version
 - ( ./script/user-conf/test.sh || exit $? ) | tee ./build/test-result.tap
 
 after_script:
