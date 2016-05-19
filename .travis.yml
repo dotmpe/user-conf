@@ -11,8 +11,8 @@ branches:
 
 script:
 - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
+- mkdir -vp build
 - ./script/user-conf/test.sh | tee ./build/test-results.tap
-- ./tools/ci/test.sh
 - bats --version
 
 #after_script: []
