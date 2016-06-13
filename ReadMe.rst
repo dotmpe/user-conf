@@ -71,6 +71,9 @@ Dev
 ----
 - Think about domain and some kind of preferential wildcard
   matching based on that.
+
+  Still using one file per host.
+  But want a bit more flexible variable expansion to improve reuse.
  
   replace $domain in COPY/SYMLINK src argument with first match
   starting with full hostname.

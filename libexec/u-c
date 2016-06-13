@@ -54,3 +54,9 @@ echo UC_PREFIX = $UC_PREFIX
 echo UC_LIBEXEC = $UC_LIBEXEC
 echo UC_CWD = $UC_CWD
 
+UCONF=~/.conf
+test ! -e $HOME/.user-conf.rc || {
+  . $HOME/.user-conf.rc
+}
+export UCONF
+
