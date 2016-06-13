@@ -4,17 +4,17 @@ set -e
 
 version=user-conf/0.0.0
 
-version() {
+uc__version() {
   echo "$version"
 }
 
-usage() {
-  version
+uc__usage() {
+  uc__version
   echo "Usage: u-c [init|install|add|copy|update]"
 }
 
-help() {
-  usage
+uc__help() {
+  uc__usage
   echo
 }
 
