@@ -1,0 +1,55 @@
+#!/bin/sh
+
+set -e
+
+version=user-conf/0.0.0
+
+version() {
+  echo "$version"
+}
+
+usage() {
+  version
+  echo "Usage: u-c [init|install|add|copy|update]"
+}
+
+help() {
+  usage
+  echo
+}
+
+resolve_link() {
+  $(type -p greadlink readlink | head -1) "$1"
+}
+
+abs_dirname() {
+  local cwd="$(pwd)"
+  local path="$1"
+
+  while [ -n "$path" ]; do
+    cd "${path%/*}"
+    local name="${path##*/}"
+    path="$(resolve_link "$name" || true)"
+  done
+
+  pwd
+  cd "$cwd"
+}
+
+expand_path() {
+  { cd "$(dirname "$1")" 2>/dev/null
+    local dirname="$PWD"
+    cd "$OLDPWD"
+    echo "$dirname/$(basename "$1")"
+  } || echo "$1"
+}
+
+UC_LIBEXEC="$(abs_dirname "$0")"
+export UC_PREFIX="$(abs_dirname "$UC_LIBEXEC")"
+export UC_CWD="$(abs_dirname .)"
+export PATH="$UC_LIBEXEC:$PATH"
+
+echo UC_PREFIX = $UC_PREFIX
+echo UC_LIBEXEC = $UC_LIBEXEC
+echo UC_CWD = $UC_CWD
+
