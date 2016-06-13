@@ -69,21 +69,29 @@ See Manual_ and Specification_ for user documentation.
 
 Dev
 ----
-- One file per host seems OK. Keeps args/variables in ucfile down.
+- Think about domain and some kind of preferential wildcard
+  matching based on that.
 
-  My initial dotfile repo symlinks.tab used hostnames as tags, to filter out
-  rules per host. Still an interesting concept. Compare with optional directives.
+  Still using one file per host.
+  But want a bit more flexible variable expansion to improve reuse.
+ 
+  replace $domain in COPY/SYMLINK src argument with first match
+  starting with full hostname.
 
-- Want a directive to specify which command to use to test for installed
-  programs, so that INSTALL can be a regular stat/update directive. \
-  XXX: BIN directive.
+  E.g. with box.example.net, vim/rc.$domain expands to first existing path from::
+
+   rc.box.example.net
+   rc.example.net
+   rc.net
+   rc(.default)
 
 - TODO: git directive submodule mode
 
 - XXX: maybe new type of directives for configuration: cron, munin-node,
-  hostname, hosts and fstab maybe. XXX: first try to use LINE for this.
+  hostname, hosts and fstab maybe. XXX: first try to use LINE for this?
 
-- TODO: add some interactive resolving maybe.. somehow.
+- TODO: config may need interactive init. But can be avoided for now.
+
 - TODO: add a simple frontend script to put in $PATH.
 
 - TODO: handling of sudo. Can determine wether paths are writable, and do auto
