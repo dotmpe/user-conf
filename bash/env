@@ -26,8 +26,12 @@ test ! -e "$HOME/.basher" || {
 }
 
 test ! -e "$HOME/.htd-tools/bin" || {
-  export HTDTOOLS_ROOT=$HOME/.htd-tools
-  export PATH="$HTDTOOLS_ROOT/bin:$HTDTOOLS_ROOT/cellar:$PATH"
+	export HTDTOOLS_ROOT=$HOME/.htd-tools
+	export PATH="$HTDTOOLS_ROOT/bin:$HTDTOOLS_ROOT/cellar:$PATH"
+}
+
+test ! -e "$HOME/.conf/box/bin" || {
+  export PATH=$HOME/.conf/box/bin:$PATH
 }
 
 test ! -e "./node_modules/.bin/" || {
@@ -41,6 +45,12 @@ test ! -d $HOME/.conf/path/$uname || {
 
 test ! -d $HOME/.conf/path/Generic || {
   export PATH=~/.conf/path/Generic:$PATH
+}
+
+test ! -d "$HOME/lib/py/" || {
+	export PYTHONPATH=.:$PYTHONPATH:$HOME/lib/py
+}
+
 test -n "$DEFAULT_HTDIR" || {
 	test -e "$HOME/public_html" && export DEFAULT_HTDIR=$HOME/public_html
 }
