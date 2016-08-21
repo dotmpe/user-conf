@@ -3,11 +3,11 @@
 
     name: user-conf
     disabled: true
-    title: 'User Conf'
+    title: 'User Conf Tests' 
     build-summary-image: 'ws/logo.png'
     htmlDescription: |
-      Build Travis test for user-conf. Jenkins plugin does not support
-      install. 
+      Build Travis test for user-conf. 
+      (Jenkins plugin does not support Travis' install attribute).
 
     vendor-repo: github
     vendor-path: dotmpe/user-conf
