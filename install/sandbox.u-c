@@ -12,44 +12,52 @@ SH info "Provisioning Host: $hostname.$domain"
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
 # Shell
-SYMLINK $UCONF/bash/rc ~/.bashrc
+SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
-#COPY $UCONF/bash/logout ~/.bash_logout
+COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
-# TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
 
 GIT https://github.com/basherpm/basher.git ~/.basher
 
 # tmux
 SYMLINK $UCONF/tmux/boilerplate.conf ~/.tmux.conf
-#SYMLINK $UCONF/tmux/airline-laedron.conf ~/.tmux-color.conf
 SYMLINK $UCONF/tmux/airline-amber.conf ~/.tmux-color.conf
 SH mkdir -vp ~/.tmux/plugins
 GIT https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-#SYMLINK $UCONF/tmuxinator ~/.tmuxinator
 
 # git
 SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
 SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
 SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
 SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
+SYMLINK $UCONF/git/mpe.gitconfig-user $UCONF/git/default.gitconfig-user
 SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 
+#INSTALL * vim git curl tmux tidy
+#INSTALL pip ansible
 
 ENV Build_Deps_Default_Paths=1
 
 SH bats --version || $UCONF/install-dependencies.sh install_bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh install_git_versioning
 SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
+SH test -x "$(which redo)" || $UCONF/install-dependencies.sh instal_redo
 
 
 ### User repositories
 
 SH info "User Repositories"
 
+#GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/conf-mpe ~/.conf
+
+#GIT https://github.com/dotmpe/script-mpe ~/bin origin dev
+#GIT git@github.com:dotmpe/script-mpe ~/bin uc-seed dev
 GIT git@github.com:dotmpe/script-mpe ~/bin github dev
+GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/script-mpe ~/bin dotmpe dev
+
+GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/htdocs-mpe ~/htdocs
 
 
 
@@ -57,10 +65,13 @@ GIT git@github.com:dotmpe/script-mpe ~/bin github dev
 
 SH info "User Projects"
 
-SH mkdir -vp $UCONF/project/$hostname
-# FIXME: proper init for projectdir document
-SH test -e $UCONF/project/$hostname/projects.yaml || echo "repositories: {}" > $UCONF/project/$hostname/projects.yaml
-SYMLINK $UCONF/project/$hostname/projects.yaml ~/project/.projects.yaml
+SYMLINK $UCONF/project/sandbox/projects.yaml ~/project/.projects.yaml
+SYMLINK $UCONF/project/sandbox/home.yaml ~/.projects.yaml
+#SYMLINK $UCONF/project/sandbox/src.yaml /src/.projects.yaml
+
+
+COPY $UCONF/basename-reg.yaml ~/.basename-reg.yaml
+
 
 
 ### VIM
@@ -70,18 +81,17 @@ SH info VIM
 SH mkdir -vp ~/.vim/plugin
 SH mkdir -vp ~/.vim/bundle
 
-# Uncommented directories do not exist within the template
-#SYMLINK $UCONF/vim/autoload ~/.vim/autoload
-#SYMLINK $UCONF/vim/colors ~/.vim/colors
+SYMLINK $UCONF/vim/autoload ~/.vim/autoload
+SYMLINK $UCONF/vim/colors ~/.vim/colors
 SYMLINK $UCONF/vim/filetype.vim ~/.vim/filetype.vim
-#SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
-#SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
-#SYMLINK $UCONF/vim/indent ~/.vim/indent
+SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
+SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
+SYMLINK $UCONF/vim/indent ~/.vim/indent
 SYMLINK $UCONF/vim/rc.$domain ~/.vimrc
-#SYMLINK $UCONF/vim/scripts ~/.vim/scripts
-#SYMLINK $UCONF/vim/spell ~/.vim/spell
+SYMLINK $UCONF/vim/scripts ~/.vim/scripts
+SYMLINK $UCONF/vim/spell ~/.vim/spell
 SYMLINK $UCONF/vim/syntax ~/.vim/syntax
-#SYMLINK $UCONF/vim/tools ~/.vim/tools
+SYMLINK $UCONF/vim/tools ~/.vim/tools
 
 # Install pathogen and some vim things
 # XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle
@@ -89,7 +99,6 @@ SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
 SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
-## VIM bundles (loaded with Pathogen)
 GIT git@github.com:scrooloose/syntastic.git ~/.vim/bundle
 GIT git@github.com:trapd00r/vimpoint.git ~/.vim/bundle
 GIT git@github.com:scrooloose/nerdtree.git ~/.vim/bundle
@@ -124,18 +133,6 @@ SH info Python
 SH mkdir -vp ~/lib/py
 SYMLINK ~/bin ~/lib/py/script_mpe
 
-
-INSTALL apt build-essential python-dev python-yaml
-INSTALL pip setuptools zope.interface zope.component twisted sqlalchemy virtualenv PyYAML
-
-
-
-### Munin
-
-#SH info Munin
-
-#COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
-#COPY $UCONF/munin/$hostname.conf /etc/munin/munin.conf
 
 
 
