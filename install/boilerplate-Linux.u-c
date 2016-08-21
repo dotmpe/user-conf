@@ -40,9 +40,10 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 ENV Build_Deps_Default_Paths=1
 
-SH bats --version || $UCONF/install-dependencies.sh install_bats
-SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh install_git_versioning
+SH bats --version || $UCONF/install-dependencies.sh bats
+SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
 SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
+SH test -x "$(which redo)" || $UCONF/install-dependencies.sh redo
 
 
 ### User repositories

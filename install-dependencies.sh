@@ -7,7 +7,6 @@ test -z "$Build_Debug" || set -x
 test -z "$Build_Deps_Default_Paths" || {
   test -n "$SRC_PREFIX" || SRC_PREFIX=$HOME/build
   test -n "$PREFIX" || PREFIX=$HOME/.local
-  mkdir -vp $SRC_PREFIX $PREFIX
 }
 
 test -n "$sudo" || sudo=
@@ -53,37 +52,71 @@ install_docopt()
       && $sudo python ./setup.py install $install_f )
 }
 
+install_apenwarr_redo()
+{
+  test -n "$global" || {
+    test -n "$sudo" && global=1 || global=0
+  }
+
+  test $global -eq 1 && {
+
+    test -d /usr/local/lib/python2.7/site-packages/redo \
+      || {
+
+        $sudo git clone https://github.com/apenwarr/redo.git \
+            /usr/local/lib/python2.7/site-packages/redo || return 1
+      }
+
+    test -h /usr/local/bin/redo \
+      || {
+
+        $sudo ln -s /usr/local/lib/python2.7/site-packages/redo/redo \
+            /usr/local/bin/redo || return 1
+      }
+
+  } || {
+
+    which basher 2>/dev/null >&2 && {
+
+      basher install apenwarr/redo
+    } || {
+
+      echo "Need basher to install apenwarr/redo locally" >&2
+      return 1
+    }
+  }
+}
+
 
 main_entry()
 {
-  test -n "$1" || set -- '*'
+  test -n "$1" || set -- '-'
 
-  case "$1" in '*'|project|test|git )
+  case "$1" in '-'|project|git )
       git --version >/dev/null || {
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
+      which pip >/dev/null || {
+        cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py; }
+      pip install setuptools objectpath \
+        || exit $?
     ;; esac
 
-  case "$1" in '*'|build|test|sh-test|bats )
+  case "$1" in '-'|build|test|sh-test|bats )
       test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
 
-  case "$1" in '*'|dev|build|check|test|git-versioning )
+  case "$1" in '-'|dev|build|check|test|git-versioning )
       test -x "$(which git-versioning)" || {
         install_git_versioning || return $?; }
     ;; esac
 
-  case "$1" in '*'|python|project|docopt)
-      pip --version >/dev/null || { echo "Sorry, PIP is a pre-requisite"; exit 1; }
+  case "$1" in '-'|python|project|docopt)
       # Using import seems more robust than scanning pip list
       python -c 'import docopt' || { install_docopt || return $?; }
     ;; esac
 
-
-  case "$1" in '*'|project|dev|build|test|check|\
-      sh-test|git|git-versioning|bats|python|docopt ) ;;
-    *)
-      echo "No such known dependency '$1'"
-      exit 2
+  case "$1" in '-'|redo )
+      install_apenwarr_redo || return $?
     ;; esac
 
   echo "OK. All pre-requisites for '$1' checked"
@@ -97,4 +130,4 @@ test "$(basename $0)" = "install-dependencies.sh" && {
   done
 } || printf ""
 
-# Id: user-conf
+# Id: user-conf-mpe
