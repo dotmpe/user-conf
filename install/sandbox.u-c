@@ -12,7 +12,7 @@ SH info "Provisioning Host: $hostname.$domain"
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
 # Shell
-SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
+SYMLINK $UCONF/bash/rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
 COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
@@ -46,7 +46,7 @@ ENV Build_Deps_Default_Paths=1
 SH bats --version || $UCONF/install-dependencies.sh bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
 SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
-SH test -x "$(which redo)" || $UCONF/install-dependencies.sh redo
+#SH test -x "$(which redo)" || $UCONF/install-dependencies.sh redo
 
 
 ### User repositories
