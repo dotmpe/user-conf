@@ -1,0 +1,55 @@
+repositories:
+  docker-jenkins:
+    clean: excluded
+    disabled: false
+    remotes:
+      dotmpe: dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/docker-jenkins.git
+      origin: git@github.com:dotmpe/docker-jenkins.git
+    sync: true
+  docker-sandbox:
+    clean: excluded
+    enabled: true
+    remotes:
+      origin: dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/docker-sandbox.git
+    sync: true
+  docker-treebox:
+    clean: tracked
+    enabled: true
+    remotes:
+      dotmpe: dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/docker-treebox.git
+      origin: git@github.com:dotmpe/docker-treebox.git
+    sync: true
+  git-versioning:
+    clean: excluded
+    enabled: true
+    remotes:
+      origin: git@github.com:dotmpe/git-versioning.git
+    sync: true
+  jenkins-job-builder:
+    enabled: true
+    remotes:
+      dotmpe-gh: git@github.com:dotmpe/jenkins-job-builder.git
+      origin: https://github.com/openstack-infra/jenkins-job-builder.git
+    sync:
+    - dotmpe-gh
+  script-mpe:
+    default: dev
+    enabled: true
+    remotes:
+      dotmpe: ssh://dotmpe-com@ssh.pcextreme.nl/~dotmpe-com/domains/dotmpe.com/htdocs/git/script-mpe.git
+      origin: git@github.com:dotmpe/script-mpe.git
+      simza: simza:/src/script-mpe.git
+    sync: true
+  tree-box:
+    disabled: true
+    remotes:
+      dotmpe: ssh://dotmpe-com@ssh.pcextreme.nl/~dotmpe-com/domains/dotmpe.com/htdocs/git/tree-box.git
+      gh: git@github.com:dotmpe/tree-box.git
+    sync: true
+  user-conf:
+    default: dev
+    enabled: false
+    remotes:
+      origin: git@github.com:dotmpe/user-conf.git
+    sync: true
+

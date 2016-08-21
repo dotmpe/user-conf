@@ -57,6 +57,7 @@ SH info "User Repositories"
 
 SH ssh-keyscan github.com >> ~/.ssh/known_hosts
 SH ssh-keyscan ssh.pcextreme.nl >> ~/.ssh/known_hosts
+
 #GIT https://github.com/dotmpe/script-mpe ~/bin origin dev
 #GIT git@github.com:dotmpe/script-mpe ~/bin uc-seed dev
 GIT git@github.com:dotmpe/script-mpe ~/bin github dev

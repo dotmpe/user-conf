@@ -1,0 +1,11 @@
+repositories:
+  bin:
+    enabled: true
+    status: {}
+  .conf:
+    enabled: true
+    status: {}
+  htdocs:
+    enabled: true
+    status: {}
+
