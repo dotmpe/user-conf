@@ -76,7 +76,7 @@ SYMLINK $UCONF/project/sandbox/home.yaml ~/.projects.yaml
 #SYMLINK $UCONF/project/sandbox/src.yaml /src/.projects.yaml
 
 
-COPY $UCONF/basename-reg.yaml ~/.basename-reg.yaml
+#COPY $UCONF/basename-reg.yaml ~/.basename-reg.yaml
 
 
 
@@ -87,17 +87,18 @@ SH info VIM
 SH mkdir -vp ~/.vim/plugin
 SH mkdir -vp ~/.vim/bundle
 
-SYMLINK $UCONF/vim/autoload ~/.vim/autoload
-SYMLINK $UCONF/vim/colors ~/.vim/colors
+# Uncommented directories do not exist within the template
+#SYMLINK $UCONF/vim/autoload ~/.vim/autoload
+#SYMLINK $UCONF/vim/colors ~/.vim/colors
 SYMLINK $UCONF/vim/filetype.vim ~/.vim/filetype.vim
-SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
-SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
-SYMLINK $UCONF/vim/indent ~/.vim/indent
+#SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
+#SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
+#SYMLINK $UCONF/vim/indent ~/.vim/indent
 SYMLINK $UCONF/vim/rc.$domain ~/.vimrc
-SYMLINK $UCONF/vim/scripts ~/.vim/scripts
-SYMLINK $UCONF/vim/spell ~/.vim/spell
+#SYMLINK $UCONF/vim/scripts ~/.vim/scripts
+#SYMLINK $UCONF/vim/spell ~/.vim/spell
 SYMLINK $UCONF/vim/syntax ~/.vim/syntax
-SYMLINK $UCONF/vim/tools ~/.vim/tools
+#SYMLINK $UCONF/vim/tools ~/.vim/tools
 
 # Install pathogen and some vim things
 # XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle
@@ -105,6 +106,7 @@ SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
 SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
+## VIM bundles (loaded with Pathogen)
 GIT git@github.com:scrooloose/syntastic.git ~/.vim/bundle
 GIT git@github.com:trapd00r/vimpoint.git ~/.vim/bundle
 GIT git@github.com:scrooloose/nerdtree.git ~/.vim/bundle
