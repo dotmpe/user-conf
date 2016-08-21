@@ -1,0 +1,6 @@
+.gitignore-*.regex
+.htdignore.merged
+.*.sw[a-p]
+.package.main
+.package.json
+.package.sh

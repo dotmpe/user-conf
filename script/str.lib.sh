@@ -18,13 +18,29 @@ mkcid()
   cid=$(echo "$1" | sed 's/\([^a-z0-9-]\|\-\)/-/g')
 }
 
+str_upper()
+{
+  test -n "$1" \
+    && { echo "$1" | tr 'a-z' 'A-Z'; } \
+    || { cat - | tr 'a-z' 'A-Z'; }
+}
+
+str_lower()
+{
+  test -n "$1" \
+    && { echo "$1" | tr 'A-Z' 'a-z'; } \
+    || { cat - | tr 'A-Z' 'a-z'; }
+}
+
 str_match()
 {
   expr "$1" : "$2" &>/dev/null || return 1
 }
+
 str_contains()
 {
-  case $(uname) in
+	test -n "$uname" || exit 214
+	case "$uname" in
     Linux )
       test 0 -lt $(expr index "$1" "/") || return 1
       ;;

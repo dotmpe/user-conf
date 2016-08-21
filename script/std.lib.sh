@@ -41,12 +41,12 @@ var_log_key()
     test -n "$log" && {
       log_key="$log"
     } || {
+      test -n "$base" || base=$scriptname
       test -n "$base" && {
-        log_key=$base.sh
-      }
+        test -n "$scriptext" || scriptext=.sh
+        log_key=$base$scriptext
+      } || echo "Cannot get var-log-key" 1>&2;
     }
-    # add stdin/out/err type symbol
-    log_key=$log_key:$stdio_0_type/$stdio_1_type/$stdio_2_type
   }
 }
 

@@ -31,7 +31,10 @@ SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
 SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
 SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
 SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
-SYMLINK $UCONF/git/mpe.gitconfig-user $UCONF/git/default.gitconfig-user
+
+
+SH { echo "[user]"; echo "name = B. van Berkum"; echo "email = dev@dotmpe.com"; \
+  } > $UCONF/git/$domain.gitconfig-user
 SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 

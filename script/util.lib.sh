@@ -36,6 +36,19 @@ try_exec_func()
   $func "$@" || return $?
 }
 
+
+lib_load()
+{
+  test -n "$scriptdir" || { echo lib-load-scriptdir 1>&2; return 1; }
+  test -n "$1" || set -- os std str
+  while test -n "$1"
+  do
+    . $scriptdir/$1.lib.sh
+    shift
+  done
+}
+
+
 # 1:file-name[:line-number] 2:content
 file_insert_at()
 {
@@ -134,4 +147,33 @@ get_lines()
 
   tail -n +$line_number $file_name | head -n $1
 }
+
+
+# Main
+
+case "$0" in "" ) ;; "-"* ) ;; * )
+  test -n "$scriptname" || scriptname="$(basename "$0" .sh)"
+  test -n "$verbosity" || verbosity=5
+  test -z "$__load_lib" || set -- "load-ext"
+  case "$1" in
+
+    load-* ) ;; # External include, do nothing
+
+    load )
+        test -n "$scriptdir" || scriptdir="$(dirname "$0")/script"
+        lib_load || {
+          echo "Error loading $scriptname" 1>&2
+          exit 1
+        }
+      ;;
+
+    '' ) ;;
+
+    * ) # Setup SCRIPTPATH and include other scripts
+        echo "Ignored $scriptname argument(s) $0: $*" 1>&2
+      ;;
+
+  esac
+
+;; esac
 

@@ -42,10 +42,14 @@ vc_gitdiff()
   target_sha1="$(git hash-object "$2")"
   co_path="$(cd $GITDIR;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
   test -n "$co_path" -a "$1" = "$GITDIR/$co_path" && {
-    return 0
+    # known state, file can be safely replaced
+    test "$target_sha1" = "$(git hash-object "$1")" \
+      && return 0 \
+      || {
+        return 1
+      }
   } || {
-    error "unknown state for path $2"
-    return 1
+    return 2
   }
 }
 
