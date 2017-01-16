@@ -1,6 +1,7 @@
 User-Config
 ===========
 :Created: 2015-10-03
+:Version: 0.0.1-dev
 :Project:
 
   .. image:: https://secure.travis-ci.org/dotmpe/user-conf.png
@@ -74,7 +75,7 @@ Dev
 
   Still using one file per host.
   But want a bit more flexible variable expansion to improve reuse.
- 
+
   replace $domain in COPY/SYMLINK src argument with first match
   starting with full hostname.
 

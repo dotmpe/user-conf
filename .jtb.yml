@@ -3,12 +3,13 @@
 
     name: user-conf
     disabled: true
-    title: 'User Conf Tests' 
+    title: 'User Conf CI Tests [Travis]' 
     build-summary-image: 'ws/logo.png'
     htmlDescription: |
-      Build Travis test for user-conf. 
-      (Jenkins plugin does not support Travis' install attribute).
+      Build CI test for user-conf. 
 
+    version: 0.0.1-dev # user-conf
+    jtb-files: .jtb.yml
     vendor-repo: github
     vendor-path: dotmpe/user-conf
     branch: master
@@ -20,4 +21,7 @@
       - tap:
           results: build/test-results.tap
 
+    triggers:
+      - pollscm:
+          cron: '*/15 * * * *'
 

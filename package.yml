@@ -1,0 +1,24 @@
+# git-versioning main: user-conf
+
+
+- type: application/vnd.dotmpe.project
+  main: user-conf
+  id: user-conf
+
+  version: 0.0.1-dev # user-conf
+  environments: [ 'development' ]
+
+  vendor: dotmpe
+  distribution: public
+  license: GPL
+
+  pd-meta:
+    scripts:
+      test-test-l: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+      update-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    init: "./install-dependencies.sh project dev"
+    check: ""
+    test: "./tools/ci/test.sh"
+    build: ""
+
+

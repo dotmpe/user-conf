@@ -1,20 +1,16 @@
 
 install: ./install-dependencies.sh project test
 
-#before_script: []
-#- export PATH=$PATH:$PREFIX/bin
-
 branches:
   only:
-  - test
-  - dev
+    - test
+    - dev
 
 script:
-- set -e
-- test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
-- ./tools/ci/test.sh
+  - set -e
+  - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
+  - ./tools/ci/test.sh
 
-#after_script: []
 env:
-  - Build_Deps_Default_Paths=1 TRAVIS_SKIP=1 JENKINS_SKIP=1
+  - Build_Deps_Default_Paths=1 TRAVIS_SKIP=1 JENKINS_SKIP=1 JTB_VERSION=
 
