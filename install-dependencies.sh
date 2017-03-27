@@ -85,7 +85,7 @@ main_entry()
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
 
-  case "$1" in pip|python )
+  case "$1" in all|pip|python )
       which pip >/dev/null || {
         cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py; }
       pip install -r requirements.txt
@@ -100,18 +100,11 @@ main_entry()
         install_git_versioning || return $?; }
     ;; esac
 
-  case "$1" in all|python|project|docopt)
+  case "$1" in python|project|docopt)
       # Using import seems more robust than scanning pip list
       python -c 'import docopt' || { install_docopt || return $?; }
     ;; esac
 
-
-  case "$1" in all|project|dev|build|test|check|\
-      sh-test|git|git-versioning|bats|python|docopt ) ;;
-    *)
-      echo "No such known dependency '$1'"
-      exit 2
-    ;; esac
 
   echo "OK. All pre-requisites for '$1' checked"
 }
