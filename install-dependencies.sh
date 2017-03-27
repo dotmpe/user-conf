@@ -100,7 +100,7 @@ main_entry()
         install_git_versioning || return $?; }
     ;; esac
 
-  case "$1" in python|project|docopt)
+  case "$1" in python|docopt)
       # Using import seems more robust than scanning pip list
       python -c 'import docopt' || { install_docopt || return $?; }
     ;; esac
