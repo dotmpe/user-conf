@@ -83,8 +83,6 @@ main_entry()
   case "$1" in all|project|test|git )
       git --version >/dev/null || {
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
-      which pip >/dev/null || {
-        echo "Sorry, PIP is a pre-requisite"; exit 1; }
     ;; esac
 
   case "$1" in all|build|test|sh-test|bats )
