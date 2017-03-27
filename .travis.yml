@@ -8,7 +8,7 @@ branches:
 
 script:
   - set -e
-  - test ! -e ~/.conf/bash/env || . ~/.conf/bash/env
+  - test ! -e ~/.conf/bash/env.sh || . ~/.conf/bash/env.sh
   - ./tools/ci/test.sh
 
 env:

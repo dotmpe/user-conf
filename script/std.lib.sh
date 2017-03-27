@@ -60,6 +60,7 @@ log()
 
 err()
 {
+  warn "err() is deprecated, see stderr()"
   log "$1" 1>&2
   test -z "$2" || exit $2
 }
@@ -86,11 +87,14 @@ std_exit()
   test "$1" != "0" -a -z "$1" && return 1 || exit $1
 }
 
-#emerg() 1
-#crit() 2
+emerg()
+{
+  std_v 1 || std_exit $2 || return 0
+  stderr "Emerg" "$1" $2
+}
 crit()
 {
-  std_v 3 || std_exit $2 || return 0
+  std_v 2 || std_exit $2 || return 0
   stderr "Crit" "$1" $2
 }
 error()

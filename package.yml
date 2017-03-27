@@ -13,12 +13,12 @@
   license: GPL
 
   pd-meta:
-    scripts:
-      test-test-l: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-      update-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
     init: "./install-dependencies.sh project dev"
     check: ""
     test: "./tools/ci/test.sh"
     build: ""
 
+  scripts:
+    test-test-l: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    update-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
 

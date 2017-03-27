@@ -54,6 +54,6 @@ then
 fi
 
 # More per host and generic env
-source ~/.conf/bash/env
+source ~/.conf/bash/env.sh
 
 
