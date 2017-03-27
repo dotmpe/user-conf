@@ -85,6 +85,12 @@ main_entry()
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
 
+  case "$1" in pip|python )
+      which pip >/dev/null || {
+        cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py; }
+      pip install -r requirements.txt
+    ;; esac
+
   case "$1" in all|build|test|sh-test|bats )
       test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
