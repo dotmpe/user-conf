@@ -2,51 +2,92 @@
 
 # keep current shell settings and keep quiet during script
 test -n "$shopts" || shopts=$-
+set -e
 set +x || printf ""
-set -e || printf ""
+
+test -z "$BASH_SH" -a "${BASH-no}" = "no" || {
+  export BASH_SH=1
+}
+
+type typeset 2>&1 >/dev/null && {
+  test "$(basename "$SHELL")" = "bash" || {
+    echo "Found typeset cmd, expected Bash" >&2
+    return 1
+  }
+}
+
+test -n "$CS" || export CS=dark
+test -n "$uname" || uname="$(uname -s)"
+
+
+case "$PATH" in
+  "*/usr/local/bin*" ) ;;
+  * ) PATH=$PATH:/usr/local/bin ;;
+esac
+
+
+# Include private profile (for keys, etc.)
+test ! -e ~/.local/etc/profile.sh ||
+  . ~/.local/etc/profile.sh
 
 
 # set PATH so it includes user's private bin if it exists
-test ! -e "$HOME/bin/" || {
+test ! -e "$HOME/bin/" ||
   export PATH=$PATH:$HOME/bin
-}
 
-test ! -e "$HOME/.local/bin/" || {
+test ! -e "$HOME/.local/bin/" ||
   export PATH=$PATH:$HOME/.local/bin
+
+
+test "$BASH_SH" = "1" && {
+
+  test ! -e ~/.basher/cellar/bin/composure.sh ||
+    . ~/.basher/cellar/bin/composure.sh
+
+  test ! -e "$HOME/.basher/completions/basher.bash" || {
+
+    export BASHER_SHELL=bash
+    export BASHER_ROOT=$HOME/.basher
+    export PATH="$BASHER_ROOT/bin:$BASHER_ROOT/cellar/bin:$PATH"
+
+    . "$BASHER_ROOT/completions/basher.bash"
+    for f in $(command ls "$BASHER_ROOT/cellar/completions/bash"); do
+      . "$BASHER_ROOT/cellar/completions/bash/$f"; done
+  }
 }
 
-test ! -e "$HOME/.basher" || {
-
-  export BASHER_SHELL=bash
-  export BASHER_ROOT=$HOME/.basher
-  export PATH="$BASHER_ROOT/bin:$BASHER_ROOT/cellar/bin:$PATH"
-  source "$BASHER_ROOT/completions/basher.bash"
-  for f in $(command ls "$BASHER_ROOT/cellar/completions/bash"); do source
-    "$BASHER_ROOT/cellar/completions/bash/$f"; done
-}
-
-test ! -e "$HOME/.htd-tools/bin" || {
-  export HTDTOOLS_ROOT=$HOME/.htd-tools
-  export PATH="$HTDTOOLS_ROOT/bin:$HTDTOOLS_ROOT/cellar:$PATH"
-}
-
-test ! -e "./node_modules/.bin/" || {
+test ! -e "./node_modules/.bin/" ||
   export PATH=$(pwd)/node_modules/.bin:$PATH
-}
 
-test -n "$uname" || uname="$(uname -s)"
-test ! -d $HOME/.conf/path/$uname || {
+test ! -e "./vendor/.bin/" ||
+  export PATH=$(pwd)/vendor/.bin:$PATH
+
+test ! -d $HOME/.conf/path/$uname ||
   export PATH=~/.conf/path/$uname:$PATH
-}
 
-test ! -d $HOME/.conf/path/Generic || {
+test ! -d $HOME/.conf/path/Generic ||
   export PATH=~/.conf/path/Generic:$PATH
+
+
+# Editors in order of preference
+if [ -n "$(which nano)" ]
+then
+export EDITOR=nano
+else if [ -n "$(which vim)" ]
+then
+export EDITOR=vim
+else if [ -n "$(which vi)" ]
+then
+export EDITOR=vi
+fi; fi; fi
+export EDITOR
+
 test -n "$DEFAULT_HTDIR" || {
-	test -e "$HOME/public_html" && export DEFAULT_HTDIR=$HOME/public_html
+  test -e "$HOME/public_html" && export DEFAULT_HTDIR=$HOME/public_html
 }
 
 test -n "$DEFAULT_UCONFDIR" || {
-    test -e "$HOME/.conf" && export DEFAULT_UCONFDIR=$HOME/.conf
+  test -e "$HOME/.conf" && export DEFAULT_UCONFDIR=$HOME/.conf
 }
 
 test -n "$DEFAULT_DCKR_VOL" || {
@@ -54,8 +95,8 @@ test -n "$DEFAULT_DCKR_VOL" || {
   do
     for local_name in -$(hostname -s | tr 'A-Z' 'a-z') ""
     do
-      test -e "/srv/docker$local_name$top_name" && {
-        export DEFAULT_DCKR_VOL=/srv/docker$local_name$top_name
+      test -e "/srv/docker-volumes$local_name$top_name" && {
+        export DEFAULT_DCKR_VOL=/srv/docker-volumes$local_name$top_name
         break 2
       }
     done
@@ -137,7 +178,7 @@ case "$hostname" in
     ;;
 
   * )
-      echo "Using generic bash/env"
+      echo "[user-conf] Using generic bash/env"
 
       init_user_env
       init_uconfdir_path
@@ -175,7 +216,7 @@ case "$shopts" in
           # undo verbosity by Jenkins, unless DEBUG is explicitly on
           set +x
         ;;
-      * ) 
+      * )
           echo "[$0] Shell debug on (DEBUG=$DEBUG)"
           set -x
         ;;
