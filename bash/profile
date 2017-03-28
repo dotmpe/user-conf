@@ -1,0 +1,13 @@
+# System-wide .profile for sh(1)
+# Executed by sh,bash,dash for login shells, should be sourced
+# after bashrc
+
+# For Debian,
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+
+if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
+
+
+# vim:ft=bash:

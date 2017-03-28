@@ -12,7 +12,7 @@
     jtb-files: .jtb.yml
     vendor-repo: github
     vendor-path: dotmpe/user-conf
-    branch: master
+    branch: test
     project-src: '*.rst,*.styl,*.yaml,*.js'
     email-individuals: false
     email-to:

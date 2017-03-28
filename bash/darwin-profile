@@ -1,0 +1,11 @@
+#!/bin/bash
+# ~/.bash_profile - Bash profile
+# Executed by bash(1) for login shells, should be sourced after bashrc
+
+
+if [ -f ~/.bashrc ]; then . ~/.bashrc; fi 
+
+
+# Added by iTerm To Enable Shell Integration
+# FIXME: https://www.iterm2.com/documentation-shell-integration.html
+#test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"

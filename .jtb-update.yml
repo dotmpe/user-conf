@@ -21,16 +21,21 @@
 
     browser: githubweb
 
-    branch: master
+    branch: test
     git-recursive-init: False
     credentials-id: ''
 
-    parameters: []
+    parameters:
+      - bool:
+          name: REINIT
+          description: "Set to clean the install folder (from initialized symlinks)"
+
     metadata: []
     properties: []
 
     builders:
       - shell: |
+          case "$REINIT" in 1|true) git clean -dfx install/ ;; esac
           ./script/user-conf/init.sh
           ./script/user-conf/stat.sh || {{
             ./script/user-conf/update.sh
