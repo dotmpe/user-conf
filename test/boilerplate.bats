@@ -11,18 +11,13 @@ init
   check_skipped_envs || \
     skip "TODO envs $envs: implement bin (test) for env"
   run $BATS_TEST_DESCRIPTION
-  test ${status} -eq 0
-  test -z "${lines[*]}" # empty output
-  test "${#lines[@]}" = "0" # lines of output (stderr+stderr)
+  test_ok_empty || stdfail
 }
 
 @test "${lib}/${base} - function should ..." {
   check_skipped_envs || \
     skip "TODO envs $envs: implement lib (test) for env"
   run function args
-  #echo ${status} > /tmp/1
-  #echo "${lines[*]}" >> /tmp/1
-  #echo "${#lines[@]}" >> /tmp/1
-  test ${status} -eq 0
+  test_ok_nonempty || stdfail
 }
 
