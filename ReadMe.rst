@@ -86,6 +86,7 @@ Dev
    rc.net
    rc(.default)
 
+
 - TODO: git directive submodule mode
 
 - XXX: maybe new type of directives for configuration: cron, munin-node,
@@ -116,7 +117,6 @@ Dev
 
   Also GIT does not take note of cruft (yet). If that is made an option,
   then maybe other tooling would be obsolete. Until then, ~/bin is to support.
-
 
 
 .. _Specification: Specification.rst

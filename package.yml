@@ -24,8 +24,8 @@
     - ./tools/ci/test.sh
     # Check/update the CI tests job of user-conf for Jenkins
     ci-job-check: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-    ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
     # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
     job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
-    job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+    job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
     #
