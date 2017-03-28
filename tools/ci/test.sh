@@ -17,9 +17,14 @@ exec 3> ./build/test-results.tap
 c_test "$@" 1>&3 || result=$?
 exec 3<&-
 
-log "Test returned '$result'"
+test ! -s build/test-results.tap || {
+  log "Test results:"
+  cat build/test-results.tap
+}
 
-cat build/test-results.tap
+test -n "$result" -o "$result" = "0" &&
+  log "Test fail, returned '$result'" ||
+  log "Test OK"
 
 exit $result
 

@@ -19,6 +19,9 @@
     build: ""
 
   scripts:
+    test:
+    - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
+    - ./tools/ci/test.sh
     test-test-l: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
     update-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
 
