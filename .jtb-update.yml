@@ -1,4 +1,6 @@
 
+# Deployment job on Jenkins
+
 - '{name}-free-git':
 
     name: user-conf
@@ -21,6 +23,9 @@
 
     browser: githubweb
 
+    jenkins-home: '/var/lib/jenkins'
+    workspace: '/var/lib/jenkins/.conf'
+
     branch: test
     git-recursive-init: False
     credentials-id: ''
@@ -28,18 +33,21 @@
     parameters:
       - bool:
           name: REINIT
-          description: "Set to clean the install folder (from initialized symlinks)"
+          description: "Set to clean the workspace folder. WARNING: throws away any consolidated, uncommitted files! "
 
     metadata: []
     properties: []
 
     builders:
       - shell: |
-          case "$REINIT" in 1|true) git clean -dfx install/ ;; esac
+          test -x "$(which git)" && git status
+          case "$REINIT" in 1|true) git clean -dfx ./ ;; esac
           ./script/user-conf/init.sh
           ./script/user-conf/stat.sh || {{
             ./script/user-conf/update.sh
           }}
+          test -x "$(which git)" && git status
+          echo "Jenkins User-Config update finished"
 
     publishers: []
 

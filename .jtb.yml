@@ -1,4 +1,6 @@
 
+# CI job on Jenkins
+
 - '{name}-gh-travis':
 
     name: user-conf

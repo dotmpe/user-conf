@@ -1,0 +1,6 @@
+
+Host *
+  VisualHostKey yes
+  LogLevel DEBUG
+  #LogLevel DEBUG3
+

@@ -34,6 +34,7 @@ SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
 SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
 #SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
 #SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
+SH touch $UCONF/git/$domain.gitconfig-user
 SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 
@@ -52,9 +53,10 @@ SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versi
 SH info "User Repositories"
 
 GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
+GIT git@github.com:dotmpe/user-conf ~/.conf uc-seed test
 
 GIT https://github.com/dotmpe/script-mpe ~/bin origin-ro dev
-#GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
+GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
 
 
 

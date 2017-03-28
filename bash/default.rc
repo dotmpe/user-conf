@@ -3,7 +3,7 @@
 # 2006--2015  Berend van Berkum <berend_dotmpe_com>
 
 
-# If not running interactively, don't do anything
+# If not running interactively or already initialized, don't do anything
 [ -z "$PS1" ] && return
 
 
@@ -57,3 +57,4 @@ fi
 source ~/.conf/bash/env.sh
 
 
+# vim:ft=bash:

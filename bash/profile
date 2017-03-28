@@ -7,6 +7,9 @@
 # the files are located in the bash-doc package.
 
 
+# If not running interactively or already initialized, don't do anything
+[ -z "$PS1" ] && return
+
 if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 
 
