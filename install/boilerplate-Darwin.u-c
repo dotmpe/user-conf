@@ -18,15 +18,13 @@ INSTALL brew tmux reattach-to-user-namespace curl wget tree \
 #  Caskroom/cask/cool-retro-term 
 
 
-
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
 # Shell
 SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
-SH touch $UCONF/bash/logout
-COPY $UCONF/bash/logout ~/.bash_logout
-COPY $UCONF/bash/darwin-profile ~/.bash_profile
+#CONS-COPY $UCONF/bash/profile ~/.bash_profile
+#CONS-COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
@@ -62,10 +60,10 @@ SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versi
 
 SH info "User Repositories"
 
-#GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed master
+GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
 
-GIT https://github.com/dotmpe/script-mpe ~/bin origin dev
-#GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
+GIT https://github.com/dotmpe/script-mpe ~/bin origin dev-ro
+GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
 
 
 

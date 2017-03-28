@@ -8,15 +8,15 @@ SH test -n "$domain" || domain=default
 SH info "Provisioning Host: $hostname.$domain"
 
 
+
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
 # Shell: directives for rc files
 SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
 # TODO: shell profile and logout
-SYMLINK $UCONF/bash/profile ~/.bash_profile
-SH touch $UCONF/bash/logout
-SYMLINK $UCONF/bash/logout ~/.bash_logout
+#CONS-COPY $UCONF/bash/profile ~/.bash_profile
+#CONS-COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
@@ -41,7 +41,6 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 ENV Build_Deps_Default_Paths=1
 
 SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
-#SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure
 SH bats --version || $UCONF/install-dependencies.sh bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
 # TODO pip docopt-mpe
@@ -52,7 +51,10 @@ SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versi
 
 SH info "User Repositories"
 
-GIT git@github.com:dotmpe/script-mpe ~/bin github dev
+GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
+
+GIT https://github.com/dotmpe/script-mpe ~/bin origin-ro dev
+#GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
 
 
 
@@ -63,7 +65,7 @@ SH info "User Projects"
 SH mkdir -vp $UCONF/project/$hostname ~/project
 # FIXME: proper init for projectdir document
 SH test -e $UCONF/project/$hostname/projects.yaml || echo "repositories: {}" > $UCONF/project/$hostname/projects.yaml
-SYMLINK $UCONF/project/$hostname/projects.yaml ~/project/.projects.yaml
+SYMLINK $UCONF/project/$hostname/projects.yaml ~/project/projects.yaml
 
 
 ### VIM

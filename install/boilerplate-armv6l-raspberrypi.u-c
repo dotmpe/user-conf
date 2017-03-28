@@ -10,10 +10,15 @@ SH info Provisioning Host: $hostname.$domain
 
 #INSTALL apt munin munin-node tmux vim telnet git
 
+
+SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
+
 # Shell
 SYMLINK $UCONF/bash/rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
-#COPY $UCONF/bash/logout ~/.bash_logout
+# TODO: shell profile and logout
+#CONS-COPY $UCONF/bash/profile ~/.bash_profile
+#CONS-COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
@@ -41,6 +46,8 @@ GIT https://github.com/dotmpe/script.mpe.git ~/bin origin dev
 
 
 ### User projects
+
+SH info "User Repositories"
 
 SH mkdir -vp $UCONF/project/$hostname
 # FIXME: proper init for projectdir document
