@@ -42,8 +42,8 @@ GIT https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 # git
 SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
 SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
-SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
-SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
+#SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
+#SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
 # TODO: init gitconfig-user
 SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
@@ -52,11 +52,10 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 ENV Build_Deps_Default_Paths=1
 
 SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
-#GIT https://github.com/basherpm/basher.git ~/.basher
 #SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure
 SH bats --version || $UCONF/install-dependencies.sh bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
-SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
+#SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
 
 
 ### User repositories

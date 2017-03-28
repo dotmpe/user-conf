@@ -11,27 +11,33 @@ SH echo Provisioning Host: $hostname.$domain
 #INSTALL apt munin munin-node tmux vim telnet git
 
 # Shell
-SYMLINK $UCONF/bash/rc $HOME/.bashrc
-SYMLINK $UCONF/bash/alias $HOME/.alias
-#COPY $UCONF/bash/logout $HOME/.bash_logout
-SH mkdir -vp $HOME/.ssh
+SYMLINK $UCONF/bash/rc ~/.bashrc
+SYMLINK $UCONF/bash/alias ~/.alias
+#COPY $UCONF/bash/logout ~/.bash_logout
+SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
-#SYMLINK $UCONF/ssh/$domain.config $HOME/.ssh/config
+#SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
 
 # tmux
-SYMLINK $UCONF/tmux/boilerplate.conf $HOME/.tmux.conf
-SYMLINK $UCONF/tmux/airline-amber.conf $HOME/.tmux-color.conf
+SYMLINK $UCONF/tmux/boilerplate.conf ~/.tmux.conf
+SYMLINK $UCONF/tmux/airline-amber.conf ~/.tmux-color.conf
 
 # git
-SYMLINK $UCONF/git/default-boilerplate.gitconfig $HOME/.gitconfig
-SYMLINK $UCONF/git/ignore-global $HOME/.gitignore-global
-SYMLINK $UCONF/git/$domain.gitconfig-user $HOME/.gitconfig-user
+SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
+SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
+SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
+
+
+
+ENV Build_Deps_Default_Paths=1
+
+SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
 
 
 ### User repositories
 
-#GIT https://github.com/dotmpe/user-conf.git $HOME/.conf uc-seed master
-GIT https://github.com/dotmpe/script.mpe.git $HOME/bin origin dev
+#GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed master
+GIT https://github.com/dotmpe/script.mpe.git ~/bin origin dev
 
 
 ### User projects
@@ -39,38 +45,38 @@ GIT https://github.com/dotmpe/script.mpe.git $HOME/bin origin dev
 SH mkdir -vp $UCONF/project/$hostname
 # FIXME: proper init for projectdir document
 SH test -e $UCONF/project/$hostname/projects.yaml || echo "repositories: {}" > $UCONF/project/$hostname/projects.yaml
-SYMLINK $UCONF/project/$hostname/projects.yaml $HOME/project/
+SYMLINK $UCONF/project/$hostname/projects.yaml ~/project/
 
 
 ### VIM
 
-SH mkdir -vp $HOME/.vim/plugin
-SH mkdir -vp $HOME/.vim/bundle
-SH mkdir -vp $HOME/.vim/syntax
+SH mkdir -vp ~/.vim/plugin
+SH mkdir -vp ~/.vim/bundle
+SH mkdir -vp ~/.vim/syntax
 
-SYMLINK $UCONF/vim/filetype.vim $HOME/.vim/filetype.vim
-SYMLINK $UCONF/vim/rc.simple $HOME/.vimrc
-SYMLINK $UCONF/vim/syntax/user-config.vim $HOME/.vim/syntax/user-config.vim
+SYMLINK $UCONF/vim/filetype.vim ~/.vim/filetype.vim
+SYMLINK $UCONF/vim/rc.simple ~/.vimrc
+SYMLINK $UCONF/vim/syntax/user-config.vim ~/.vim/syntax/user-config.vim
 
 # Install pathogen and some vim things
-# XXX: ASSERT-DIR $HOME/.vim/autoload $HOME/.vim/bundle
+# XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle
 SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
 SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
-GIT git@github.com:croaker/mustang-vim.git $HOME/.vim/bundle
-GIT git@github.com:edkolev/tmuxline.vim.git $HOME/.vim/bundle
-GIT git@github.com:bling/vim-airline.git $HOME/.vim/bundle
-GIT https://github.com/vim-airline/vim-airline-themes.git $HOME/.vim/bundle
-GIT git@github.com:dotmpe/vim-bats.git $HOME/.vim/bundle
-GIT git@github.com:tpope/vim-fugitive.git $HOME/.vim/bundle
-GIT git://github.com/airblade/vim-gitgutter.git $HOME/.vim/bundle
+GIT git@github.com:croaker/mustang-vim.git ~/.vim/bundle
+GIT git@github.com:edkolev/tmuxline.vim.git ~/.vim/bundle
+GIT git@github.com:bling/vim-airline.git ~/.vim/bundle
+GIT https://github.com/vim-airline/vim-airline-themes.git ~/.vim/bundle
+GIT git@github.com:dotmpe/vim-bats.git ~/.vim/bundle
+GIT git@github.com:tpope/vim-fugitive.git ~/.vim/bundle
+GIT git://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
 
 
 ### Python libs
 
-SH mkdir -vp $HOME/lib/py
-SYMLINK $HOME/bin $HOME/lib/py/script_mpe
+SH mkdir -vp ~/lib/py
+SYMLINK ~/bin ~/lib/py/script_mpe
 
 # docopt-mpe FIXME: should put this in install somehow
 GIT https://github.com/dotmpe/docopt-mpe.git /src/ dotmpe-gh 0.6.x
