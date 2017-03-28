@@ -18,8 +18,6 @@ COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
 
-GIT https://github.com/basherpm/basher.git ~/.basher
-
 # tmux
 SYMLINK $UCONF/tmux/boilerplate.conf ~/.tmux.conf
 SYMLINK $UCONF/tmux/airline-amber.conf ~/.tmux-color.conf
@@ -39,9 +37,12 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 #INSTALL pip ansible
 
 ENV Build_Deps_Default_Paths=1
+ENV BASH_SH=1
 
-SH bats --version || $UCONF/install-dependencies.sh install_bats
-SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh install_git_versioning
+SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
+SH test -x $(which bats) || $UCONF/install-dependencies.sh bats
+SH test -x $(which git-versioning) || $UCONF/install-dependencies.sh git-versioning
+# FIXME: SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure
 SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
 SH test -x "$(which redo)" || $UCONF/install-dependencies.sh instal_redo
 
@@ -50,23 +51,22 @@ SH test -x "$(which redo)" || $UCONF/install-dependencies.sh instal_redo
 
 SH info "User Repositories"
 
-#GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/conf-mpe ~/.conf
-
 SH ssh-keyscan github.com >> ~/.ssh/known_hosts
 SH ssh-keyscan ssh.pcextreme.nl >> ~/.ssh/known_hosts
 #GIT https://github.com/dotmpe/script-mpe ~/bin origin dev
 #GIT git@github.com:dotmpe/script-mpe ~/bin uc-seed dev
-GIT git@github.com:dotmpe/script-mpe ~/bin github dev
-#GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/script-mpe ~/bin dotmpe dev
+#GIT git@github.com:dotmpe/script-mpe ~/bin github dev
+# FIXME: configure HTDOCS repo
+#GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/htdocs-mpe ~/htdocs
 
-GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/htdocs-mpe ~/htdocs
-
+SYMLINK $UCONF/script/composure ~/.local/composure
 
 
 ### User projects
 
 SH info "User Projects"
 
+SH mkdir -vp ~/project
 SYMLINK $UCONF/project/sandbox/projects.yaml ~/project/.projects.yaml
 SYMLINK $UCONF/project/sandbox/home.yaml ~/.projects.yaml
 #SYMLINK $UCONF/project/sandbox/src.yaml /src/.projects.yaml
@@ -100,6 +100,8 @@ SYMLINK $UCONF/vim/tools ~/.vim/tools
 SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
 SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+#SH curl -LSso ~/.vim/autoload/pathogen.vim \
+#  https://rawgit.com/tpope/vim-pathogen/master/autoload/pathogen.vim
 
 GIT git@github.com:scrooloose/syntastic.git ~/.vim/bundle
 GIT git@github.com:trapd00r/vimpoint.git ~/.vim/bundle

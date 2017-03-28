@@ -8,18 +8,17 @@ SH test -n "$domain" || domain=default
 SH info "Provisioning Host: $hostname.$domain"
 
 
-
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
 # Shell
-SYMLINK $UCONF/bash/rc ~/.bashrc
+SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
-#COPY $UCONF/bash/logout ~/.bash_logout
+SH touch $UCONF/bash/logout
+COPY $UCONF/bash/logout ~/.bash_logout
+COPY $UCONF/bash/profile ~/.bash_profile
 SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
-
-GIT https://github.com/basherpm/basher.git ~/.basher
 
 # tmux
 SYMLINK $UCONF/tmux/boilerplate.conf ~/.tmux.conf
@@ -40,8 +39,11 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 ENV Build_Deps_Default_Paths=1
 
-SH bats --version || $UCONF/install-dependencies.sh install_bats
-SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh install_git_versioning
+SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
+#GIT https://github.com/basherpm/basher.git ~/.basher
+#SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure
+SH bats --version || $UCONF/install-dependencies.sh bats
+SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
 SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
 
 

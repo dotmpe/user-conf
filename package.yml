@@ -19,9 +19,13 @@
     build: ""
 
   scripts:
-    test:
+    test: # Builds the CI tests
     - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
     - ./tools/ci/test.sh
-    test-test-l: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-    update-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-
+    # Check/update the CI tests job of user-conf for Jenkins
+    test-ci-job: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    update-ci-test-l: "DRY=0 jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
+    test-job: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+    update-job: "DRY=0 jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+    #
