@@ -4,18 +4,35 @@ alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ......='cd ../../../../..'
 alias cr='clear;reset'
+alias c='clear'
+alias e='clear; exit'
+alias r='reset'
+alias words-to-lines="tr ' ' '\n'"
+alias lines-to-words="tr '\n' ' '"
+alias wtl='words-to-lines'
+alias ltw='lines-to-words'
 
 
 ### Often edited/sourced files
-alias vv='vim ~/.vimrc ~/.conf/vim/filetype.vim'
+alias vv=$EDITOR' ~/.vimrc ~/.conf/vim/filetype.vim'
+if [ -n "$(which vim)" ]
+then
 alias vf='vimdiff ~/.conf/fs/`hostname -s`.tab /etc/fstab'
 alias vh='vimdiff ~/.conf/host/`hostname -s`.tab /etc/hosts'
 alias vn='vimdiff ~/.conf/network/`hostname -s`.interfaces /etc/network/interfaces'
 alias ve='vimdiff ~/.conf/export/`hostname -s`.tab /etc/exports'
-alias va="vim ~/.alias $(grep '^\s*source' ~/.alias | cut -d " " -f 2); source ~/.alias"
-alias vp='vim ~/.conf/bash/env.sh; source ~/.conf/bash/env.sh'
-alias vb='vim ~/.bashrc; source ~/.bashrc'
 alias vl='sudo vimdiff /etc/rc.local ~/.conf/rc/'$(hostname)'.local'
-alias vs='vim /etc/apt/sources.list'
-alias vg="vim ~/.gitconfig $(echo $(grep '^\s*path\s*=' ~/.gitconfig | cut -d " " -f 3)); source ~/.alias"
+else
+alias vf=$EDITOR' ~/.conf/fs/`hostname -s`.tab /etc/fstab'
+alias vh=$EDITOR' ~/.conf/host/`hostname -s`.tab /etc/hosts'
+alias vn=$EDITOR' ~/.conf/network/`hostname -s`.interfaces /etc/network/interfaces'
+alias ve=$EDITOR' ~/.conf/export/`hostname -s`.tab /etc/exports'
+alias vl='sudo '$EDITOR' /etc/rc.local ~/.conf/rc/'$(hostname)'.local'
+fi
+alias va="$EDITOR ~/.alias $(grep '^\s*source' ~/.alias | cut -d " " -f 2); source ~/.alias"
+alias vp=$EDITOR' ~/.conf/bash/env; source ~/.conf/bash/env'
+alias vb=$EDITOR' ~/.bashrc; source ~/.bashrc'
+alias vs=$EDITOR' ~/.ssh/config'
+alias vas=$EDITOR' /etc/apt/sources.list'
+alias vg="$EDITOR ~/.gitconfig $(echo $(grep '^\s*path\s*=' ~/.gitconfig | cut -d " " -f 3)); source ~/.alias"
 alias fname='find ./ -name '

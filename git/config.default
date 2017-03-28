@@ -1,6 +1,6 @@
 
 [core]
-  excludesfile = $HOME/.gitignore-global
+  excludesfile = ~/.gitignore-global
   editor = vim
 
 [alias]
