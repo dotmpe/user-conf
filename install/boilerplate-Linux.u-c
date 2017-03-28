@@ -10,12 +10,13 @@ SH info "Provisioning Host: $hostname.$domain"
 
 SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
 
-# Shell
+# Shell: directives for rc files
 SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
+# TODO: shell profile and logout
+SYMLINK $UCONF/bash/profile ~/.bash_profile
 SH touch $UCONF/bash/logout
-COPY $UCONF/bash/logout ~/.bash_logout
-COPY $UCONF/bash/profile ~/.bash_profile
+SYMLINK $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 # TODO: init ssh user config
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
@@ -43,6 +44,7 @@ SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
 #SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure
 SH bats --version || $UCONF/install-dependencies.sh bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
+# TODO pip docopt-mpe
 #SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
 
 
@@ -58,7 +60,7 @@ GIT git@github.com:dotmpe/script-mpe ~/bin github dev
 
 SH info "User Projects"
 
-SH mkdir -vp $UCONF/project/$hostname
+SH mkdir -vp $UCONF/project/$hostname ~/project
 # FIXME: proper init for projectdir document
 SH test -e $UCONF/project/$hostname/projects.yaml || echo "repositories: {}" > $UCONF/project/$hostname/projects.yaml
 SYMLINK $UCONF/project/$hostname/projects.yaml ~/project/.projects.yaml
@@ -84,37 +86,33 @@ SYMLINK $UCONF/vim/rc.$domain ~/.vimrc
 SYMLINK $UCONF/vim/syntax ~/.vim/syntax
 #SYMLINK $UCONF/vim/tools ~/.vim/tools
 
-# Install pathogen and some vim things
+# Update pathogen - VIM plugin manager
 # XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle
 SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
 SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
 ## VIM bundles (loaded with Pathogen)
-GIT git@github.com:scrooloose/syntastic.git ~/.vim/bundle
-GIT git@github.com:trapd00r/vimpoint.git ~/.vim/bundle
-GIT git@github.com:scrooloose/nerdtree.git ~/.vim/bundle
-GIT git@github.com:vim-scripts/vis.git ~/.vim/bundle
-GIT git@github.com:croaker/mustang-vim.git ~/.vim/bundle
-GIT git@github.com:kien/ctrlp.vim.git ~/.vim/bundle
-GIT git@github.com:edkolev/tmuxline.vim.git ~/.vim/bundle
-GIT git@github.com:bling/vim-airline.git ~/.vim/bundle
+GIT https://github.com/scrooloose/syntastic.git ~/.vim/bundle
+GIT https://github.com/trapd00r/vimpoint.git ~/.vim/bundle
+GIT https://github.com/scrooloose/nerdtree.git ~/.vim/bundle
+GIT https://github.com/vim-scripts/vis.git ~/.vim/bundle
+GIT https://github.com/croaker/mustang-vim.git ~/.vim/bundle
+#GIT https://github.com/kien/ctrlp.vim.git ~/.vim/bundle
+GIT https://github.com/edkolev/tmuxline.vim.git ~/.vim/bundle
+GIT https://github.com/bling/vim-airline.git ~/.vim/bundle
 GIT https://github.com/vim-airline/vim-airline-themes.git ~/.vim/bundle
 GIT git@github.com:dotmpe/vim-bats.git ~/.vim/bundle
 #!GIT https://github.com/markcornick/vim-bats.git ~/.vim/bundle original
-GIT git@github.com:tpope/vim-fugitive.git ~/.vim/bundle
-GIT git://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
-GIT git://github.com/mikewest/vimroom.git ~/.vim/bundle
-GIT git://github.com/altercation/vim-colors-solarized.git ~/.vim/bundle/
-
-#WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/rng.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/autoswap_mac.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/vmath.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/SWTC.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/betterdigraphs.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/dragvisuals.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/hudigraphs.vim ~/.vim/plugin
-#WEB https://raw.githubusercontent.com/thoughtstream/Damian-Conway-s-Vim-Setup/master/plugin/listtrans.vim ~/.vim/plugin
+GIT https://github.com/altercation/vim-colors-solarized.git ~/.vim/bundle
+GIT https://github.com/tpope/vim-fugitive.git ~/.vim/bundle
+GIT https://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
+GIT https://github.com/mikewest/vimroom.git ~/.vim/bundle
+GIT https://github.com/powerman/vim-plugin-AnsiEsc.git ~/.vim/bundle
+GIT https://github.com/ekalinin/Dockerfile.vim.git ~/.vim/bundle
+GIT https://github.com/majutsushi/tagbar.git ~/.vim/bundle
+GIT https://github.com/aklt/plantuml-syntax.git ~/.vim/bundle
+GIT https://github.com/wavded/vim-stylus.git ~/.vim/bundle
 
 
 

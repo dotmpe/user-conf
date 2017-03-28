@@ -5,7 +5,7 @@ AGE git 86400
 
 SH test -n "$domain" || domain=default
 
-SH echo Provisioning Host: $hostname.$domain
+SH info Provisioning Host: $hostname.$domain
 
 
 #INSTALL apt munin munin-node tmux vim telnet git
@@ -78,16 +78,13 @@ GIT git://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
 SH mkdir -vp ~/lib/py
 SYMLINK ~/bin ~/lib/py/script_mpe
 
-# docopt-mpe FIXME: should put this in install somehow
-GIT https://github.com/dotmpe/docopt-mpe.git /src/ dotmpe-gh 0.6.x
-SH python -c "import docopt" || python /src/docopt-mpe/setup.py install
 
 
 ### Munin
 
-#COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
-#COPY $UCONF/munin/$hostname.conf /etc/munin/munin.conf
+SH info Munin
 
 WEB https://raw.github.com/perception101/pisense/master/pisense_ /etc/munin/plugins
 
+#CONS-COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
 
