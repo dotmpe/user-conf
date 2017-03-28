@@ -26,11 +26,14 @@ init
     } || stdfail 2
 }
 
-@test "${lib}/${base} - current_test_env: echos valid env, returns 0" {
+@test "${lib}/${base} - current_test_env no args: echos valid env (TEST_ENV, host or user name), returns 0" {
 
     run current_test_env
-    { test "${status}" = 0 && test "${lines[0]}" = "$hostnameid"
-    # test "${lines[0]}" = "$(whoami)"
+    { test "${status}" = 0 && {
+        test "${lines[0]}" = "$TEST_ENV" ||
+        test "${lines[0]}" = "$hostnameid" ||
+        test "${lines[0]}" = "$(whoami)"
+      }
     } || stdfail
 }
 
