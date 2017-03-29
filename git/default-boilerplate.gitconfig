@@ -1,9 +1,9 @@
 
 [include]
-  path = ~/.conf/git/config.default
+  path = ~/.conf/git/default.gitconfig
 
 [include]
-  path = ~/.conf/git/config.user
+  path = ~/.gitconfig-user
 
-
-# vim:ft=gitconfig"
+# Id: user-conf/0.0.1-dev git/default-boilerplate.gitconfig
+# vim:ft=gitconfig:

@@ -95,3 +95,5 @@ WEB https://raw.github.com/perception101/pisense/master/pisense_ /etc/munin/plug
 
 #CONS-COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
 
+
+# Id: user-conf

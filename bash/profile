@@ -13,4 +13,5 @@
 if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 
 
+# Id: user-conf
 # vim:ft=bash:

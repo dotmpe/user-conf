@@ -2,6 +2,8 @@
 # Git ignore: 
 # files excluded from versioning or cleaning.
 # Other files: git clean -df
+#
+# Id: user-conf/0.0.1-dev git/ignore-global
 
 
 # Generic
@@ -9,5 +11,4 @@
 *~
 .DS_Store
 .*.sw[a-p]
-
 

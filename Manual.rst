@@ -14,7 +14,6 @@ Update
 Stat
   Run the rules but only check for changes, don't apply.
 Diff
-
   TODO: Run the rules interactively, to consolidate changes.
 Add
   TODO: Add a new rule, and consolidate a new file.

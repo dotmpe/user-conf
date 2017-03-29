@@ -2,7 +2,7 @@
 
 set -e
 
-version=user-conf/0.0.0
+version=0.0.0 # user-conf
 
 uc__version() {
   echo "$version"
@@ -60,3 +60,4 @@ test ! -e $HOME/.user-conf.rc || {
 }
 export UCONF
 
+# Id: user-conf

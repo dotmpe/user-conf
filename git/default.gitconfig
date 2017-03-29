@@ -68,6 +68,5 @@
 [pager]
   diff =
 
-
-
-# vim:ft=gitconfig"
+# Id: user-conf/0.0.1-dev git/default.gitconfig
+# vim:ft=gitconfig:
