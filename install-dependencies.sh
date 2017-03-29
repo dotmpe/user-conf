@@ -60,10 +60,27 @@ install_bats()
   )
 }
 
-install_git_versioning()
+install_composer()
 {
-  git clone https://github.com/dotmpe/git-versioning.git $SRC_PREFIX/git-versioning
-  ( cd $SRC_PREFIX/git-versioning && ./configure.sh $PREFIX && ENV=production ./install.sh )
+  test -e ~/.local/bin/composer || {
+    curl -sS https://getcomposer.org/installer |
+      php -- --install-dir=$HOME/.local/bin --filename=composer
+  }
+  ~/.local/bin/composer --version
+  test -x "$(which composer)" || {
+    echo "Composer is installed but not found on PATH! Aborted. " >&2
+    return 1
+  }
+  test -e composer.json && {
+    test -e composer.lock && {
+      composer update
+    } || {
+      rm -rf vendor || noop
+      composer install
+    }
+  } || {
+    warn "No composer.json"
+  }
 }
 
 install_docopt()
@@ -73,6 +90,12 @@ install_docopt()
   ( cd $SRC_PREFIX/docopt-mpe \
       && git checkout 0.6.x \
       && $pref python ./setup.py install $install_f )
+}
+
+install_git_versioning()
+{
+  git clone https://github.com/dotmpe/git-versioning.git $SRC_PREFIX/git-versioning
+  ( cd $SRC_PREFIX/git-versioning && ./configure.sh $PREFIX && ENV=production ./install.sh )
 }
 
 
@@ -85,17 +108,17 @@ main_entry()
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
 
-  case "$1" in all|pip|python )
+  case "$1" in pip|python )
       which pip >/dev/null || {
         cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py; }
       pip install -r requirements.txt
     ;; esac
 
-  case "$1" in all|build|test|sh-test|bats )
+  case "$1" in all|project|build|test|sh-test|bats )
       test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
 
-  case "$1" in all|dev|build|check|test|git-versioning )
+  case "$1" in dev|build|check|test|git-versioning )
       test -x "$(which git-versioning)" || {
         install_git_versioning || return $?; }
     ;; esac
@@ -103,6 +126,16 @@ main_entry()
   case "$1" in python|docopt)
       # Using import seems more robust than scanning pip list
       python -c 'import docopt' || { install_docopt || return $?; }
+    ;; esac
+
+  case "$1" in all|php|project|composer)
+      test -x "$(which composer)" \
+        || install_composer || return $?
+    ;; esac
+
+  case "$1" in all|basher|test )
+      test -d ~/.basher ||
+        git clone https://github.com/basherpm/basher.git ~/.basher/
     ;; esac
 
 
