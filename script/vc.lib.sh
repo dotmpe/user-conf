@@ -17,17 +17,6 @@ vc_gitdir()
   }
 }
 
-vc_gitremote()
-{
-  test -n "$1" || set -- "." "origin"
-  test -d "$1" || err "vc-gitremote expected dir argument" 1
-  test -n "$2" || err "vc-gitremote expected remote name" 1
-  test -z "$3" || err "vc-gitremote surplus arguments" 1
-
-  cd "$(vc_gitdir "$1")"
-  git config --get remote.$2.url
-}
-
 # Given COPY src and trgt file from user-conf repo,
 # see if target path is of a known version for src-path in repo,
 # and that its the currently checked out version.
