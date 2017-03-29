@@ -8,7 +8,6 @@ vc_gitdir()
   test -n "$1" || set -- "."
   test -d "$1" || err "vc-gitdir expected dir argument" 1
   test -z "$2" || err "vc-gitdir surplus arguments" 1
-
   test -d "$1/.git" && {
     echo "$1/.git"
   } || {

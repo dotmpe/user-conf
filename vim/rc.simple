@@ -1,11 +1,14 @@
 
-set nobomb
-
-set hlsearch
 
 
 " set up unicode editing
 runtime scripts/set_utf8.vim
+
+set nobomb
+
+set modeline modelines=5
+
+set hlsearch
 
 " {{{ Command mappings
 
