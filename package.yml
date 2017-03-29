@@ -1,12 +1,9 @@
 # git-versioning main: user-conf
 
-
 - type: application/vnd.dotmpe.project
   main: user-conf
   id: user-conf
-
   version: 0.0.1-dev # user-conf
-  environments: [ 'development' ]
 
   vendor: dotmpe
   distribution: public
@@ -19,13 +16,26 @@
     build: ""
 
   scripts:
-    test: # Builds the CI tests
-    - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
-    - ./tools/ci/test.sh
+    ci: # Builds the CI tests
+      - ./git/hooks/pre-commit-spaceindent-check.sh '*'
+      # FIXME: - ./git/hooks/pre-commit-tabindent-check.sh brixadmin
+      - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
+      - ./tools/ci/test.sh
+
     # Check/update the CI tests job of user-conf for Jenkins
     ci-job-check: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
     ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+
     # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
     job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
     job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
-    #
+
+    test:
+      - htd run ci-job-check
+      - htd run job-check
+      - htd run ci
+
+    update:
+      - htd run ci-job-update
+      - htd run job-update
+
