@@ -105,7 +105,7 @@ main_entry()
 {
   test -n "$1" || set -- all
 
-  case "$1" in all|project|test|git )
+  case "$1" in all|test|git )
       git --version >/dev/null || {
         echo "Sorry, GIT is a pre-requisite"; exit 1; }
     ;; esac
@@ -116,7 +116,7 @@ main_entry()
       pip install -r requirements.txt
     ;; esac
 
-  case "$1" in all|project|build|test|sh-test|bats )
+  case "$1" in all|build|test|sh-test|bats )
       test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
 
@@ -125,12 +125,12 @@ main_entry()
         install_git_versioning || return $?; }
     ;; esac
 
-  case "$1" in python|docopt)
+  case "$1" in python|docopt )
       # Using import seems more robust than scanning pip list
       python -c 'import docopt' || { install_docopt || return $?; }
     ;; esac
 
-  case "$1" in all|php|project|composer)
+  case "$1" in php|composer )
       test -x "$(which composer)" \
         || install_composer || return $?
     ;; esac
