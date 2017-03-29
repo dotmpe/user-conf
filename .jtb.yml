@@ -19,6 +19,11 @@
     email-individuals: false
     email-to:
 
+    parameters:
+      - bool:
+          name: REINIT
+          description: "Set to clean the workspace folder. WARNING: throws away any consolidated, uncommitted files! "
+
     publishers:
       - tap:
           results: build/test-results.tap
