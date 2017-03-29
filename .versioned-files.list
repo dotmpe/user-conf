@@ -4,9 +4,10 @@ install-dependencies.sh
 .jtb-install-deps.yml
 .jtb-update.yml
 .jtb.yml
-git/hooks/pre-commit-spaceindent-check.sh
 git/default-boilerplate.gitconfig
 git/default.gitconfig
+git/hooks/pre-commit-spaceindent-check.sh
+git/hooks/pre-commit-tabindent-check.sh
 git/ignore-global
 Makefile.example
 bash/alias
@@ -14,8 +15,8 @@ bash/darwin-profile
 bash/default.rc
 bash/env.sh
 bash/profile
-bin/u-c
 install/boilerplate-Darwin.u-c
 install/boilerplate-Linux.u-c
 install/boilerplate-armv6l-raspberrypi.u-c
 install/sandbox.u-c
+libexec/u-c
