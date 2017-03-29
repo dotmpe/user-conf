@@ -46,6 +46,7 @@ SH bats --version || $UCONF/install-dependencies.sh bats
 SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
 # TODO pip docopt-mpe
 #SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
+SH test -x $(which composer) || $UCONF/install-dependencies.sh composer
 
 
 ### User repositories

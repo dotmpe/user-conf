@@ -62,25 +62,27 @@ install_bats()
 
 install_composer()
 {
-  test -e ~/.local/bin/composer || {
+  test -e $PREFIX/bin/composer || {
     curl -sS https://getcomposer.org/installer |
-      php -- --install-dir=$HOME/.local/bin --filename=composer
+      php -- --install-dir=$PREFIX/bin --filename=composer
   }
-  ~/.local/bin/composer --version
+  $PREFIX/bin/composer --version
+  . ~/.conf/bash/env.sh
   test -x "$(which composer)" || {
     echo "Composer is installed but not found on PATH! Aborted. " >&2
     return 1
   }
-  test -e composer.json && {
-    test -e composer.lock && {
-      composer update
-    } || {
-      rm -rf vendor || noop
-      composer install
-    }
-  } || {
-    warn "No composer.json"
-  }
+  # XXX: cleanup
+  #test -e composer.json && {
+  #  test -e composer.lock && {
+  #    composer update
+  #  } || {
+  #    rm -rf vendor || noop
+  #    composer install
+  #  }
+  #} || {
+  #  warn "No composer.json"
+  #}
 }
 
 install_docopt()
