@@ -7,10 +7,12 @@ branches:
     - dev
 
 script:
-  - case "$REINIT" in 1|true) git clean -dfx install/ ;; esac
+  - test -x "$(which git)" && git status
+  - case "$REINIT" in 1|true) git clean -dfx ./ ;; esac
   - set -e
   - . ./bash/env.sh
   - ./tools/ci/test.sh
+  - test -x "$(which git)" && git status
 
 env:
   - Build_Deps_Default_Paths=1 TRAVIS_SKIP=1 JENKINS_SKIP=1 JTB_VERSION=
