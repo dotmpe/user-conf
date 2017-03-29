@@ -26,7 +26,7 @@
     jenkins-home: '/var/lib/jenkins'
     workspace: '/var/lib/jenkins/.conf'
 
-    branch: test
+    branch: master
     git-recursive-init: False
     credentials-id: ''
 
