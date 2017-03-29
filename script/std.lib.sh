@@ -8,6 +8,7 @@ stdio_type()
   local io= pid=
   test -n "$1" && io=$1 || io=1
   test -n "$uname" || uname=$(uname)
+  test -x "$(which file)" || error "file util required for stdio-type" 1
   case "$uname" in
 
     Linux )

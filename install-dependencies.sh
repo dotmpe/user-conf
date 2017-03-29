@@ -2,6 +2,10 @@
 
 set -e
 
+test -n "$scriptpath" || scriptpath=$(dirname "$0")/script
+. $scriptpath/util.lib.sh
+lib_load
+
 test -z "$Build_Debug" || set -x
 
 test -z "$Build_Deps_Default_Paths" || {
@@ -17,6 +21,8 @@ test -z "$Build_Deps_Default_Paths" || {
       && PREFIX=/usr/local/ \
       || PREFIX=$HOME/.local
   }
+
+  note "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
 }
 
 test -n "$sudo" || sudo=
@@ -28,16 +34,11 @@ test -w /usr/local || {
   test -n "$sudo" || py_setup_f="--user"
 }
 
+test -n "$SRC_PREFIX" ||
+  error "Not sure where to checkout (SRC_PREFIX missing)" 1
 
-test -n "$SRC_PREFIX" || {
-  echo "Not sure where checkout"
-  exit 1
-}
-
-test -n "$PREFIX" || {
-  echo "Not sure where to install"
-  exit 1
-}
+test -n "$PREFIX" ||
+  error "Not sure where to install (PREFIX missing)" 1
 
 test -d $SRC_PREFIX || ${pref} mkdir -vp $SRC_PREFIX
 test -d $PREFIX || ${pref} mkdir -vp $PREFIX
@@ -46,7 +47,7 @@ test -d $PREFIX || ${pref} mkdir -vp $PREFIX
 
 install_bats()
 {
-  echo "Installing bats"
+  note "Installing bats"
   test -n "$BATS_BRANCH" || BATS_BRANCH=master
   test -n "$BATS_REPO" || BATS_REPO=https://github.com/dotmpe/bats.git
   test -n "$BATS_BRANCH" || BATS_BRANCH=master
@@ -68,10 +69,8 @@ install_composer()
   }
   $PREFIX/bin/composer --version
   . ~/.conf/bash/env.sh
-  test -x "$(which composer)" || {
-    echo "Composer is installed but not found on PATH! Aborted. " >&2
-    return 1
-  }
+  test -x "$(which composer)" ||
+    note "Composer is installed but not found on PATH! Aborted. " 1
   # XXX: cleanup
   #test -e composer.json && {
   #  test -e composer.lock && {
@@ -105,9 +104,9 @@ main_entry()
 {
   test -n "$1" || set -- all
 
-  case "$1" in all|test|git )
-      git --version >/dev/null || {
-        echo "Sorry, GIT is a pre-requisite"; exit 1; }
+  case "$1" in all|project|test|git )
+      git --version >/dev/null ||
+        error "Sorry, GIT is a pre-requisite" 1
     ;; esac
 
   case "$1" in pip|python )
@@ -135,16 +134,19 @@ main_entry()
         || install_composer || return $?
     ;; esac
 
-  case "$1" in all|basher|test )
-      test -d ~/.basher ||
-        git clone https://github.com/basherpm/basher.git ~/.basher/
+  case "$1" in dev|basher)
+      test -x "$(which basher)" || {
+        git clone https://github.com/basherpm/basher.git ~/.basher
+        . bash/env.sh
+        test -x "$(which basher)" && note "basher installed correctly" || error "missing basher" 1
+      }
+      basher update
     ;; esac
 
-
-  echo "OK. All pre-requisites for '$1' checked"
+  note "OK. All pre-requisites for '$1' checked"
 }
 
-test "$(basename $0)" = "install-dependencies.sh" && {
+test "$(basename "$0")" = "install-dependencies.sh" && {
   test -n "$1" || set -- all
   while test -n "$1"
   do
