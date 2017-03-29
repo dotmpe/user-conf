@@ -14,11 +14,12 @@ test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
 
 . "$sh_lib"/std.lib.sh
 . "$sh_lib"/str.lib.sh
+. "$sh_lib"/src.lib.sh
 . "$sh_lib"/match.lib.sh
 . "$sh_lib"/os.lib.sh
 . "$sh_lib"/date.lib.sh
 . "$sh_lib"/vc.lib.sh
-. "$sh_lib"/util.lib.sh
+. "$sh_lib"/sys.lib.sh
 . "$sh_lib"/conf.lib.sh
 
 test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
