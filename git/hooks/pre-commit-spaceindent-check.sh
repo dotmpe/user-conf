@@ -22,3 +22,5 @@ grep -nsrI '^\t\+' \
   echo "File indentation looks good"
   exit 0
 }
+
+# Id: user-conf/0.0.1-dev git/hooks/pre-commit-spaceindent-check.sh
