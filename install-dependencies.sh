@@ -160,8 +160,11 @@ main_entry()
   stderr "OK. All pre-requisites for '$1' checked"
 }
 
-test "$(basename "$0")" = "install-dependencies.sh" && {
-  test -n "$1" || set -- all
+stderr "0: '$0'"
+{
+  test "$(basename "$0")" = "install-dependencies.sh"
+} && {
+  test -n "$1" -o "$1" != "-" || set -- all
   while test -n "$1"
   do
     main_entry "$1" || exit $?
