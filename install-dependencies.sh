@@ -162,9 +162,8 @@ main_entry()
 
 {
   test "$(basename "$0")" = "install-dependencies.sh" ||
-  test "$(basename "$0")" = "bash" -a "$1" = "-" || {
+  test "$(basename "$0")" = "bash" ||
     stderr "0: '$0' *: $*" 1
-  }
 } && {
   test -n "$1" -o "$1" != "-" || set -- all
   while test -n "$1"
