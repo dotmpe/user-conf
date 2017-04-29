@@ -38,6 +38,7 @@ test -n "$hostname" || {
     hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
   }
 }
+test -n "$username" || username=$(whoami)
 test -n "$verbosity" || verbosity=5
 
 stdio_type 0
@@ -57,15 +58,31 @@ test -n "$choice_interactive" || {
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 c_initialize()
 {
+  test -n "$domain" || domain=mpe
   test "$hostname.$domain" = "$(hostname)" || {
     echo "$hostname.$domain" > $HOME/.domain
   }
   test -n "$UCONF" || echo "? $UCONF" 1
   cd "$UCONF" || echo "? cd $UCONF" 1
-  local conf=install/$hostname.u-c
-  test ! -e "$conf" && {
-    note "Initializing $hostname: $conf"
-  } || {
+  local conf=install/$hostname.u-c \
+    local_name_conf=local-$hostname-$domain.u-c \
+    local_conf=local.u-c
+
+  test -e "install/$local_name_conf" && {
+    test "$(readlink install/$local_name_conf)" = "$(basename $conf)" ||
+      rm install/$local_name_conf
+  }
+  test -e "install/$local_name_conf" ||
+    ln -s $(basename $conf) install/$local_name_conf
+
+  test -e "install/$local_conf" && {
+    test "$(readlink install/$local_conf)" = "$local_name_conf" ||
+      rm install/$local_conf
+  }
+  test -e "install/$local_conf" ||
+    ln -s $local_name_conf install/$local_conf
+
+  test ! -e "$conf" || {
     note "Already initialized: $conf"
     return
   }
@@ -75,7 +92,7 @@ c_initialize()
     tpl="install/boilerplate-$tag.u-c"
     test ! -e "$tpl" || {
       cp -v $tpl $conf
-      note "Initialized $hostname"
+      note "Initialized $hostname from $tag boilerplate"
       break
     }
     for path in install/boilerplate-$tag*.u-c
@@ -95,35 +112,49 @@ c_initialize()
 
 c_install()
 {
-  exec_dirs install "$1" || return $?
+  local conf=
+  req_conf
+  exec_dirs install "$1" $conf || return $?
 }
 
 # Update host from provision and config directives
 c_update()
 {
-  exec_dirs update "$1" || return $?
+  local conf=
+  req_conf
+  exec_dirs update "$1" $conf || return $?
 }
 
 # Compare host with provision and config directives
+# 1:diridx
 c_stat()
 {
-  exec_dirs stat "$1" || return $?
+  local conf=
+  req_conf
+  exec_dirs stat "$1" $conf || return $?
 }
 
 # Add a new path to config (COPY directive only)
 # XXX: looks like bashisms
 c_add()
 {
-  test -f "$1" || error "? expected file argument" 1
+  case "$1" in
+    SYMLINK|COPY ) ;;
+    * ) echo "? expected valid directive, not '$1'"; exit 1 ;; esac
+  test -f "$2" || error "? expected file argument '$2'" 1
+
+  # Best effort to get canonical path
+  local basename="$(basename "$2")" \
+    basedir="$(cd $(dirname "$2"); pwd -P)"
+  # Start off u-c env
   local pwd=$(pwd) conf=
   req_conf
-  test -e "$1" && toadd=$1 || toadd=$pwd/$1
-  test -e "$conf" || error "no such install config $conf" 1
 
+  local toadd=$basedir/$basename
+
+  # Look if any BASE direct matches source path, use that
+  # mapping for the target path inside the repository
   #exec_dirs base
-
-  basename="$(basename "$toadd")"
-  basedir="$(dirname "$toadd")"
   match_grep_pattern_test "$basedir"
   grep -iq "^BASE\ $p_\ " "$conf" && {
     ucbasedir_raw="$(grep "^\s*BASE\ $p_\ " "$conf" | cut -d ' ' -f 3 )"
@@ -140,8 +171,8 @@ c_add()
   cp "$toadd" "$ucbasedir"
   git add "$ucbasedir/$basename"
 
-  test "${1:0:${#HOME}}" = "$HOME" && {
-    echo "$1 $ucbasedir_raw/$basename \$HOME/${1:$(( ${#HOME} + 1))}" >> "$conf"
+  test "${2:0:${#HOME}}" = "$HOME" && {
+    echo "$1 $ucbasedir_raw/$basename \$HOME/${2:$(( ${#HOME} + 1))}" >> "$conf"
   } || {
     echo "$1 $ucbasedir_raw/$basename $toadd" >> "$conf"
   }
@@ -153,11 +184,11 @@ c_add()
 
 c_copy()
 {
-  c_add COPY "$1" || return $?
+  c_add COPY "$1"
 }
 c_symlink()
 {
-  c_add SYMLINK "$1" || return $?
+  c_add SYMLINK "$1"
 }
 
 # Run tests, some unittests on the Sh library
@@ -166,7 +197,7 @@ c_test()
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
   # Test script: run Bats tests
-  bats ./test/*-spec.bats || return $?
+  bats ./test/*-spec.bats
 }
 
 
@@ -186,7 +217,7 @@ d_SYMLINK()
       test -d "$2" && {
         set -- "$1" "$2/$(basename $1)"
       } || {
-        error "expected directory or symlink"
+        error "expected directory or symlink: $2"
         return 1
       }
     }
@@ -261,33 +292,60 @@ d_COPY()
     error "not a file: $1"
     return 1
   }
+
+  test -e "$2" -a -d "$2" && {
+      copy_target="$(normalize_relative "$2/$(basename "$1")")"
+      debug "Expanding '$2' to '$copy_target'"
+      set -- "$1" "$copy_target"
+  } || noop
+
   test -e "$2" && {
-    test -d "$2" && set -- "$1" "$2/$(basename $1)" || noop
+
+    stat=0
     test -f "$2" && {
       # Check existing COPY version
-      GITDIR=$UCONF vc_gitdiff "$1" "$2" || {
-        return $?
+      #diff -bqr "$2" "$1" >/dev/null || {
+      GITDIR=$UCONF vc_gitdiff "$1" "$2" || stat=$?
+
         #trueish $choice_interactive && {
         #  #echo | read -p 'Resolve using vimdiff?' resolve
         #  #case "$resolve" in y )
         #      vimdiff "$1" "$2"
         #  #esac
         #} || return 1
-      }
-
-      diff -bqr "$2" "$1" >/dev/null || {
-        case "$RUN" in
-          stat ) log "Updates for copy of '$1' at '$2'" ;;
-          update ) cp "$1" "$2" ;;
-        esac
-      }
     } || {
-      test -e "$2" && {
+      test ! -f "$2" && {
         error "Copy target path already exists and not a file '$2'"
         return 2
-      } || noop
+      }
     }
+
+    case "$stat" in
+      0 )
+          info "Up to date with '$1' at '$2'"
+          return
+        ;;
+      2 )
+          warn "Unknown state of '$1' for path '$2'"
+          return 2
+        ;;
+    esac
+
+    case "$RUN" in
+      stat )
+          note "Out of date with '$1' at '$2'"
+          return 1
+        ;;
+      update )
+          cp "$1" "$2" || {
+            log "Copy to $2 failed"
+            return 1
+          }
+        ;;
+    esac
+
   } || {
+
     case "$RUN" in
       stat )
         log "Missing copy of '$1' at '$2'"
@@ -406,9 +464,9 @@ d_GIT()
           test -d "$gitdir" || error "cannot determine gitdir at '$2'" 1
           {
             test -e $gitdir/FETCH_HEAD && {
-              newer_than $gitdir/FETCH_HEAD $GIT_AGE
+              younger_than $gitdir/FETCH_HEAD $GIT_AGE
             } || {
-              note "No FETCH_HEAD in $2"
+              info "No FETCH_HEAD in $2"
               test # break to '||' and do first-time fetch
             }
           } || {
@@ -501,7 +559,7 @@ d_ENV_exec()
 
 d_SH_exec()
 {
-  eval printf -- \"$@\n\"
+  printf -- "$@\n"
 }
 
 d_BASH_exec()
@@ -585,6 +643,11 @@ d_INSTALL_OPKG()
   opkg install "$@"
 }
 
+d_INSTALL_BIN()
+{
+  echo $@
+}
+
 
 # Misc. utils
 
@@ -597,6 +660,7 @@ req_conf() {
   cd $UCONF
   conf=install/$hostname.u-c
   test -e $conf || error "no such user-config $conf" 1
+  conf="$(echo $conf $(verbose=false exec_dirs include $conf))"
 }
 
 prep_dir_func() {
@@ -617,7 +681,8 @@ prep_dir_func() {
       case $1 in stat|update) return 1 ;; esac
       packager=$(echo $arguments_raw | awk '{print $1}')
       arguments="$(eval echo "$arguments_raw")"
-      arguments="$(expr substr "$arguments" $(( 1 + ${#packager} )) ${#arguments} )"
+      arguments="$(echo "$arguments" | cut -c$(( 2 + ${#packager} ))-${#arguments} )"
+
       test "$packager" = "*" && {
         for packager in APT BREW PIP OPKG
         do
@@ -648,30 +713,39 @@ prep_dir_func() {
       gen_eval="d_${directive}_exec"
       ;;
 
+    INCLUDE )
+      case $1 in include) ;; * ) return ;; esac
+      arguments="$(eval echo "$arguments_raw")"
+      echo $arguments
+      ;;
+
     * ) error "Unknown directive $directive" 1 ;;
 
   esac
 }
 
+# Eval/
 exec_dirs()
 {
-  local conf= func_name= arguments= diridx=0
-  rm -f /tmp/uc-$1-failed
-  req_conf
-
-  cat "$conf" | grep -v '^\([[:space:]]*\(#.*\)\?\)$' | while read directive arguments_raw
+  local dirs=$1 func_name= arguments= diridx=0 idx=$2
+  shift 2
+  rm -f /tmp/uc-$dirs-passed /tmp/uc-$dirs-failed
+  read_nix_style_files $@ | while read directive arguments_raw
   do
     diridx=$(( $diridx + 1 ))
 
     #printf -- "'$directive' '$arguments_raw'\n"
-    # look for funtion or skip
-    prep_dir_func $1 || continue
-    #printf -- "'$directive' '$arguments_raw' '$arguments'\n"
+    # look for function or skip
+    prep_dir_func $dirs || {
+      r=$?; test $r -gt 1 || continue
+      echo "prepare:$diridx" >>/tmp/uc-$dirs-failed
+      error "Error preparing directive $directive $arguments_raw" $r
+    }
 
-    test -z "$2" || {
-      # Skip if diridx requested
-      test $diridx -lt $2 \
-        && continue || test $2 -eq $diridx || return
+    test -z "$idx" || {
+      # Skip if diridx requested does not match
+      test $diridx -lt $idx \
+        && continue || test $idx -eq $diridx || return
     }
 
     # Evaluate before function
@@ -679,29 +753,65 @@ exec_dirs()
       gen=$($gen_eval "$arguments")
       eval $gen && {
         info "evaluated $directive $arguments_raw"
+        echo "exec:$diridx" >>/tmp/uc-$dirs-passed
         continue
       } || {
-        error "$1 ret $? in $directive with '$arguments'"
-        touch /tmp/uc-$1-failed
+        error "Evaluation failure ($?): in $directive with '$arguments'"
+        echo "eval:$diridx" >>/tmp/uc-$dirs-failed
+        continue
       }
     } || noop
 
     # Execute directive
     $func_name $arguments && {
       debug "executed $directive $arguments_raw"
+      echo "exec:$diridx" >>/tmp/uc-$dirs-passed
       continue
     } || {
-      error "$1 returned $? in $directive with '$arguments'"
-      touch /tmp/uc-$1-failed
+      error "Failed ($?): $directive '$arguments'"
+      echo "exec:$diridx" >>/tmp/uc-$dirs-failed
     }
 
   done
 
-  test ! -e "/tmp/uc-$1-failed" || {
-    rm -f /tmp/uc-$1-failed
-    error "failed directives" 1
+  test -n "$verbose" || verbose=true
+
+  local ret=0
+
+  trueish "$verbose" && {
+    local failed=0 passed=0
+    cln_out "/tmp/uc-$dirs-passed"; passed=$lines
+    cln_out "/tmp/uc-$dirs-failed"; failed=$lines
+
+    info "Passed: $passed, Failed: $failed"
+
+    test $passed -gt 0 -a $failed -eq 0 && {
+      note "All $passed directives passed"
+    }
+    test $passed -gt 0 || {
+      error "No directive ran successfully"
+      ret=1
+    }
+    test $failed -eq 0 || {
+      warn "Failed $failed directives"
+      ret=3
+    }
   }
+
+  return $ret
 }
+
+# Cleanup exec_dirs outputs after run
+cln_out()
+{
+  test ! -s "$1" && lines=0 || {
+    lines=$(wc -l $1 | awk '{print $1}')
+    rm -f $1
+    return 1
+  }
+  test ! -e "$1" || rm "$1"
+}
+
 
 # Get or set default GIT age
 req_git_age()
