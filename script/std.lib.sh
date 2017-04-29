@@ -44,12 +44,12 @@ var_log_key()
     test -n "$log" && {
       log_key="$log"
     } || {
+      test -n "$base" || base=$scriptname
       test -n "$base" && {
-        log_key=$base.sh
-      }
+        test -n "$scriptext" || scriptext=.sh
+        log_key=$base$scriptext
+      } || echo "Cannot get var-log-key" 1>&2;
     }
-    # add stdin/out/err type symbol
-    log_key=$log_key:$stdio_0_type/$stdio_1_type/$stdio_2_type
   }
 }
 
@@ -127,4 +127,39 @@ debug()
   stderr "Debug" "$1" $2
 }
 
+
+
+# Main
+
+case "$0" in "" ) ;; "-"* ) ;; * )
+  test -n "$scriptname" || scriptname="$(basename "$0" .sh)"
+  test -n "$verbosity" || verbosity=5
+  test -z "$__load_lib" && lib_std_act="$1" || lib_std_act="load-ext"
+  case "$lib_std_act" in
+
+    load-ext ) ;; # External include, do nothing
+
+    error )
+        test -n "$3" &&
+          error "$2" $3 ||
+          error "$2"
+      ;;
+
+    load )
+        test -n "$scriptpath" || scriptpath="$(dirname "$0")/script"
+        std_load || {
+          echo "Error loading $scriptname" 1>&2
+          exit 1
+        }
+      ;;
+
+    '' ) ;;
+
+    * ) # Setup SCRIPTPATH and include other scripts
+        echo "Ignored $scriptname argument(s) $0: $*" 1>&2
+      ;;
+
+  esac
+
+;; esac
 
