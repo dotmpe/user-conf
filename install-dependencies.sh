@@ -4,7 +4,7 @@ set -e
 
 stderr()
 {
-  echo "$1" >&2
+  echo "$log_pref$1" >&2
   test -z "$2" || exit $2
 }
 
@@ -117,6 +117,7 @@ install_git_versioning()
 main_entry()
 {
   test -n "$1" || set -- all
+  main_load
 
   case "$1" in all|project|test|git )
       git --version >/dev/null ||
@@ -159,6 +160,14 @@ main_entry()
 
   stderr "OK. All pre-requisites for '$1' checked"
 }
+
+main_load()
+{
+  #test -x "$(which tput)" && ...
+  log_pref="[install-dependencies]"
+  stderr "Loaded"
+}
+
 
 {
   test "$(basename "$0")" = "install-dependencies.sh" ||
