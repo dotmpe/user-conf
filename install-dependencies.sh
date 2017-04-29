@@ -2,9 +2,11 @@
 
 set -e
 
-test -n "$scriptpath" || scriptpath=$(dirname "$0")/script
-. $scriptpath/util.lib.sh
-lib_load
+stderr()
+{
+  echo "$1" >&2
+  test -z "$2" || exit $2
+}
 
 test -z "$Build_Debug" || set -x
 
@@ -22,7 +24,7 @@ test -z "$Build_Deps_Default_Paths" || {
       || PREFIX=$HOME/.local
   }
 
-  note "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
+  stderr "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
 }
 
 test -n "$sudo" || sudo=
@@ -35,22 +37,34 @@ test -w /usr/local || {
 }
 
 test -n "$SRC_PREFIX" ||
-  error "Not sure where to checkout (SRC_PREFIX missing)" 1
+  stderr "Not sure where to checkout (SRC_PREFIX missing)" 1
 
 test -n "$PREFIX" ||
-  error "Not sure where to install (PREFIX missing)" 1
+  stderr "Not sure where to install (PREFIX missing)" 1
 
 test -d $SRC_PREFIX || ${pref} mkdir -vp $SRC_PREFIX
 test -d $PREFIX || ${pref} mkdir -vp $PREFIX
 
 
+install_uc()
+{
+  stderr "Installing User-Conf"
+  test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
+  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/bats.git
+  test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
+  test -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
+  git clone https://github.com/dotmpe/user-conf.git $UCONF_DIR
+  cd $UCONF_DIR
+  git checkout $UCONF_BRANCH --
+  ./script/user-conf/init.sh
+  ./script/user-conf/update.sh
+}
 
 install_bats()
 {
-  note "Installing bats"
+  stderr "Installing bats"
   test -n "$BATS_BRANCH" || BATS_BRANCH=master
   test -n "$BATS_REPO" || BATS_REPO=https://github.com/dotmpe/bats.git
-  test -n "$BATS_BRANCH" || BATS_BRANCH=master
   test -d $SRC_PREFIX/bats || {
     git clone $BATS_REPO $SRC_PREFIX/bats || return $?
   }
@@ -70,7 +84,7 @@ install_composer()
   $PREFIX/bin/composer --version
   . ~/.conf/bash/env.sh
   test -x "$(which composer)" ||
-    note "Composer is installed but not found on PATH! Aborted. " 1
+    stderr "Composer is installed but not found on PATH! Aborted. " 1
   # XXX: cleanup
   #test -e composer.json && {
   #  test -e composer.lock && {
@@ -80,7 +94,7 @@ install_composer()
   #    composer install
   #  }
   #} || {
-  #  warn "No composer.json"
+  #  stderr "No composer.json"
   #}
 }
 
@@ -106,7 +120,7 @@ main_entry()
 
   case "$1" in all|project|test|git )
       git --version >/dev/null ||
-        error "Sorry, GIT is a pre-requisite" 1
+        stderr "Sorry, GIT is a pre-requisite" 1
     ;; esac
 
   case "$1" in pip|python )
@@ -138,12 +152,12 @@ main_entry()
       test -x "$(which basher)" || {
         git clone https://github.com/basherpm/basher.git ~/.basher
         . bash/env.sh
-        test -x "$(which basher)" && note "basher installed correctly" || error "missing basher" 1
+        test -x "$(which basher)" && stderr "basher installed correctly" || stderr "missing basher" 1
       }
       basher update
     ;; esac
 
-  note "OK. All pre-requisites for '$1' checked"
+  stderr "OK. All pre-requisites for '$1' checked"
 }
 
 test "$(basename "$0")" = "install-dependencies.sh" && {
