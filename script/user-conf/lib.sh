@@ -58,7 +58,6 @@ test -n "$choice_interactive" || {
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 c_initialize()
 {
-  test -n "$domain" || domain=mpe
   test "$hostname.$domain" = "$(hostname)" || {
     echo "$hostname.$domain" > $HOME/.domain
   }
