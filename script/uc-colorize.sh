@@ -10,6 +10,12 @@ case "$uname" in
   Linux )
       # For GNU sed: \o033
       esc=`echo -e '\o33'`
+
+      case "$(sed --version)" in *"This is not GNU sed"* )
+              # For matchbox sed
+              esc=`echo -e '\033'`
+          ;;
+      esac
     ;;
 esac
 
