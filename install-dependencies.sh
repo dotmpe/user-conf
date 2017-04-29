@@ -135,7 +135,7 @@ main_entry()
     ;; esac
 
   case "$1" in all|user-conf )
-      test -x "$(which bats)" || { install_uc || return $?; }
+      test -d "~/.conf" || { install_uc || return $?; }
     ;; esac
 
   case "$1" in dev|build|check|test|git-versioning )
