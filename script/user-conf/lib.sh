@@ -501,7 +501,7 @@ d_ENV_exec()
 
 d_SH_exec()
 {
-  printf -- "$@\n"
+  printf -- "sh -c '$@'\n"
 }
 
 d_BASH_exec()
