@@ -164,7 +164,7 @@ main_entry()
 main_load()
 {
   #test -x "$(which tput)" && ...
-  log_pref="[install-dependencies]"
+  log_pref="[install-dependencies] "
   stderr "Loaded"
 }
 
@@ -174,7 +174,7 @@ main_load()
   test "$(basename "$0")" = "bash" ||
     stderr "0: '$0' *: $*" 1
 } && {
-  test -n "$1" -o "$1" != "-" || set -- all
+  test -n "$1" -o "$1" = "-" || set -- all
   while test -n "$1"
   do
     main_entry "$1" || exit $?
