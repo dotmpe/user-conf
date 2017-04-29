@@ -78,7 +78,7 @@ install_bats()
 install_composer()
 {
   test -e $PREFIX/bin/composer || {
-    curl -sS https://getcomposer.org/installer |
+    curl -sSf https://getcomposer.org/installer |
       php -- --install-dir=$PREFIX/bin --filename=composer
   }
   $PREFIX/bin/composer --version
@@ -130,12 +130,12 @@ main_entry()
       pip install -r requirements.txt
     ;; esac
 
-  case "$1" in all|build|test|sh-test|bats )
-      test -x "$(which bats)" || { install_bats || return $?; }
-    ;; esac
-
   case "$1" in all|user-conf )
       test -d "~/.conf" || { install_uc || return $?; }
+    ;; esac
+
+  case "$1" in all|build|test|sh-test|bats )
+      test -x "$(which bats)" || { install_bats || return $?; }
     ;; esac
 
   case "$1" in dev|build|check|test|git-versioning )
@@ -154,6 +154,7 @@ main_entry()
     ;; esac
 
   case "$1" in dev|basher)
+      . bash/env.sh
       test -x "$(which basher)" || {
         git clone https://github.com/basherpm/basher.git ~/.basher
         . bash/env.sh
