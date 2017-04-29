@@ -7,16 +7,13 @@ init
 
 
 @test "${bin} -vv -n help" {
-  skip "envs: envs=$envs FIXME is hardcoded in test/helper.bash current_test_env"
-  check_skipped_envs || \
-    skip "TODO envs $envs: implement bin (test) for env"
+  skip "reason"
   run $BATS_TEST_DESCRIPTION
   test_ok_empty || stdfail
 }
 
 @test "${lib}/${base} - function should ..." {
-  check_skipped_envs || \
-    skip "TODO envs $envs: implement lib (test) for env"
+  TODO something # tasks-ignore
   run function args
   test_ok_nonempty || stdfail
 }

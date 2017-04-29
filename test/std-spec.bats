@@ -11,30 +11,24 @@ init
 
   verbosity=1
   run std_v 1
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test_ok_empty || stdfail 1.1
   run std_v 2
-  test ${status} -eq 1
-  test -z "${lines[*]}"
+  { test ${status} -eq 1 &&
+    test -z "${lines[*]}"; } || stdfail 1.2
   run std_v 0
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test_ok_empty || stdfail 1.3
 
   verbosity=6
   run std_v 7
-  test ${status} -eq 1
-  test -z "${lines[*]}"
+  { test ${status} -eq 1 && test -z "${lines[*]}"; } || stdfail 2.1
   run std_v 1
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test_ok_empty || stdfail 2.2
   run std_v 0
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test_ok_empty || stdfail 2.3
 
   verbosity=0
   run std_v 0
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test_ok_empty || stdfail 3.1
   run std_v 1
   test ${status} -eq 1
   test -z "${lines[*]}"
@@ -115,20 +109,7 @@ init
   exit(){ echo 'exit '$1' call'; command exit $1; }
   verbosity=6
   run info "test" 0
-#  echo ${status} > /tmp/1
-#  echo "${lines[*]}" >> /tmp/1
   test ${status} -eq 0
   fnmatch "*exit 0 call" "${lines[*]}"
-}
-
-
-@test "${lib}/${base} - function should ..." {
-  check_skipped_envs || \
-    skip "TODO envs $envs: implement lib (test) for env"
-  #run function args
-  #echo ${status} > /tmp/1
-  #echo "${lines[*]}" >> /tmp/1
-  #echo "${#lines[@]}" >> /tmp/1
-  #test ${status} -eq 0
 }
 

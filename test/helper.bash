@@ -116,6 +116,8 @@ check_skipped_envs()
   done
 }
 
+### Misc. helper functions
+
 next_temp_file()
 {
   test -n "$pref" || pref=script-mpe-test-
@@ -150,6 +152,7 @@ tmpf()
 tmpd()
 {
   tmpd=$BATS_TMPDIR/bats-tempd
+  test -d "$tmpd" && rm -rf $tmpd
   mkdir -vp $tmpd
 }
 
