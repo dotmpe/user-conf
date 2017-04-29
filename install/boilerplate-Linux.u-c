@@ -53,8 +53,8 @@ SH bats --version || $UCONF/install-dependencies.sh bats
 
 SH info "User Repositories"
 
-GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
-GIT git@github.com:dotmpe/user-conf ~/.conf uc-seed test
+#GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
+#GIT git@github.com:dotmpe/user-conf ~/.conf uc-seed test
 
 GIT https://github.com/dotmpe/script-mpe ~/bin origin-ro dev
 GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
