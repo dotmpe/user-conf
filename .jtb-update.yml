@@ -1,7 +1,7 @@
 
-# Deployment job on Jenkins
+# JTB YAML for deployment job on Jenkins
 
-- '{name}-free-git':
+- '{name}-free-git-ws':
 
     name: user-conf
     defaults: std-freestyle-job

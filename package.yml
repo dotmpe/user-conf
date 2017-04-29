@@ -14,6 +14,8 @@
     check: ""
     test: "./tools/ci/test.sh"
     build: ""
+    tasks:
+      document: todo.txt
 
   scripts:
     ci: # Builds the CI tests
@@ -38,4 +40,7 @@
     update:
       - htd run ci-job-update
       - htd run job-update
+
+    tasks:
+      - htd tasks --Check-All-Tags --Check-All-Files
 

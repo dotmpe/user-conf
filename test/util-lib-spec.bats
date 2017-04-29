@@ -5,7 +5,6 @@ load util-ex.inc
 
 init
 source $lib/util.lib.sh
-#source $lib/main.sh
 
 
 # XXX: clean me up to a test-helper func
