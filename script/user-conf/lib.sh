@@ -659,7 +659,7 @@ exec_dirs()
   rm -f /tmp/uc-$1-failed
   req_conf
 
-  cat "$conf" | grep -v '^\s*\(#\|$\)' | while read directive arguments_raw
+  cat "$conf" | grep -v '^\([[:space:]]*\(#.*\)\?\)$' | while read directive arguments_raw
   do
     diridx=$(( $diridx + 1 ))
 
