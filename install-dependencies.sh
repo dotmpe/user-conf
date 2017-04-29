@@ -50,7 +50,7 @@ install_uc()
 {
   stderr "Installing User-Conf"
   test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
-  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/bats.git
+  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/user-conf.git
   test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
   test -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
   git clone https://github.com/dotmpe/user-conf.git $UCONF_DIR
@@ -132,6 +132,10 @@ main_entry()
 
   case "$1" in all|build|test|sh-test|bats )
       test -x "$(which bats)" || { install_bats || return $?; }
+    ;; esac
+
+  case "$1" in all|user-conf )
+      test -x "$(which bats)" || { install_uc || return $?; }
     ;; esac
 
   case "$1" in dev|build|check|test|git-versioning )
