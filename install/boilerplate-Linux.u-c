@@ -78,7 +78,7 @@ SH info VIM
 SH mkdir -vp ~/.vim/plugin
 SH mkdir -vp ~/.vim/bundle
 
-SH test -e vim/rc.$domain || ln -s rc.simple vim/rc.$domain
+SH test -e $UCONF/vim/rc.$domain || ln -s rc.simple $UCONF/vim/rc.$domain
 
 # Uncommented directories do not exist within the template
 #SYMLINK $UCONF/vim/autoload ~/.vim/autoload
