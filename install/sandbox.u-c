@@ -8,13 +8,14 @@ SH test -n "$domain" || domain=default
 SH info "Provisioning Host: $hostname.$domain"
 
 
+SH info "Shell dotfiles"
 
-SH info "Shell dotfiles (Bash, SSH, rc.local, TMUX, GIT)"
-
-# Shell
+# Shell: directives for rc files
+SH test -e bash/$domain.rc || ln -s default.rc bash/$domain.rc
 SYMLINK $UCONF/bash/$domain.rc ~/.bashrc
 SYMLINK $UCONF/bash/alias ~/.alias
-COPY $UCONF/bash/logout ~/.bash_logout
+# TODO: shell profile and logout
+#COPY $UCONF/bash/logout ~/.bash_logout
 SH mkdir -vp ~/.ssh
 #SYMLINK $UCONF/ssh/$domain.config ~/.ssh/config
 
@@ -27,9 +28,10 @@ GIT https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 # git
 SYMLINK $UCONF/git/default-boilerplate.gitconfig ~/.gitconfig
 SYMLINK $UCONF/git/ignore-global ~/.gitignore-global
-SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
-SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
-SYMLINK $UCONF/git/mpe.gitconfig-user $UCONF/git/default.gitconfig-user
+#SYMLINK $UCONF/git/ignore-clean-global ~/.gitignore-clean-global
+#SYMLINK $UCONF/git/ignore-temp-global ~/.gitignore-temp-global
+SH touch $UCONF/git/$domain.gitconfig-user
+#SYMLINK $UCONF/git/$domain.gitconfig-user $UCONF/git/default.gitconfig-user
 SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 
@@ -37,7 +39,7 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 #INSTALL pip ansible
 
 ENV Build_Deps_Default_Paths=1
-ENV BASH_SH=1
+#ENV BASH_SH=1
 
 SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
 SH test -x $(which bats) || $UCONF/install-dependencies.sh bats
@@ -83,19 +85,22 @@ SH info VIM
 SH mkdir -vp ~/.vim/plugin
 SH mkdir -vp ~/.vim/bundle
 
-SYMLINK $UCONF/vim/autoload ~/.vim/autoload
-SYMLINK $UCONF/vim/colors ~/.vim/colors
-SYMLINK $UCONF/vim/filetype.vim ~/.vim/filetype.vim
-SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
-SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
-SYMLINK $UCONF/vim/indent ~/.vim/indent
-SYMLINK $UCONF/vim/rc.$domain ~/.vimrc
-SYMLINK $UCONF/vim/scripts ~/.vim/scripts
-SYMLINK $UCONF/vim/spell ~/.vim/spell
-SYMLINK $UCONF/vim/syntax ~/.vim/syntax
-SYMLINK $UCONF/vim/tools ~/.vim/tools
+SH test -e $UCONF/vim/rc.$domain || ln -s rc.simple $UCONF/vim/rc.$domain
 
-# Install pathogen and some vim things
+# Uncommented directories do not exist within the template
+#SYMLINK $UCONF/vim/autoload ~/.vim/autoload
+#SYMLINK $UCONF/vim/colors ~/.vim/colors
+SYMLINK $UCONF/vim/filetype.vim ~/.vim/filetype.vim
+#SYMLINK $UCONF/vim/ftdetect ~/.vim/ftdetect
+#SYMLINK $UCONF/vim/ftplugin ~/.vim/ftplugin
+#SYMLINK $UCONF/vim/indent ~/.vim/indent
+SYMLINK $UCONF/vim/rc.$domain ~/.vimrc
+#SYMLINK $UCONF/vim/scripts ~/.vim/scripts
+#SYMLINK $UCONF/vim/spell ~/.vim/spell
+SYMLINK $UCONF/vim/syntax ~/.vim/syntax
+#SYMLINK $UCONF/vim/tools ~/.vim/tools
+
+# Update pathogen - VIM plugin manager
 # XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle
 SH mkdir -p ~/.vim/autoload ~/.vim/bundle
 SH rm -f ~/.vim/autoload/pathogen.vim
@@ -103,21 +108,29 @@ SH curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 #SH curl -LSso ~/.vim/autoload/pathogen.vim \
 #  https://rawgit.com/tpope/vim-pathogen/master/autoload/pathogen.vim
 
-GIT git@github.com:scrooloose/syntastic.git ~/.vim/bundle
-GIT git@github.com:trapd00r/vimpoint.git ~/.vim/bundle
-GIT git@github.com:scrooloose/nerdtree.git ~/.vim/bundle
-GIT git@github.com:vim-scripts/vis.git ~/.vim/bundle
-GIT git@github.com:croaker/mustang-vim.git ~/.vim/bundle
-GIT git@github.com:kien/ctrlp.vim.git ~/.vim/bundle
-GIT git@github.com:edkolev/tmuxline.vim.git ~/.vim/bundle
-GIT git@github.com:bling/vim-airline.git ~/.vim/bundle
+## VIM bundles (loaded with Pathogen)
+GIT https://github.com/scrooloose/syntastic.git ~/.vim/bundle
+GIT https://github.com/trapd00r/vimpoint.git ~/.vim/bundle
+GIT https://github.com/scrooloose/nerdtree.git ~/.vim/bundle
+GIT https://github.com/vim-scripts/vis.git ~/.vim/bundle
+GIT https://github.com/croaker/mustang-vim.git ~/.vim/bundle
+#GIT https://github.com/kien/ctrlp.vim.git ~/.vim/bundle
+GIT https://github.com/edkolev/tmuxline.vim.git ~/.vim/bundle
+GIT https://github.com/bling/vim-airline.git ~/.vim/bundle
 GIT https://github.com/vim-airline/vim-airline-themes.git ~/.vim/bundle
 GIT git@github.com:dotmpe/vim-bats.git ~/.vim/bundle
 #!GIT https://github.com/markcornick/vim-bats.git ~/.vim/bundle original
-GIT git@github.com:tpope/vim-fugitive.git ~/.vim/bundle
-GIT git://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
-GIT git://github.com/mikewest/vimroom.git ~/.vim/bundle
-GIT git://github.com/altercation/vim-colors-solarized.git ~/.vim/bundle/
+GIT https://github.com/altercation/vim-colors-solarized.git ~/.vim/bundle
+GIT https://github.com/tpope/vim-fugitive.git ~/.vim/bundle
+GIT https://github.com/airblade/vim-gitgutter.git ~/.vim/bundle
+GIT https://github.com/mikewest/vimroom.git ~/.vim/bundle
+GIT https://github.com/powerman/vim-plugin-AnsiEsc.git ~/.vim/bundle
+GIT https://github.com/ekalinin/Dockerfile.vim.git ~/.vim/bundle
+GIT https://github.com/majutsushi/tagbar.git ~/.vim/bundle
+GIT https://github.com/aklt/plantuml-syntax.git ~/.vim/bundle
+GIT https://github.com/wavded/vim-stylus.git ~/.vim/bundle
+
+
 
 #WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/rng.vim ~/.vim/plugin
 #WEB https://raw.githubusercontent.com/greg0ire/more-instantly-better-vim/master/plugin/autoswap_mac.vim ~/.vim/plugin

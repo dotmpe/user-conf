@@ -40,10 +40,11 @@ SYMLINK $UCONF/git/$domain.gitconfig-user ~/.gitconfig-user
 
 
 ENV Build_Deps_Default_Paths=1
+#ENV BASH_SH=1
 
 SH test -x $(which basher) || $UCONF/install-dependencies.sh basher
-SH bats --version || $UCONF/install-dependencies.sh bats
-#SH test -x "$(which git-versioning)" || $UCONF/install-dependencies.sh git-versioning
+SH test -x $(which bats) || $UCONF/install-dependencies.sh bats
+SH test -x $(which git-versioning) || $UCONF/install-dependencies.sh git-versioning
 # TODO pip docopt-mpe
 #SH python -c 'import docopt' || $UCONF/install-dependencies.sh docopt
 #SH test -x "$(which composer)" || $UCONF/install-dependencies.sh composer
