@@ -160,9 +160,11 @@ main_entry()
   stderr "OK. All pre-requisites for '$1' checked"
 }
 
-stderr "0: '$0'"
 {
-  test "$(basename "$0")" = "install-dependencies.sh"
+  test "$(basename "$0")" = "install-dependencies.sh" ||
+  test "$(basename "$0")" = "bash" -a "$1" = "-" || {
+    stderr "0: '$0'" 1
+  }
 } && {
   test -n "$1" -o "$1" != "-" || set -- all
   while test -n "$1"
