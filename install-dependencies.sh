@@ -52,7 +52,7 @@ install_uc()
   test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
   test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/user-conf.git
   test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
-  test -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
+  test ! -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
   git clone https://github.com/dotmpe/user-conf.git $UCONF_DIR
   cd $UCONF_DIR
   git checkout $UCONF_BRANCH --
