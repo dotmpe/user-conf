@@ -406,7 +406,7 @@ d_GIT()
           test -d "$gitdir" || error "cannot determine gitdir at '$2'" 1
           {
             test -e $gitdir/FETCH_HEAD && {
-              younger_than $gitdir/FETCH_HEAD $GIT_AGE
+              newer_than $gitdir/FETCH_HEAD $GIT_AGE
             } || {
               note "No FETCH_HEAD in $2"
               test # break to '||' and do first-time fetch
