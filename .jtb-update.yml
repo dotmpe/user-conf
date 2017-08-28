@@ -49,6 +49,10 @@
           test -x "$(which git)" && git status
           case "$REINIT" in 1|true) git clean -dfx ./ ;; esac
           ./script/user-conf/init.sh
+          test -e ./script/user-conf/$SUBCMD.sh || {{
+            echo "No such command '$SUBCMD'"  >&2
+            exit 1
+          }}
           ./script/user-conf/$SUBCMD.sh || {{
             ./script/user-conf/update.sh
           }}
