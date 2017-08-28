@@ -131,7 +131,7 @@ main_entry()
     ;; esac
 
   case "$1" in all|user-conf )
-      test -d "~/.conf" || { install_uc || return $?; }
+      test -d ~/.conf || { install_uc || return $?; }
     ;; esac
 
   case "$1" in all|build|test|sh-test|bats )
