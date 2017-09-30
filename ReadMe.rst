@@ -40,7 +40,7 @@ Install
   # something to put in your shell profile script
   export UCONF=$HOME/.conf
 
-  git clone --origin tpl git@github.com:dotmpe/user-conf.git $UCONF
+  git clone --origin tpl git@github.com:bvberkum/user-conf.git $UCONF
 
 
 Guide
