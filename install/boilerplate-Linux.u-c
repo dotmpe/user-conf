@@ -54,11 +54,11 @@ SH test -x $(which git-versioning) || $UCONF/install-dependencies.sh git-version
 
 SH info "User Repositories"
 
-#GIT https://github.com/dotmpe/user-conf.git ~/.conf uc-seed-ro master
-#GIT git@github.com:dotmpe/user-conf ~/.conf uc-seed test
+#GIT https://github.com/bvberkum/user-conf.git ~/.conf uc-seed-ro master
+#GIT git@github.com:bvberkum/user-conf ~/.conf uc-seed test
 
-GIT https://github.com/dotmpe/script-mpe ~/bin origin-ro dev
-GIT git@github.com:dotmpe/script-mpe ~/bin origin dev
+GIT https://github.com/bvberkum/script-mpe ~/bin origin-ro dev
+GIT git@github.com:bvberkum/script-mpe ~/bin origin dev
 
 
 
@@ -110,7 +110,7 @@ GIT https://github.com/croaker/mustang-vim.git ~/.vim/bundle
 GIT https://github.com/edkolev/tmuxline.vim.git ~/.vim/bundle
 GIT https://github.com/bling/vim-airline.git ~/.vim/bundle
 GIT https://github.com/vim-airline/vim-airline-themes.git ~/.vim/bundle
-GIT git@github.com:dotmpe/vim-bats.git ~/.vim/bundle
+GIT git@github.com:bvberkum/vim-bats.git ~/.vim/bundle
 #!GIT https://github.com/markcornick/vim-bats.git ~/.vim/bundle original
 GIT https://github.com/altercation/vim-colors-solarized.git ~/.vim/bundle
 GIT https://github.com/tpope/vim-fugitive.git ~/.vim/bundle

@@ -50,10 +50,10 @@ install_uc()
 {
   stderr "Installing User-Conf"
   test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
-  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/user-conf.git
+  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/bvberkum/user-conf.git
   test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
   test ! -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
-  git clone https://github.com/dotmpe/user-conf.git $UCONF_DIR
+  git clone https://github.com/bvberkum/user-conf.git $UCONF_DIR
   cd $UCONF_DIR
   git checkout $UCONF_BRANCH --
   ./script/user-conf/init.sh
@@ -64,7 +64,7 @@ install_bats()
 {
   stderr "Installing bats"
   test -n "$BATS_BRANCH" || BATS_BRANCH=master
-  test -n "$BATS_REPO" || BATS_REPO=https://github.com/dotmpe/bats.git
+  test -n "$BATS_REPO" || BATS_REPO=https://github.com/bvberkum/bats.git
   test -d $SRC_PREFIX/bats || {
     git clone $BATS_REPO $SRC_PREFIX/bats || return $?
   }
@@ -101,7 +101,7 @@ install_composer()
 install_docopt()
 {
   test -n "$install_f" || install_f="$py_setup_f"
-  git clone https://github.com/dotmpe/docopt-mpe.git $SRC_PREFIX/docopt-mpe
+  git clone https://github.com/bvberkum/docopt-mpe.git $SRC_PREFIX/docopt-mpe
   ( cd $SRC_PREFIX/docopt-mpe \
       && git checkout 0.6.x \
       && $pref python ./setup.py install $install_f )
@@ -109,7 +109,7 @@ install_docopt()
 
 install_git_versioning()
 {
-  git clone https://github.com/dotmpe/git-versioning.git $SRC_PREFIX/git-versioning
+  git clone https://github.com/bvberkum/git-versioning.git $SRC_PREFIX/git-versioning
   ( cd $SRC_PREFIX/git-versioning && ./configure.sh $PREFIX && ENV=production ./install.sh )
 }
 
