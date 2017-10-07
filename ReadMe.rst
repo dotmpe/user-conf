@@ -1,7 +1,7 @@
 User-Config
 ===========
 :Created: 2015-10-03
-:Version: 0.1.0
+:Version: 0.1.1-dev
 :Project:
 
   .. image:: https://secure.travis-ci.org/dotmpe/user-conf.png

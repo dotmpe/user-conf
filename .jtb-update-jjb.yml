@@ -1,0 +1,56 @@
+# Found {name}-free-git-ws in ../jenkins-templated-builds/dist/base.yaml
+# Using ENV.jtb_disabled for disabled=False
+# Using ENV.jtb_jenkins_home for jenkins-home='/var/jenkins_home_acc'
+# Using ENV.jtb_name for name='jnk/user-conf-update'
+# Using ENV.jtb_workspace for workspace='/var/jenkins_home_acc/.conf'
+- project:
+    jobs:
+    - '{name}-free-git-ws':
+        branch: master
+        browser: githubweb
+        build-summary-image: ws/logo.png
+        builders:
+        - shell: "test -n \"$SUBCMD\" || SUBCMD=stat\ntest -x \"./script/user-conf/$SUBCMD.sh\"\
+            \ || exit 12\ntest -x \"$(which git)\" && git status\ncase \"$REINIT\"\
+            \ in 1|true) git clean -dfx ./ ;; esac\n./script/user-conf/init.sh\ntest\
+            \ -e ./script/user-conf/$SUBCMD.sh || {{\n  echo \"No such command '$SUBCMD'\"\
+            \  >&2\n  exit 1\n}}\n./script/user-conf/$SUBCMD.sh || {{\n  ./script/user-conf/update.sh\n\
+            }}\ntest -x \"$(which git)\" && git status\necho \"Jenkins User-Config\
+            \ update finished\"\n"
+        concurrent: false
+        credentials-id: ''
+        defaults: std-freestyle-job
+        disabled: false
+        email-individuals: false
+        email-to: ''
+        fail-on-error: true
+        git-browser: githubweb
+        git-browser-url: https://github.com/
+        git-recursive-init: false
+        git-url: http://github.com/dotmpe/user-conf.git
+        htmlDescription: 'Init (first time), stat and update. '
+        jenkins-home: /var/jenkins_home_acc
+        jtb-files: ''
+        metadata: []
+        parameters:
+        - string:
+            default: update
+            description: ' Available commands are install, stat, update and test. '
+            name: SUBCMD
+        - bool:
+            description: 'Set to clean the workspace folder. WARNING: throws away
+              any consolidated, uncommitted files! '
+            name: REINIT
+        project-src: '*.rst,*.styl,*.yaml,*.js'
+        properties: []
+        publish-on-error: true
+        publishers: []
+        restrict-node: ''
+        title: User Conf - Run
+        unstable-on-warning: true
+        vendor-path: ''
+        vendor-repo: github
+        version: ''
+        workspace: /var/jenkins_home_acc/.conf
+    name: jnk/user-conf-update
+

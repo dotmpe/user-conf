@@ -1,0 +1,58 @@
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+- TODO: git directive submodule mode src_name:ReadMe.rst src_line:90 _id:ReadMe.rst:90
+- XXX: maybe new type of directives for configuration: cron, munin-node, src_name:ReadMe.rst src_line:92 _id:ReadMe.rst:92
+hostname, hosts and fstab maybe. XXX: first try to use LINE for this? src_name:ReadMe.rst src_line:93 _id:ReadMe.rst:93
+- TODO: config may need interactive init. But can be avoided for now. src_name:ReadMe.rst src_line:95 _id:ReadMe.rst:95
+- TODO: add a simple frontend script to put in $PATH. src_name:ReadMe.rst src_line:97 _id:ReadMe.rst:97
+- TODO: handling of sudo. Can determine wether paths are writable, and do auto src_name:ReadMe.rst src_line:99 _id:ReadMe.rst:99
+- TODO: a source directive. As new directives are added it should be useful src_name:ReadMe.rst src_line:102 _id:ReadMe.rst:102
+- XXX: maybe use installer glob for INSTALL. But would need to map package names src_name:ReadMe.rst src_line:105 _id:ReadMe.rst:105
+- XXX: make directives optional. Maybe stick an asterix or q-mark to the keyword. Then src_name:ReadMe.rst src_line:108 _id:ReadMe.rst:108
+- XXX: at some point, replace cat $conf with something that handles SOURCE src_name:ReadMe.rst src_line:112 _id:ReadMe.rst:112
+- XXX: DIR directive, and consolidation asks for kind of interaction src_name:ReadMe.rst src_line:115 _id:ReadMe.rst:115
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+- XXX: for consolidation git can be used, no need to improve there? src_name:Specification.rst src_line:104 _id:Specification.rst:104
+need to be pushed. XXX: To keep no-push remotes some other function is src_name:Specification.rst src_line:114 _id:Specification.rst:114
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
+# FIXME: src_name:bash/darwin-profile src_line:10 https://www.iterm2.com/documentation-shell-integration.html _id:bash/darwin-profile:10
+# XXX: cleanup src_name:install-dependencies.sh src_line:74 _id:install-dependencies.sh:74
+# TODO: init ssh user config src_name:install/boilerplate-Darwin.u-c src_line:29 _id:install/boilerplate-Darwin.u-c:29
+# TODO: init gitconfig-user src_name:install/boilerplate-Darwin.u-c src_line:45 _id:install/boilerplate-Darwin.u-c:45
+# FIXME: proper init for projectdir document src_name:install/boilerplate-Darwin.u-c src_line:75 _id:install/boilerplate-Darwin.u-c:75
+# XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle src_name:install/boilerplate-Darwin.u-c src_line:106 _id:install/boilerplate-Darwin.u-c:106
+# FIXME: sync dirs.. src_name:install/boilerplate-Darwin.u-c src_line:185 _id:install/boilerplate-Darwin.u-c:185
+# TODO: shell profile and logout src_name:install/boilerplate-Linux.u-c src_line:17 _id:install/boilerplate-Linux.u-c:17
+# TODO: init ssh user config src_name:install/boilerplate-Linux.u-c src_line:21 _id:install/boilerplate-Linux.u-c:21
+# TODO pip docopt-mpe src_name:install/boilerplate-Linux.u-c src_line:47 _id:install/boilerplate-Linux.u-c:47
+# FIXME: proper init for projectdir document src_name:install/boilerplate-Linux.u-c src_line:69 _id:install/boilerplate-Linux.u-c:69
+# XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle src_name:install/boilerplate-Linux.u-c src_line:95 _id:install/boilerplate-Linux.u-c:95
+# TODO: shell profile and logout src_name:install/boilerplate-armv6l-raspberrypi.u-c src_line:19 _id:install/boilerplate-armv6l-raspberrypi.u-c:19
+# TODO: init ssh user config src_name:install/boilerplate-armv6l-raspberrypi.u-c src_line:23 _id:install/boilerplate-armv6l-raspberrypi.u-c:23
+# FIXME: proper init for projectdir document src_name:install/boilerplate-armv6l-raspberrypi.u-c src_line:53 _id:install/boilerplate-armv6l-raspberrypi.u-c:53
+# XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle src_name:install/boilerplate-armv6l-raspberrypi.u-c src_line:69 _id:install/boilerplate-armv6l-raspberrypi.u-c:69
+# FIXME: SH type glossary >/dev/null || $UCONF/install-dependencies.sh composure src_name:install/sandbox.u-c src_line:45 _id:install/sandbox.u-c:45
+# FIXME: configure HTDOCS repo src_name:install/sandbox.u-c src_line:59 _id:install/sandbox.u-c:59
+# XXX: ASSERT-DIR ~/.vim/autoload ~/.vim/bundle src_name:install/sandbox.u-c src_line:99 _id:install/sandbox.u-c:99
+# FIXME: - ./git/hooks/pre-commit-tabindent-check.sh brixadmin src_name:package.yml src_line:23 _id:package.yml:23
+# TODO: re-enable existing settings if line matches src_name:script/conf.lib.sh src_line:5 _id:script/conf.lib.sh:5
+# XXX: <keyword><sp> syntax does not help with shell script variables src_name:script/conf.lib.sh src_line:6 _id:script/conf.lib.sh:6
+echo 'TODO: setting-matches '$1' "'$2'"' src_name:script/conf.lib.sh src_line:49 _id:script/conf.lib.sh:49
+echo 'TODO: enable-line '$1' "'$2'"' src_name:script/conf.lib.sh src_line:57 _id:script/conf.lib.sh:57
+echo 'TODO: disable-line '$1:$2 src_name:script/conf.lib.sh src_line:65 _id:script/conf.lib.sh:65
+# XXX: no escape for insert string src_name:script/src.lib.sh src_line:71 _id:script/src.lib.sh:71
+# TODO: turn this on and fix tests warn "err() is deprecated, see stderr()" src_name:script/std.lib.sh src_line:66 _id:script/std.lib.sh:66
+# FIXME: core tool name src_name:script/std.lib.sh src_line:118 _id:script/std.lib.sh:118
+# XXX: looks like bashisms src_name:script/user-conf/lib.sh src_line:114 _id:script/user-conf/lib.sh:114
+# XXX AGE is eval'd in sequence, seems convenient for some meta dirs src_name:script/user-conf/lib.sh src_line:709 _id:script/user-conf/lib.sh:709
+#  # TODO: parse some expression for age: 1h 5min 5m etc. src_name:script/user-conf/lib.sh src_line:712 _id:script/user-conf/lib.sh:712
+# FIXME: move to init src_name:test/helper.bash src_line:3 _id:test/helper.bash:3
+# XXX path to shared script files src_name:test/helper.bash src_line:59 _id:test/helper.bash:59
+# currently usage is to mark test as skipped or 'TODO' per test case, based on src_name:test/helper.bash src_line:76 _id:test/helper.bash:76
+# XXX: cleanup src_name:test/helper.bash src_line:130 _id:test/helper.bash:130
+# XXX: clean me up to a test-helper func src_name:test/util-lib-spec.bats src_line:10 _id:test/util-lib-spec.bats:10
+syn keyword etTodo TODO FIXME XXX NOTE src_name:vim/syntax/user-config.vim src_line:23 _id:vim/syntax/user-config.vim:23

@@ -1,0 +1,41 @@
+# Found {name}-gh-travis in ../jenkins-templated-builds/dist/base.yaml
+# Using ENV.jtb_disabled for disabled=False
+# Using ENV.jtb_name for name='jnk/user-conf'
+- project:
+    jobs:
+    - '{name}-gh-travis':
+        branch: master
+        build-summary-image: ws/logo.png
+        concurrent: false
+        credentials-id: ''
+        disabled: false
+        email-individuals: false
+        email-to: ''
+        fail-on-error: '{fail-on-error}'
+        git-browser: githubweb
+        git-browser-url: https://github.com/
+        git-recursive-init: false
+        htmlDescription: "Build CI test for user-conf. \n"
+        jtb-files: .jtb.yml
+        metadata: []
+        parameters:
+        - bool:
+            description: 'Set to clean the workspace folder. WARNING: throws away
+              any consolidated, uncommitted files! '
+            name: REINIT
+        project-src: '*.rst,*.styl,*.yaml,*.js'
+        properties: []
+        publishers:
+        - tap:
+            results: build/test-results.tap
+        restrict-node: ''
+        title: User Conf CI Tests [Travis]
+        triggers:
+        - pollscm:
+            cron: '*/15 * * * *'
+        vendor-path: dotmpe/user-conf
+        vendor-repo: github
+        vendor-root: 'git@github.com:'
+        version: 0.0.1-dev
+    name: jnk/user-conf
+

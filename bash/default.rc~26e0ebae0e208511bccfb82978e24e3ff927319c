@@ -1,0 +1,192 @@
+#!/bin/bash
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# 2006--2017  Berend van Berkum <berend_dotmpe_com>
+
+
+# If not running interactively, don't do anything
+[ -z "$PS1" -a -z "$RC_ENV_OVERRIDE" ] && {
+  return
+}
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *)
+          test -n "$RC_ENV_OVERRIDE" || {
+            logger -p local0.info -t bash/$domain.rc \
+              "Not running interactively, no env profile"
+            return
+          }
+        ;;
+esac
+
+
+#export MPE_CONF_DEBUG=1
+
+[ "$MPE_CONF_DEBUG" ] && echo  "Sourcing ~/.bashrc (default)"
+
+test -n "$MPE_ENV_NAME" || {
+  test -n "$ENV_NAME" || ENV_NAME=$MPE_ENV_NAME
+}
+
+test -n "$MPE_ENV_NAME" || {
+  test -s ~/.env \
+    && export MPE_ENV_NAME=$(cat ~/.env) \
+    || export MPE_ENV_NAME=dev
+}
+
+
+test -n "$CS" || export CS=dark
+COLORIZE=1
+
+
+export CS
+
+
+
+shopt -s cmdhist
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+if [ -e ~/.conf/bash/lib.sh ]
+then
+  . ~/.conf/bash/lib.sh
+  bash_lib_load
+  record_env_keys 1-bashrc
+  unset tmpf
+fi
+
+
+### Auto-completion
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+  . /etc/bash_completion
+fi
+
+if [ -x "$(which grunt)" ]
+then
+# Tab completion for Gruntfiles
+  eval "$(grunt --completion=bash)"
+fi
+
+if [ "$(uname -s)" = "Darwin" ]
+then
+
+  if [ -f $(brew --prefix)/etc/bash_completion ]; then
+    #source $(brew --prefix)/share/bash-completion/bash_completion
+
+    # Define functions, and source files from BASH_COMPLETION_DIR
+    # Latter contains 195 files on my OSC-ML/Bash 4 env.
+    source $(brew --prefix)/etc/bash_completion
+
+  fi
+
+  # Bash completion has been installed to:
+  #BASH_COMPLETION_DIR=/usr/local/etc/bash_completion.d
+  # There is also another dir with a few but same files:
+  # $(brew --prefix)/share/bash-completion/completions
+
+fi
+
+
+
+### Colored prompt
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if test "$COLORIZE" = "1"
+then
+  CYAN="\[\033[1;36m\]"
+  YELLOW="\[\033[1;33m\]"
+  GREEN="\[\033[1;32m\]"
+  BLUE="\[\033[1;34m\]"
+  RED="\[\033[1;31m\]"
+  BWHITE="\[\033[1;37m\]"
+  if [ "$CS" = "dark" ]
+  then
+    NORMAL="\[\033[0;37m\]"
+    SEP="\[\033[1;38m\]"
+  else
+    NORMAL="\[\033[0;38m\]"
+    SEP="\[\033[1;30m\]"
+  fi
+else
+  CYAN=
+  YELLOW=
+  GREEN=
+  BLUE=
+  NORMAL=
+  SEP=
+fi
+PSEP="$BWHITE:$NORMAL"
+ISEP="$SEP \d$NORMAL"
+TSEP="${SEP}T$NORMAL"
+AOSEP="$SEP<$NORMAL"
+APSEP="$SEP>$NORMAL"
+PAT="$SEP@$NORMAL"
+
+
+if test "$COLORIZE" = "1"
+then
+
+  alias tree='tree -C'
+  case "$(uname)" in
+    Darwin )
+        alias ls='ls -G'
+      ;;
+    Linux )
+        alias ls='ls --color=auto'
+        #alias dir='dir --color=auto'
+        #alias vdir='vdir --color=auto'
+      ;;
+  esac
+  alias grep='grep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias egrep='egrep --color=auto'
+fi
+
+##LESS man page colors
+# Purple section titles and alinea leader IDs
+export LESS_TERMCAP_md=$'\E[01;35m'
+# Green keywords
+export LESS_TERMCAP_us=$'\E[01;32m'
+# Black on Yellow statusbar
+export LESS_TERMCAP_so=$'\E[00;43;30m'
+# Normal text
+export LESS_TERMCAP_me=$'\E[0m'
+export LESS_TERMCAP_ue=$'\E[0m'
+export LESS_TERMCAP_se=$'\E[0m'
+# Red?
+export LESS_TERMCAP_mb=$'\E[01;31m'
+
+
+
+# Set/handle TERM, or other specific envs
+#source ~/.conf/bash/terminal.sh
+
+# Per host PS1 env
+source ~/.conf/bash/prompt.sh
+
+# More per host and generic env
+source ~/.conf/bash/env.sh
+
+### Command aliases
+test ! -e ~/.alias || {
+  source ~/.alias
+}
+
+# For !! in prompt.
+# NOTE: causes all bashrc to be recorded too, keep at end.
+set -o history -o histexpand || printf ""
+
+# vim:ft=bash:
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
