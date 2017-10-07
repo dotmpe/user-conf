@@ -1,0 +1,20 @@
+1..16
+ok 1 bash/env.sh - should load, and print generic bash/env notice
+ok 2 bash/alias - should load, print nothing
+ok 3 bash/default.rc - should load, print nothing
+ok 4 bash/profile - should load, print nothing
+ok 5 ./script/../test/helper.bash - is_skipped: returns 0 if ENV_SKIP=1 or 1, no output
+ok 6 ./script/../test/helper.bash - current_test_env no args: echos valid env (TEST_ENV, host or user name), returns 0
+ok 7 ./script/../test/helper.bash - check_skipped_envs: returns 0 or 1, no output
+ok 8 ./script/../test/helper.bash - check_skipped_envs: check current env
+ok 9 ./script/std - std_v <n> should return 1 if <n> <= <verbosity>. No output.
+ok 10 ./script/std - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. 
+exit 0 ok
+ok 11 ./script/std - error should echo at verbosity>=3
+exit 0 call
+ok 12 ./script/std - info should echo at verbosity>=6
+exit 0 call
+ok 13 1. u-c update - executes SH directives, and by index number
+ok 14 2. u-c update - processes ENV directives, and by index number
+ok 15 ./script test run test functions to verify
+ok 16 ./script test run non-existing function to verify

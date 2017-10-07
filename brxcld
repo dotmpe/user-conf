@@ -1,0 +1,7 @@
+# htd run ci-job-update
+# htd run job-update
+
+jenkins-jobs --conf /etc/jenkins_jobs/jenkins_jobs.ini update ../jenkins-templated-builds/dist/base.yaml:.jtb-jjb.yml
+
+jenkins-jobs --conf /etc/jenkins_jobs/jenkins_jobs.ini update ../jenkins-templated-builds/dist/base.yaml:.jtb-update-jjb.yml
+
