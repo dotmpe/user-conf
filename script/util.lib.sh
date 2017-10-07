@@ -2,13 +2,8 @@
 
 set -e
 
-func_exists()
-{
-  type $1 2> /dev/null 1> /dev/null || return $?
-  return 0
-}
 
-
+# Load sh-lib on scriptpath
 lib_load()
 {
   local f_lib_load=
@@ -18,7 +13,7 @@ lib_load()
   do
     . $scriptpath/$1.lib.sh load-ext
     f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_load
-    # func_exists, then call
+    # again, func_exists is in sys.lib.sh. But inline here:
     type ${f_lib_load} 2> /dev/null 1> /dev/null && {
       ${f_lib_load}
     }

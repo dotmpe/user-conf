@@ -17,6 +17,24 @@ vc_gitdir()
   }
 }
 
+# See if path is in GIT checkout
+vc_isgit()
+{
+  test -e "$1" || err "vc-isgit expected path argument" 1
+  test -d "$1" || {
+    set -- "$(dirname "$1")"
+  }
+  while test "$1" != "/"
+  do
+    test -e $1/.git && {
+      echo "$1"
+      return
+    }
+    set -- "$(dirname "$1")"
+  done
+  return 1
+}
+
 vc_gitremote()
 {
   test -n "$1" || set -- "." "origin"
@@ -52,4 +70,3 @@ vc_gitdiff()
     return 2
   }
 }
-

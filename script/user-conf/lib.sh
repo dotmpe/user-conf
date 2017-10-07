@@ -22,6 +22,7 @@ test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
 . "$sh_lib"/sys.lib.sh
 . "$sh_lib"/conf.lib.sh
 
+test -n "$UCONF" || UCONF="$UCONFDIR"
 test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 
 test -n "$HOME" || error "no user dir set" 100
@@ -58,6 +59,7 @@ test -n "$choice_interactive" || {
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 c_initialize()
 {
+  test -n "$domain" || domain=default
   test "$hostname.$domain" = "$(hostname)" || {
     echo "$hostname.$domain" > $HOME/.domain
   }
@@ -285,8 +287,10 @@ d_SYMLINK_stat()
 
 ## Copy directive
 
-d_COPY()
+d_COPY() # SCM-Src-File Host-Target-File
 {
+  test -e "$1" &&
+    set -- "$(realpath "$1")" "$2"
   test -f "$1" || {
     error "not a file: $1"
     return 1
@@ -302,16 +306,17 @@ d_COPY()
 
     stat=0
     test -f "$2" && {
-      # Check existing COPY version
-      #diff -bqr "$2" "$1" >/dev/null || {
-      GITDIR=$UCONF vc_gitdiff "$1" "$2" || stat=$?
-
-        #trueish $choice_interactive && {
-        #  #echo | read -p 'Resolve using vimdiff?' resolve
-        #  #case "$resolve" in y )
-        #      vimdiff "$1" "$2"
-        #  #esac
-        #} || return 1
+      diff_copy "$1" "$2" || { stat=$?
+        diff -q "$1" "$2" && {
+           warn "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
+           return
+        }
+        # Check existing COPY version
+        trueish $choice_interactive && {
+          vimdiff "$1" "$2" </dev/tty >/dev/tty ||
+            warn "Interactive Diff still non-zero ($?)"
+        } || return 1
+      }
     } || {
       test ! -f "$2" && {
         error "Copy target path already exists and not a file '$2'"
@@ -351,8 +356,11 @@ d_COPY()
         return 1
         ;;
       update )
-        cp "$1" "$2"
-        log "New copy of '$1' at '$2'"
+        cp "$1" "$2" &&
+        log "New copy of '$1' at '$2'" || {
+          warn "Unable to copy '$1' at '$2'"
+          return 1
+        }
         ;;
     esac
   }
@@ -766,8 +774,10 @@ exec_dirs()
       debug "executed $directive $arguments_raw"
       echo "exec:$diridx" >>/tmp/uc-$dirs-passed
       continue
-    } || {
-      error "Failed ($?): $directive '$arguments'"
+    } || { r=$?
+      test "$RUN" = "stat" &&
+        error "Status warning ($r): $directive '$arguments'" ||
+        error "Failed ($r): $directive '$arguments'"
       echo "exec:$diridx" >>/tmp/uc-$dirs-failed
     }
 
@@ -862,5 +872,23 @@ c_commit()
   } || {
     error "dir looks dirty"
   }
+}
+
+# Use vc-gitdiff to check the file's checkout path and SHA1 object.
+# Here, also allow file to exist in different repository.
+diff_copy() # SCM-File Other-File
+{
+  case "$1" in
+    "$UCONF*" )
+        GITDIR=$UCONF vc_gitdiff "$1" "$2"
+        return $?
+      ;;
+    * )
+        GITDIR="$(vc_isgit "$1" || return 2)" \
+          vc_gitdiff "$1" "$2"
+        return $?
+      ;;
+  esac
+  return 2
 }
 
