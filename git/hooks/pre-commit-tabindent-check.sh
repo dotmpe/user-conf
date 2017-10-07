@@ -9,3 +9,5 @@ grep -lsrI '^\ \ \+' --exclude '*.rst' * && {
   echo "File indentation looks good"
   exit 0
 }
+
+# Id: user-conf/0.1.1-dev git/hooks/pre-commit-tabindent-check.sh

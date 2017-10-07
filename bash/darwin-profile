@@ -11,4 +11,4 @@ if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 #test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
 
 
-# Id: user-conf/0.1.0 bash/darwin-profile
+# Id: user-conf/0.1.1-dev bash/darwin-profile

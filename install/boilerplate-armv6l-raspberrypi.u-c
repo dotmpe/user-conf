@@ -96,4 +96,4 @@ WEB https://raw.github.com/perception101/pisense/master/pisense_ /etc/munin/plug
 #CONS-COPY $UCONF/munin/$hostname-node.conf /etc/munin/munin-node.conf
 
 
-# Id: user-conf/0.1.0 install/boilerplate-armv6l-raspberrypi.u-c
+# Id: user-conf/0.1.1-dev install/boilerplate-armv6l-raspberrypi.u-c

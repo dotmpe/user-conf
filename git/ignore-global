@@ -3,7 +3,7 @@
 # files excluded from versioning or cleaning.
 # Other files: git clean -df
 #
-# Id: user-conf/0.1.0 git/ignore-global
+# Id: user-conf/0.1.1-dev git/ignore-global
 
 
 # Generic

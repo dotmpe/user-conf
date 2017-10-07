@@ -23,4 +23,4 @@ grep -nsrI '^\t\+' \
   exit 0
 }
 
-# Id: user-conf/0.1.0 git/hooks/pre-commit-spaceindent-check.sh
+# Id: user-conf/0.1.1-dev git/hooks/pre-commit-spaceindent-check.sh

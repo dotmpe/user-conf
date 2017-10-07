@@ -57,5 +57,5 @@ fi
 source ~/.conf/bash/env.sh
 
 
-# Id: user-conf/0.1.0 bash/default.rc
+# Id: user-conf/0.1.1-dev bash/default.rc
 # vim:ft=bash:
