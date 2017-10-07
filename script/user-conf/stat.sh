@@ -9,7 +9,7 @@ run_stat()
 
   test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
   . "$uc_lib"/lib.sh
-  { c_stat "$@" || echo $? > $failed ; } \
+  { uc__stat "$@" || echo $? > $failed ; } \
     2>&1 | $UCONF/script/uc-colorize.sh
 
   test ! -e "$failed" || {

@@ -14,7 +14,7 @@ test ! -e ./build/test-results.tap ||
 log "Hostname: $(hostname)"
 
 exec 3> ./build/test-results.tap
-c_test "$@" 1>&3 || result=$?
+uc__test "$@" 1>&3 || result=$?
 exec 3<&-
 
 test ! -s build/test-results.tap || {
