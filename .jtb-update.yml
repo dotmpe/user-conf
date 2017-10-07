@@ -6,6 +6,7 @@
     name: user-conf
     defaults: std-freestyle-job
 
+    version: 0.1.1-dev # user-conf
     title: 'User Conf - Run'
     htmlDescription: "Init (first time), stat and update. "
     build-summary-image: 'ws/logo.png'
