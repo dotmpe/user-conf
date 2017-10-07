@@ -20,7 +20,7 @@ uc__help() {
 
 resolve_link() {
   readlink "$1"
-#$(type -p greadlink readlink | head -1) "$1"
+# FIXME: $(type -p greadlink readlink | head -1) "$1"
 }
 
 abs_dirname() {
