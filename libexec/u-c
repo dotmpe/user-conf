@@ -60,4 +60,4 @@ test ! -e $HOME/.user-conf.rc || {
 }
 export UCONF
 
-# Id: user-conf
+# Id: user-conf/0.1.0 libexec/u-c

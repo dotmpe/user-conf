@@ -39,4 +39,4 @@ test -e ~/.gitconfig -a ~/.alias &&
   alias vg="$EDITOR ~/.gitconfig $(echo $(grep '^\s*path\s*=' ~/.gitconfig | cut -d " " -f 3)); source ~/.alias"
 alias fname='find ./ -name '
 
-# Id: user-conf
+# Id: user-conf/0.1.0 bash/alias

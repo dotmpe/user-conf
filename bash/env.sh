@@ -224,4 +224,4 @@ case "$shopts" in
   ;;
 esac
 
-# Id: user-conf
+# Id: user-conf/0.1.0 bash/env.sh

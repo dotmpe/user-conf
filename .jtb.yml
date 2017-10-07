@@ -10,7 +10,7 @@
     htmlDescription: |
       Build CI test for user-conf. 
 
-    version: 0.0.1-dev # user-conf
+    version: 0.1.0 # user-conf
     jtb-files: .jtb.yml
     vendor-repo: github
     vendor-path: dotmpe/user-conf

@@ -20,3 +20,4 @@ install/boilerplate-Linux.u-c
 install/boilerplate-armv6l-raspberrypi.u-c
 install/sandbox.u-c
 libexec/u-c
+local-formats.sh

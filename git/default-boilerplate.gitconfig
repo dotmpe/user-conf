@@ -5,5 +5,5 @@
 [include]
   path = ~/.gitconfig-user
 
-# Id: user-conf/0.0.1-dev git/default-boilerplate.gitconfig
+# Id: user-conf/0.1.0 git/default-boilerplate.gitconfig
 # vim:ft=gitconfig:
