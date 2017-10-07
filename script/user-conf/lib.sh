@@ -57,7 +57,7 @@ test -n "$choice_interactive" || {
 # User-config holds directives for current env/host, make a copy to
 # install/$hostname.u-c of the first existing path in
 # boilerplate-{$machine,$uname,$domain,default}.u-c
-c_initialize()
+uc__initialize()
 {
   test -n "$domain" || domain=default
   test "$hostname.$domain" = "$(hostname)" || {
@@ -111,7 +111,7 @@ c_initialize()
   done
 }
 
-c_install()
+uc__install()
 {
   local conf=
   req_conf
@@ -119,7 +119,7 @@ c_install()
 }
 
 # Update host from provision and config directives
-c_update()
+uc__update()
 {
   local conf=
   req_conf
@@ -128,7 +128,7 @@ c_update()
 
 # Compare host with provision and config directives
 # 1:diridx
-c_stat()
+uc__stat()
 {
   local conf=
   req_conf
@@ -137,7 +137,7 @@ c_stat()
 
 # Add a new path to config (COPY directive only)
 # XXX: looks like bashisms
-c_add()
+uc__add()
 {
   case "$1" in
     SYMLINK|COPY ) ;;
@@ -183,17 +183,17 @@ c_add()
   git -c color.status=always status
 }
 
-c_copy()
+uc__copy()
 {
-  c_add COPY "$1"
+  uc__add COPY "$1"
 }
-c_symlink()
+uc__symlink()
 {
-  c_add SYMLINK "$1"
+  uc__add SYMLINK "$1"
 }
 
 # Run tests, some unittests on the Sh library
-c_test()
+uc__test()
 {
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
@@ -862,7 +862,7 @@ req_git_remote()
   }
 }
 
-c_commit()
+uc__commit()
 {
   test "$(pwd)" = "$UCONF" || cd $UCONF
   git diff --quiet && {

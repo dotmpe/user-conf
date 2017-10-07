@@ -10,7 +10,7 @@ test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
 
 # ----
 
-def_func=c_stat
+def_func=uc__stat
 
 
 # Main
@@ -27,7 +27,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
         cmd=$1
         test -n "$def_func" -a -z "$cmd" \
           && func=$def_func \
-          || func=$(echo c_$cmd | tr '-' '_')
+          || func=$(echo uc__$cmd | tr '-' '_')
 
         type $func &>/dev/null && {
           shift 1

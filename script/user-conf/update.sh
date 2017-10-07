@@ -9,7 +9,7 @@ run_update()
 
   test -n "$uc_lib" || uc_lib="$(cd "$(dirname "$0")"; pwd)"
   . "$uc_lib"/lib.sh
-  { c_update "$@" || echo $? > $failed ; } \
+  { uc__update "$@" || echo $? > $failed ; } \
     2>&1 | $UCONF/script/uc-colorize.sh
 
   test ! -e "$failed" || {
