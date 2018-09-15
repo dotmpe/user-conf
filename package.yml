@@ -9,6 +9,12 @@
   distribution: public
   license: GPL
 
+  repositories:
+    github: git@github.com:bvberkum/user-conf.git
+    notus.24-2: /srv/project-24-2-notus-brix/user-conf/.git
+    #notus.24-2: /srv/src-24-2-notus-brix/github.com/bvberkum/user-conf/.git
+    dotmpe.origin: domains/dotmpe.com/htdocs/git/user-conf.git
+
   pd-meta:
     init: "./install-dependencies.sh project dev"
     check: ""
@@ -31,6 +37,10 @@
     # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
     job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
     job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+
+    init:
+      - htd package update && htd package remotes-reset
+      - vc regenerate
 
     test:
       - htd run ci-job-check
