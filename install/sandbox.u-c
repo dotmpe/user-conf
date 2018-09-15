@@ -59,7 +59,7 @@ SH ssh-keyscan ssh.pcextreme.nl >> ~/.ssh/known_hosts
 #GIT git@github.com:bvberkum/script-mpe ~/bin uc-seed dev
 #GIT git@github.com:bvberkum/script-mpe ~/bin github dev
 # FIXME: configure HTDOCS repo
-#GIT dotmpe-com@ssh.pcextreme.nl:domains/dotmpe.com/htdocs/git/htdocs-mpe ~/htdocs
+#GIT dotmpe:domains/dotmpe.com/htdocs/git/htdocs-mpe ~/htdocs
 
 SYMLINK $UCONF/script/composure ~/.local/composure
 
