@@ -1,11 +1,10 @@
 # git-versioning main: user-conf
 
-- type: application/vnd.dotmpe.project
+- type: application/vnd.org.wtwta.project
   main: user-conf
   id: user-conf
   version: 0.0.1-dev # user-conf
-
-  vendor: dotmpe
+  vendor: bvberkum
   distribution: public
   license: GPL
 
@@ -16,6 +15,10 @@
     build: ""
     tasks:
       document: todo.txt
+
+  repositories:
+    github: git@github.com:bvberkum/user-conf.git
+    dotmpe: domains/dotmpe.com/htdocs/git/user-conf/.git
 
   scripts:
     ci: # Builds the CI tests
