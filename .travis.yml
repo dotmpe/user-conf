@@ -6,7 +6,7 @@ version: 0.2.0-dev # user-conf
 branches:
   only:
     - test
-    - r[0-9\.]*
+    - '/^r[0-9\.]*/'
 
 script:
   - test -x "$(which git)" && git status
