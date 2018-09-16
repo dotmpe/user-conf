@@ -4,7 +4,7 @@ install: ./install-dependencies.sh all test
 branches:
   only:
     - test
-    - dev
+    - '/^r[0-9\.]*/'
 
 script:
   - test -x "$(which git)" && git status
