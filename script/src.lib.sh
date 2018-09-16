@@ -27,6 +27,7 @@ file_insert_at()
   test -n "$1" || error "content expected" 1
   test -n "$*" || error "nothing to insert" 1
 
+  # Note: this loses trailing blank lines
   # use ed-script to insert second file into first at line
   stderr info "Inserting at $file_name:$line_number"
   echo "${line_number}a
@@ -37,10 +38,7 @@ w" | ed -s $file_name
 
 
 # Replace entire line using Sed
-file_replace_at_spc=" ( FILE:LINE | ( FILE LINE ) ) INSERT "
-# file-replace-at 1:file-name[:line-number] 2:content
-# file-replace-at 1:file-name 2:line-number 3:content
-file_replace_at()
+file_replace_at() # ( FILE:LINE | ( FILE LINE ) ) INSERT
 {
   test -n "$*" || error "arguments required" 1
   test -z "$4" || error "too many arguments" 1

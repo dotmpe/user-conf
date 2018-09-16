@@ -28,9 +28,21 @@ test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 test -n "$HOME" || error "no user dir set" 100
 test -e "$HOME" || error "no user dir" 100
 
+# All boxes
+test -n "$os_kernel" || os_kernel="$(uname -s)"
+test -n "$os_release" || os_release="$(uname -r)"
+test -n "$machine_type" || machine_type="$(uname -m)"
+test -n "$machine_processor" || machine_processor="$(uname -p)"
 
-test -n "$uname" || uname="$(uname -s)"
-test -n "$machine" || machine="$(uname -m)"
+# Not on Darwin
+test "$os_kernel" = "Darwin" && {
+  os_name=
+  machine_platform=
+} || {
+  test -n "$os_name" || os_name="$(uname -o || printf "" 2>/dev/null)"
+  test -n "$machine_platform" || machine_platform="$(uname -i || printf "" 2>/dev/null)"
+}
+
 test -n "$hostname" || {
   test -e $HOME/.domain &&  {
     hostname=$(cat $HOME/.domain | sed 's/^\([^\.]*\)\..*$/\1/g')
@@ -88,9 +100,18 @@ uc__initialize()
     return
   }
   local tpl=
-  for tag in $machine $uname $hostname default
+
+  { cat <<EOM
+
+install/boilerplate-$hostname.u-c
+install/boilerplate-$machine_type-$machine_processor.u-c
+install/boilerplate-$machine_type.u-c
+install/boilerplate-$os_kernel-$os_release.u-c
+install/boilerplate-$os_kernel.u-c
+
+EOM
+} | while read tpl
   do
-    tpl="install/boilerplate-$tag.u-c"
     test ! -e "$tpl" || {
       cp -v $tpl $conf
       note "Initialized $hostname from $tag boilerplate"
@@ -183,17 +204,17 @@ uc__add()
   git -c color.status=always status
 }
 
-uc__copy()
+c_copy()
 {
-  uc__add COPY "$1"
+  c_add COPY "$1"
 }
-uc__symlink()
+c_symlink()
 {
-  uc__add SYMLINK "$1"
+  c_add SYMLINK "$1"
 }
 
 # Run tests, some unittests on the Sh library
-uc__test()
+c_test()
 {
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
@@ -289,10 +310,9 @@ d_SYMLINK_stat()
 
 d_COPY() # SCM-Src-File Host-Target-File
 {
-  test -e "$1" &&
-    set -- "$(realpath "$1")" "$2"
+  test -e "$1" && set -- "$(realpath "$1")" "$2" "$1"
   test -f "$1" || {
-    error "not a file: $1"
+    error "not a file: $1 ($(pwd))"
     return 1
   }
 
@@ -300,20 +320,24 @@ d_COPY() # SCM-Src-File Host-Target-File
       copy_target="$(normalize_relative "$2/$(basename "$1")")"
       debug "Expanding '$2' to '$copy_target'"
       set -- "$1" "$copy_target"
-  } || noop
+  } || true
 
   test -e "$2" && {
 
+    test -w "$1" -a -w "$2" || {
+      warn "Setting sudo to access '$2' (for '$1')"
+      sudo="sudo "
+    }
     stat=0
     test -f "$2" && {
       diff_copy "$1" "$2" || { stat=$?
-        diff -q "$1" "$2" && {
+        ${sudo}diff -q "$1" "$2" && {
            warn "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
            return
         }
         # Check existing COPY version
         trueish $choice_interactive && {
-          vimdiff "$1" "$2" </dev/tty >/dev/tty ||
+          ${sudo}vimdiff "$1" "$2" </dev/tty >/dev/tty ||
             warn "Interactive Diff still non-zero ($?)"
         } || return 1
       }
@@ -341,7 +365,7 @@ d_COPY() # SCM-Src-File Host-Target-File
           return 1
         ;;
       update )
-          cp "$1" "$2" || {
+          ${sudo}cp "$1" "$2" || {
             log "Copy to $2 failed"
             return 1
           }
@@ -350,13 +374,17 @@ d_COPY() # SCM-Src-File Host-Target-File
 
   } || {
 
+    test -w "$1" -a -w "$(dirname "$2")" || {
+      warn "Setting sudo to access '$(dirname $2)' (for '$1')"
+      sudo="sudo "
+    }
     case "$RUN" in
       stat )
         log "Missing copy of '$1' at '$2'"
         return 1
         ;;
       update )
-        cp "$1" "$2" &&
+        ${sudo}cp "$1" "$2" &&
         log "New copy of '$1' at '$2'" || {
           warn "Unable to copy '$1' at '$2'"
           return 1
@@ -767,7 +795,7 @@ exec_dirs()
         echo "eval:$diridx" >>/tmp/uc-$dirs-failed
         continue
       }
-    } || noop
+    } || true
 
     # Execute directive
     $func_name $arguments && {
@@ -830,7 +858,7 @@ req_git_age()
   #  age_expr=$(echo $(grep -i '^AGE\ GIT\ ') | cut -d ' ' -f 3)
   #  # TODO: parse some expression for age: 1h 5min 5m etc.
   #  GIT_AGE="$age_expr"
-  #} || noop
+  #} || true
 
   test -n "$GIT_AGE" || {
     GIT_AGE=$_5MIN
@@ -891,4 +919,3 @@ diff_copy() # SCM-File Other-File
   esac
   return 2
 }
-

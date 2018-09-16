@@ -1,13 +1,13 @@
 #!/bin/bash
-
-
 uname=$(uname)
 
 case "$uname" in
+
   Darwin )
       esc=`echo -e '\033'`
     ;;
-  Linux )
+
+  Linux | CYGWIN_NT-* )
       # For GNU sed: \o033
       esc=`echo -e '\o33'`
 
@@ -17,6 +17,8 @@ case "$uname" in
           ;;
       esac
     ;;
+
+  * ) error "No stdio-type for $uname" 1 ;;
 esac
 
 

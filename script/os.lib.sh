@@ -1,7 +1,15 @@
 #!/bin/sh
 
+
 # OS: files, paths
 
+
+short()
+{
+  test -n "$1" || set -- "$(pwd)"
+  # XXX maybe replace python script. Only replaces home
+  $HOME/bin/short-pwd.py -1 "$1"
+}
 
 
 

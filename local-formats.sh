@@ -6,7 +6,7 @@ getVersion_local()
   case "$1" in
 
     *.gitconfig )
-        get_unix_comment_id $1
+        get_unix_comment_id "$1"
       ;;
 
     * )
@@ -21,7 +21,7 @@ applyVersion_local()
   case "$1" in
 
     *.gitconfig )
-        apply_commonUnixComment $1
+        apply_commonUnixComment "$1"
       ;;
 
     * )
@@ -31,4 +31,4 @@ applyVersion_local()
   esac
 }
 
-# Id: user-conf/0.1.1-dev local-formats.sh
+# Id: user-conf/0.2.0-dev local-formats.sh

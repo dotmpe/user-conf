@@ -3,7 +3,7 @@
 - type: application/vnd.org.wtwta.project
   main: user-conf
   id: user-conf
-  version: 0.0.1-dev # user-conf
+  version: 0.0.2-dev # user-conf
   vendor: bvberkum
   distribution: public
   license: GPL
@@ -29,32 +29,34 @@
 
   scripts:
     ci: # Builds the CI tests
-      - ./git/hooks/pre-commit-spaceindent-check.sh '*'
-      # FIXME: - ./git/hooks/pre-commit-tabindent-check.sh brixadmin
+      - git-versioning check
+      - ./tools/git/hooks/pre-commit-spaceindent-check.sh '*'
+      # FIXME setup or remove tab-check ./tools/git/hooks/pre-commit-tabindent-check.sh
       - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
       - ./tools/ci/test.sh
 
     # Check/update the CI tests job of user-conf for Jenkins
-    ci-job-check: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-    ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    #ci-job-check: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
+    #ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
 
     # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
-    job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
-    job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+    #job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
+    #job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
 
     init:
       - htd package update && htd package remotes-reset
       - vc regenerate
 
     test:
-      - htd run ci-job-check
-      - htd run job-check
+      #- htd run ci-job-check
+      #- htd run job-check
       - htd run ci
 
     update:
-      - htd run ci-job-update
+      #- htd run ci-job-update
       - htd run job-update
 
     tasks:
-      - htd tasks --Check-All-Tags --Check-All-Files
+      #- htd tasks --Check-All-Tags --Check-All-Files
+      - Check_All_Tags=1 Check_All_Files=1 htd tasks scan
 

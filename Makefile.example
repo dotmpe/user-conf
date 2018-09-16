@@ -6,4 +6,4 @@ test::
 	./script/user-conf/test.sh
 
 
-# Id: user-conf/0.1.1-dev Makefile.example
+# Id: user-conf/0.2.0-dev Makefile.example

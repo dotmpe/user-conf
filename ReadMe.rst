@@ -1,7 +1,8 @@
 User-Config
 ===========
 :Created: 2015-10-03
-:Version: 0.1.1-dev
+:Updated: 2018-09-16
+:Version: 0.2.0-dev
 :Project:
 
   .. image:: https://secure.travis-ci.org/bvberkum/user-conf.png
@@ -92,12 +93,7 @@ Dev
 - XXX: maybe new type of directives for configuration: cron, munin-node,
   hostname, hosts and fstab maybe. XXX: first try to use LINE for this?
 
-- TODO: config may need interactive init. But can be avoided for now.
-
 - TODO: add a simple frontend script to put in $PATH.
-
-- TODO: handling of sudo. Can determine wether paths are writable, and do auto
-  root. Maybe stick a decorator to directive to always run with sudo.
 
 - TODO: a source directive. As new directives are added it should be useful
   create generic bits of ufile with var. directives and distribute ucfiles in bits.

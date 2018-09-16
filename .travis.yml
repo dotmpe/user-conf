@@ -1,18 +1,16 @@
 
 install: ./install-dependencies.sh all test
 
-version: 0.1.1-dev # user-conf
+version: 0.2.0-dev # user-conf
 
 branches:
   only:
     - test
-    - dev
+    - r[0-9\.]*
 
 script:
   - test -x "$(which git)" && git status
   - case "$REINIT" in 1|true) git clean -dfx ./ ;; esac
-  - set -e
-  - . ./bash/env.sh
   - ./tools/ci/test.sh
   - test -x "$(which git)" && git status
 

@@ -32,3 +32,8 @@ fnmatch()
   case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
 }
 
+# Remove last n chars from stream at stdin
+strip_last_nchars() # Num
+{
+  rev | cut -c $(( 1 + $1 ))- | rev
+}

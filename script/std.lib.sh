@@ -11,7 +11,7 @@ stdio_type()
   test -x "$(which file)" || error "file util required for stdio-type" 1
   case "$uname" in
 
-    Linux )
+    Linux | CYGWIN_NT-* )
         test -n "$2" && pid=$2 || pid=$$
         test -e /proc/$pid/fd/${io} || error "No $uname FD $io"
         if readlink /proc/$pid/fd/$io | grep -q "^pipe:"; then
@@ -35,6 +35,7 @@ stdio_type()
         fi
       ;;
 
+    * ) error "No stdio-type for $uname" 1 ;;
   esac
 }
 
