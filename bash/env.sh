@@ -156,7 +156,7 @@ case "$hostname" in
 
   sandbox* )
     export HTDIR=$HOME/htdocs
-    export HTD_GIT_REMOTE=dotmpe
+    export HTD_GIT_REMOTE=bvberkum
 
     init_user_env
     init_uconfdir_path

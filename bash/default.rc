@@ -1,6 +1,6 @@
 #!/bin/bash
 # ~/.bashrc: executed by bash(1) for non-login shells.
-# 2006--2015  Berend van Berkum <berend_dotmpe_com>
+# 2006--2018  Berend van Berkum <berend_dotmpe_com>
 
 
 # If not running interactively or already initialized, don't do anything

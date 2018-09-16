@@ -13,7 +13,7 @@
     version: 0.1.0 # user-conf
     jtb-files: .jtb.yml
     vendor-repo: github
-    vendor-path: dotmpe/user-conf
+    vendor-path: bvberkum/user-conf
     branch: master
     project-src: '*.rst,*.styl,*.yaml,*.js'
     email-individuals: false

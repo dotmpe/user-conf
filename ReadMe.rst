@@ -4,12 +4,12 @@ User-Config
 :Version: 0.1.0
 :Project:
 
-  .. image:: https://secure.travis-ci.org/dotmpe/user-conf.png
-    :target: https://travis-ci.org/dotmpe/user-conf
+  .. image:: https://secure.travis-ci.org/bvberkum/user-conf.png
+    :target: https://travis-ci.org/bvberkum/user-conf
     :alt: Build
 
-  .. image:: https://badge.fury.io/gh/dotmpe%2Fuser-conf.png
-    :target: http://badge.fury.io/gh/dotmpe%2Fuser-conf
+  .. image:: https://badge.fury.io/gh/bvberkum%2Fuser-conf.png
+    :target: http://badge.fury.io/gh/bvberkum%2Fuser-conf
     :alt: GIT
 
 A dotfile repository, with shell scripts for misc. provisioning and
@@ -121,4 +121,3 @@ Dev
 
 .. _Specification: Specification.rst
 .. _Manual: Manual.rst
-
