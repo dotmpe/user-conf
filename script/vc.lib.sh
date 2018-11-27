@@ -6,33 +6,31 @@ set -e
 vc_gitdir()
 {
   test -n "$1" || set -- "."
-  test -d "$1" || err "vc-gitdir expected dir argument" 1
-  test -z "$2" || err "vc-gitdir surplus arguments" 1
+  test -e "$1" -a -d "$1" || set -- "$(dirname "$1")"
+  test -d "$1" || error "vc-gitdir expected dir argument: '$1'" 1
+  test -z "$2" || error "vc-gitdir surplus arguments: '$2'" 1
 
-  test -d "$1/.git" && {
-    echo "$1/.git"
-  } || {
-    test "$1" = "." || cd $1
-    git rev-parse --git-dir 2>/dev/null
-  }
+  local pwd="$(pwd)"
+  cd "$1"
+  repo=$(git rev-parse --git-dir 2>/dev/null)
+  while fnmatch "*/.git/modules*" "$repo"
+  do repo="$(dirname "$repo")" ; done
+  test -n "$repo" || return 1
+  echo "$repo"
+  #repo="$(git rev-parse --show-toplevel)"
+  #echo $repo/.git
+  cd "$pwd"
 }
 
 # See if path is in GIT checkout
 vc_isgit()
 {
-  test -e "$1" || err "vc-isgit expected path argument" 1
+  test -e "$1" || error "vc-isgit expected path argument: '$1'" 1
+  test -z "$2" || error "vc-isgit surplus arguments: '$2'" 1
   test -d "$1" || {
     set -- "$(dirname "$1")"
   }
-  while test "$1" != "/"
-  do
-    test -e $1/.git && {
-      echo "$1"
-      return
-    }
-    set -- "$(dirname "$1")"
-  done
-  return 1
+  ( cd "$1" && go_to_dir_with .git || return 1 )
 }
 
 vc_gitremote()
@@ -51,11 +49,11 @@ vc_gitremote()
 # and that its the currently checked out version.
 vc_gitdiff()
 {
-  test -n "$1" || err "vc-gitdiff expected src" 1
-  test -n "$2" || err "vc-gitdiff expected trgt" 1
-  test -z "$3" || err "vc-gitdiff surplus arguments" 1
-  test -n "$GITDIR" || err "vc-gitdiff expected GITDIR env" 1
-  test -d "$GITDIR" || err "vc-gitdiff GITDIR env is not a dir" 1
+  test -n "$1" || error "vc-gitdiff expected src" 1
+  test -n "$2" || error "vc-gitdiff expected trgt" 1
+  test -z "$3" || error "vc-gitdiff surplus arguments" 1
+  test -n "$GITDIR" || error "vc-gitdiff expected GITDIR env" 1
+  test -d "$GITDIR" || error "vc-gitdiff GITDIR env is not a dir" 1
 
   target_sha1="$(git hash-object "$2")"
   co_path="$(cd $GITDIR;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"

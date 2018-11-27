@@ -2,7 +2,7 @@
 
 set -e
 
-stderr()
+stderr_()
 {
   echo "$log_pref$1" >&2
   test -z "$2" || exit $2
@@ -24,7 +24,7 @@ test -z "$Build_Deps_Default_Paths" || {
       || PREFIX=$HOME/.local
   }
 
-  stderr "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
+  stderr_ "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
 }
 
 test -n "$sudo" || sudo=
@@ -37,10 +37,11 @@ test -w /usr/local || {
 }
 
 test -n "$SRC_PREFIX" ||
-  stderr "Not sure where to checkout (SRC_PREFIX missing)" 1
+  stderr_ "Not sure where to checkout (SRC_PREFIX missing)" 1
 
 test -n "$PREFIX" ||
-  stderr "Not sure where to install (PREFIX missing)" 1
+  stderr_ "Not sure where to install (PREFIX missing)" 1
+
 
 test -d $SRC_PREFIX || ${pref} mkdir -vp $SRC_PREFIX
 test -d $PREFIX || ${pref} mkdir -vp $PREFIX
@@ -48,11 +49,11 @@ test -d $PREFIX || ${pref} mkdir -vp $PREFIX
 
 install_uc()
 {
-  stderr "Installing User-Conf"
+  stderr_ "Installing User-Conf"
   test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
   test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/bvberkum/user-conf.git
   test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
-  test ! -d "$UCONF_DIR" || stderr "$UCONF_DIR exists" 1
+  test ! -d "$UCONF_DIR" || stderr_ "$UCONF_DIR exists" 1
   git clone https://github.com/bvberkum/user-conf.git $UCONF_DIR
   cd $UCONF_DIR
   git checkout $UCONF_BRANCH --
@@ -62,7 +63,7 @@ install_uc()
 
 install_bats()
 {
-  stderr "Installing bats"
+  stderr_ "Installing bats"
   test -n "$BATS_BRANCH" || BATS_BRANCH=master
   test -n "$BATS_REPO" || BATS_REPO=https://github.com/bvberkum/bats.git
   test -d $SRC_PREFIX/bats || {
@@ -84,7 +85,7 @@ install_composer()
   $PREFIX/bin/composer --version
   . ~/.conf/bash/env.sh
   test -x "$(which composer)" ||
-    stderr "Composer is installed but not found on PATH! Aborted. " 1
+    stderr_ "Composer is installed but not found on PATH! Aborted. " 1
   # XXX: cleanup
   #test -e composer.json && {
   #  test -e composer.lock && {
@@ -94,17 +95,23 @@ install_composer()
   #    composer install
   #  }
   #} || {
-  #  stderr "No composer.json"
+  #  stderr_ "No composer.json"
   #}
 }
 
 install_docopt()
 {
   test -n "$install_f" || install_f="$py_setup_f"
-  git clone https://github.com/bvberkum/docopt-mpe.git $SRC_PREFIX/docopt-mpe
-  ( cd $SRC_PREFIX/docopt-mpe \
-      && git checkout 0.6.x \
-      && $pref python ./setup.py install $install_f )
+  local src=github.com/bvberkum/docopt-mpe
+
+  test -d $src || {
+    mkdir -p "$(dirname "$src")"
+    git clone "https://$src.git" "$SRC_PREFIX/$src"
+  }
+  ( cd $SRC_PREFIX/$src &&
+      git checkout 0.6.x &&
+      $pref python ./setup.py install $install_f &&
+      git checkout . && git clean -dfx )
 }
 
 install_git_versioning()
@@ -121,7 +128,7 @@ main_entry()
 
   case "$1" in all|project|test|git )
       git --version >/dev/null ||
-        stderr "Sorry, GIT is a pre-requisite" 1
+        stderr_ "Sorry, GIT is a pre-requisite" 1
     ;; esac
 
   case "$1" in pip|python )
@@ -158,26 +165,26 @@ main_entry()
       test -x "$(which basher)" || {
         git clone https://github.com/basherpm/basher.git ~/.basher
         . bash/env.sh
-        test -x "$(which basher)" && stderr "basher installed correctly" || stderr "missing basher" 1
+        test -x "$(which basher)" && stderr_ "basher installed correctly" || stderr_ "missing basher" 1
       }
       basher update
     ;; esac
 
-  stderr "OK. All pre-requisites for '$1' checked"
+  stderr_ "OK. All pre-requisites for '$1' checked"
 }
 
 main_load()
 {
   #test -x "$(which tput)" && ...
   log_pref="[install-dependencies] "
-  stderr "Loaded"
+  stderr_ "Loaded"
 }
 
 
 {
   test "$(basename "$0")" = "install-dependencies.sh" ||
   test "$(basename "$0")" = "bash" ||
-    stderr "0: '$0' *: $*" 1
+    stderr_ "0: '$0' *: $*" 1
 } && {
   test -n "$1" -o "$1" = "-" || set -- all
   while test -n "$1"

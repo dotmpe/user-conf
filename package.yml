@@ -23,9 +23,9 @@
     tasks:
       document: todo.txt
 
-  repositories:
-    github: git@github.com:bvberkum/user-conf.git
-    dotmpe: domains/dotmpe.com/htdocs/git/user-conf/.git
+  lists:
+    documents:
+      exts: .rst
 
   scripts:
     ci: # Builds the CI tests

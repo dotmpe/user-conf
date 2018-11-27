@@ -64,6 +64,11 @@ log()
 
 err()
 {
+  warn "err() is deprecated, see stderr()"
+  test -z "$3" || {
+    echo "Surplus arguments '$3'"
+    exit 123
+  }
   # TODO: turn this on and fix tests warn "err() is deprecated, see stderr()"
   log "$1" 1>&2
   test -z "$2" || exit $2

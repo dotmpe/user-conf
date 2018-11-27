@@ -5,8 +5,8 @@
 
 sys_lib_load()
 {
-  test -n "$hostname" || hostname=$(hostname -s | tr 'A-Z' 'a-z')
-  test -n "$uname" || uname="$(uname -s)"
+  test -n "$uname" || export uname="$(uname -s)"
+  test -n "$hostname" || export hostname="$(hostname -s | tr 'A-Z' 'a-z')"
 }
 
 # Error unless non-empty and true-ish value

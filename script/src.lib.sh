@@ -27,8 +27,9 @@ file_insert_at()
   test -n "$1" || error "content expected" 1
   test -n "$*" || error "nothing to insert" 1
 
-  # Note: this loses trailing blank lines
   # use ed-script to insert second file into first at line
+  # Note: this loses trailing blank lines
+  # XXX: should not have ed period command. Cannot sync this function, file-insert-at
   stderr info "Inserting at $file_name:$line_number"
   echo "${line_number}a
 $1
