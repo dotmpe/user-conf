@@ -10,7 +10,6 @@ hostname, hosts and fstab maybe. XXX: first try to use LINE for this? src_name:R
 - XXX: DIR directive, and consolidation asks for kind of interaction src_name:ReadMe.rst src_line:115 _id:ReadMe.rst:115
 - XXX: for consolidation git can be used, no need to improve there? src_name:Specification.rst src_line:104 _id:Specification.rst:104
 need to be pushed. XXX: To keep no-push remotes some other function is src_name:Specification.rst src_line:114 _id:Specification.rst:114
-# FIXME: - ./tools/git/hooks/pre-commit-tabindent-check.sh brixadmin src_name:package.yml src_line:23 _id:package.yml:23
 # TODO: re-enable existing settings if line matches src_name:script/conf.lib.sh src_line:5 _id:script/conf.lib.sh:5
 # XXX: <keyword><sp> syntax does not help with shell script variables src_name:script/conf.lib.sh src_line:6 _id:script/conf.lib.sh:6
 echo 'TODO: setting-matches '$1' "'$2'"' src_name:script/conf.lib.sh src_line:49 _id:script/conf.lib.sh:49
