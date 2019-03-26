@@ -10,10 +10,10 @@ uc_lib=script/user-conf
 mkdir -vp build
 test ! -e ./build/test-results.tap || rm ./build/test-results.tap
 
-exec 3> ./build/test-results.tap
-#uc__test "$@" 1>&3 || result=$?
-bats test/*-spec.bats 1>&3 || result=$?
-exec 3<&-
+exec 5> ./build/test-results.tap
+#uc__test "$@" 1>&5 || result=$?
+bats test/*-spec.bats 1>&5 || result=$?
+exec 5<&-
 
 test ! -s ./build/test-results.tap || {
   log "Test results:"
@@ -25,3 +25,6 @@ test -n "$result" -o "$result" = "0" &&
   log "Test OK"
 
 exit $result
+
+# Sync: BIN:
+# Sync: U-S:
