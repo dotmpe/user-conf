@@ -3,8 +3,8 @@
 base=../test/helper.bash
 load helper
 init
-. $lib/std.lib.sh
-. $lib/str.lib.sh
+. $lib/std-uc.lib.sh
+. $lib/str-uc.lib.sh
 
 
 @test "${lib}/${base} - is_skipped: returns 0 if ENV_SKIP=1 or 1, no output" {

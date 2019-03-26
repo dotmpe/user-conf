@@ -37,3 +37,5 @@ strip_last_nchars() # Num
 {
   rev | cut -c $(( 1 + $1 ))- | rev
 }
+
+# Sync: CONF:

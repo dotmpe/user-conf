@@ -25,6 +25,3 @@ test -n "$result" -o "$result" = "0" &&
   log "Test OK"
 
 exit $result
-
-# Sync: BIN:
-# Sync: U-S:

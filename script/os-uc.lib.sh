@@ -3,7 +3,7 @@
 
 # OS: files, paths
 
-os_lib_load()
+os_uc_lib_load()
 {
   test -n "$uname" || uname="$(uname -s)"
   test -n "$os" || os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -11,16 +11,16 @@ os_lib_load()
 
   # Set vars for GNU variants
   test -n "$gsed" || case "$uname" in
-      Linux ) gsed=sed ;; * ) gsed=gsed ;;
+      linux ) gsed=sed ;; * ) gsed=gsed ;;
   esac
   test -n "$ggrep" || case "$uname" in
-      Linux ) ggrep=grep ;; * ) ggrep=ggrep ;;
+      linux ) ggrep=grep ;; * ) ggrep=ggrep ;;
   esac
   test -n "$gstat" || case "$uname" in
-      Linux ) gstat=stat ;; * ) gstat=gstat ;;
+      linux ) gstat=stat ;; * ) gstat=gstat ;;
   esac
   test -n "$gtr" || case "$uname" in
-      Linux ) gtr=tr ;; * ) gtr=gtr ;;
+      linux ) gtr=tr ;; * ) gtr=gtr ;;
   esac
 }
 
@@ -38,10 +38,10 @@ filesize() # File
 {
   local flags=- ; file_stat_flags
   case "$uname" in
-    Darwin )
+    darwin )
         stat -f '%z' $flags "$1" || return 1
       ;;
-    Linux )
+    linux )
         stat -c '%s' $flags "$1" || return 1
       ;;
     * ) error "filesize: $1?" 1 ;;
@@ -52,11 +52,11 @@ filemtime() # File
 {
   local flags=- ; file_stat_flags
   case "$uname" in
-    Darwin )
+    darwin )
         trueish "$file_names" && pat='%N %m' || pat='%m'
         stat -f "$pat" $flags "$1" || return 1
       ;;
-    Linux )
+    linux )
         trueish "$file_names" && pat='%N %Y' || pat='%Y'
         stat -c "$pat" $flags "$1" || return 1
       ;;
@@ -138,3 +138,5 @@ go_to_dir_with()
 
   test -e "$1" || return 1
 }
+
+# Sync: CONF:

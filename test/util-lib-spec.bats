@@ -4,7 +4,7 @@ load helper
 load util-ex.inc
 
 init
-source $lib/util.lib.sh
+source $lib/util-uc.lib.sh
 
 
 # XXX: clean me up to a test-helper func

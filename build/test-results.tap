@@ -6,11 +6,3 @@ ok 4 ./script/../test/helper.bash - check_skipped_envs: check current env
 ok 5 ./script/std - std_v <n> should return 1 if <n> <= <verbosity>. No output.
 ok 6 ./script/std - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. 
 exit 0 ok
-ok 7 ./script/std - error should echo at verbosity>=3
-exit 0 call
-ok 8 ./script/std - info should echo at verbosity>=6
-exit 0 call
-ok 9 1. u-c update - executes SH directives, and by index number
-ok 10 2. u-c update - processes ENV directives, and by index number
-ok 11 ./script test run test functions to verify
-ok 12 ./script test run non-existing function to verify

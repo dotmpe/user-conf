@@ -3,7 +3,7 @@
 # Sys: lower level Sh helpers; dealing with vars, functions, and other shell
 # idiosyncrasies.
 
-sys_lib_load()
+sys_uc_lib_load()
 {
   test -n "$uname" || export uname="$(uname -s)"
   test -n "$hostname" || export hostname="$(hostname -s | tr 'A-Z' 'a-z')"
@@ -36,13 +36,13 @@ create_ram_disk()
 
   case "$uname" in
 
-    Darwin )
+    darwin )
         local size=$(( $2 * 2048 ))
         diskutil erasevolume 'Case-sensitive HFS+' \
           "$1" `hdiutil attach -nomount ram://$size`
       ;;
 
-      # Linux
+      # linux
       # mount -t tmpfs -o size=512m tmpfs /mnt/ramdisk
 
     * )
@@ -272,3 +272,5 @@ fi
 #  clsp
 #fi
 #ipython -c "import curses;v=curses.initscr();x=v.getmaxyx();curses.endwin();print x[0]*'\n'"
+
+# Sync: CONF:

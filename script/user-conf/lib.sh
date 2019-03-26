@@ -12,15 +12,17 @@ test -x "$uc_lib"/update.sh || exit 95
 
 test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
 
-. "$sh_lib"/std.lib.sh
-. "$sh_lib"/str.lib.sh
-. "$sh_lib"/src.lib.sh
-. "$sh_lib"/match.lib.sh
-. "$sh_lib"/os.lib.sh
-. "$sh_lib"/date.lib.sh
-. "$sh_lib"/vc.lib.sh
-. "$sh_lib"/sys.lib.sh
-. "$sh_lib"/conf.lib.sh
+. "$sh_lib"/std-uc.lib.sh
+. "$sh_lib"/str-uc.lib.sh
+. "$sh_lib"/src-uc.lib.sh
+. "$sh_lib"/match-uc.lib.sh
+. "$sh_lib"/os-uc.lib.sh
+. "$sh_lib"/date-uc.lib.sh
+. "$sh_lib"/vc-uc.lib.sh
+. "$sh_lib"/sys-uc.lib.sh
+. "$sh_lib"/conf-uc.lib.sh
+os_uc_lib_load
+sys_uc_lib_load
 
 test -n "$UCONF" || UCONF="$UCONFDIR"
 test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"

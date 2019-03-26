@@ -11,7 +11,7 @@ stdio_type()
   test -x "$(which file)" || error "file util required for stdio-type" 1
   case "$uname" in
 
-    Linux | CYGWIN_NT-* )
+    linux | cygwin_nt-* )
         test -n "$2" && pid=$2 || pid=$$
         test -e /proc/$pid/fd/${io} || error "No $uname FD $io"
         if readlink /proc/$pid/fd/$io | grep -q "^pipe:"; then
@@ -23,7 +23,7 @@ stdio_type()
         fi
       ;;
 
-    Darwin )
+    darwin )
 
         test -e /dev/fd/${io} || error "No $uname FD $io"
         if file /dev/fd/$io | grep -q 'named.pipe'; then
@@ -169,3 +169,4 @@ case "$0" in "" ) ;; "-"* ) ;; * )
 
 ;; esac
 
+# Sync: CONF:
