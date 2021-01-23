@@ -4,16 +4,13 @@
   main: user-conf
   id: user-conf
   version: 0.0.1-dev # user-conf
-  vendor: bvberkum
+  vendor: dotmpe
   distribution: public
   license: GPL
 
   repositories:
-    github: git@github.com:bvberkum/user-conf.git
-    notus.24-2: /srv/project-24-2-notus-brix/user-conf/.git
-    #notus.24-2: /srv/src-24-2-notus-brix/github.com/bvberkum/user-conf/.git
-    notus.24-2: /srv/scm-git-24-2-notus-brix/bvberkum/user-conf.git
-    dotmpe.origin: domains/dotmpe.com/htdocs/git/user-conf.git
+    github: git@github.com:dotmpe/user-conf.git
+    dotmpe.origin: git-repos/user-conf.git
 
   pd-meta:
     init: "./install-dependencies.sh project dev"
@@ -23,33 +20,21 @@
     tasks:
       document: todo.txt
 
-  repositories:
-    github: git@github.com:bvberkum/user-conf.git
-    dotmpe: domains/dotmpe.com/htdocs/git/user-conf/.git
-
   scripts:
     ci: # Builds the CI tests
-      - ./git/hooks/pre-commit-spaceindent-check.sh '*'
-      # FIXME: - ./git/hooks/pre-commit-tabindent-check.sh brixadmin
       - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
       - ./tools/ci/test.sh
-
-    # Check/update the CI tests job of user-conf for Jenkins
-    ci-job-check: "DRY=1 jtb_name=jnk/user-conf ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-    ci-job-update: "rm -f .jtb-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb.yml "
-
-    # Check/update the U-C update job of user-conf (ie. continuous delivery) for Jenkins
-    job-check: "DRY=1 jtb_name=jnk/user-conf-update ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
-    job-update: "rm -f .jtb-update-jjb.yml && DRY=0 jtb_jenkins_home=/var/jenkins_home jtb_workspace=/var/jenkins_home/.conf jtb_name=jnk/user-conf-update jtb_disabled=false ../jenkins-templated-builds/bin/jtb.sh update-jtb .jtb-update.yml "
 
     init:
       - htd package update && htd package remotes-reset
       - vc regenerate
 
     test:
-      - htd run ci-job-check
-      - htd run job-check
-      - htd run ci
+      - ./run-dev.sh ./bin/uc info
+      - ./run-dev.sh dash -lic './bin/uc info'
+      - ./run-dev.sh bash -lic './bin/uc info'
+      #- ./run-dev.sh dash -lic './bin/uc init'
+      #- htd run ci
 
     update:
       - htd run ci-job-update
@@ -58,3 +43,4 @@
     tasks:
       - htd tasks --Check-All-Tags --Check-All-Files
 
+#

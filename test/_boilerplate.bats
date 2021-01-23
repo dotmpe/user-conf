@@ -13,7 +13,7 @@ init
 }
 
 @test "${lib}/${base} - function should ..." {
-  TODO something # tasks-ignore
+  check_skipped_envs travis
   run function args
   test_ok_nonempty || stdfail
 }

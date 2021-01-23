@@ -156,3 +156,4 @@ tmpd()
   mkdir -vp $tmpd
 }
 
+# Id: U-c:test/helper.bash

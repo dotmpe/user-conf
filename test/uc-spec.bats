@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-base=boilerplate
+base=uc
 load helper
 init
 
