@@ -7,3 +7,5 @@ fnmatch()
 {
   case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
 }
+
+# Derive: U-S:src/sh/lib/str.lib.sh

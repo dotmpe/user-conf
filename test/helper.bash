@@ -38,7 +38,7 @@ type test_ok_nonempty >/dev/null 2>&1 || {
 # Set env and other per-specfile init
 test_init()
 {
-  test -n "$uname" || uname=$(uname)
+  true "${uname:=$( uname -s | tr '[:upper:]' '[:lower:]' )}"
   hostname_init
 }
 

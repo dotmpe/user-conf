@@ -93,3 +93,5 @@ enable_setting()
   # Add enabled line
   add_setting $1 "" "$2"
 }
+
+# Sync: U-S:src/sh/lib/conf.lib.sh

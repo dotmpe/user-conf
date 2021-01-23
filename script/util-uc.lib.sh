@@ -53,3 +53,4 @@ case "$0" in "" ) ;; "-"* ) ;; * )
 
 # Id: user-conf/0.0.1-dev script/util.lib.sh
 # From: script-mpe/0.0.4-dev util.sh
+# Sync: CONF:

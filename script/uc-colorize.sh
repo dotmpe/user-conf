@@ -3,11 +3,11 @@ uname=$(uname)
 
 case "$uname" in
 
-  Darwin )
+  darwin )
       esc=`echo -e '\033'`
     ;;
 
-  Linux | CYGWIN_NT-* )
+  linux | cygwin_nt-* )
       # For GNU sed: \o033
       esc=`echo -e '\o33'`
 
@@ -34,3 +34,4 @@ sed -E '
 #    s/^\[(.*)\]\ Warning:/\\033[1;30m\[\1\]\\033[0;33m\ Warning:\\033[0m/g
 #    s/^\[(.*)\]\ Notice:/\\033[1;30m\[\1\]\\033[0;34m\ Notice:\\033[0m/g
 #    s/\*/\\&/g
+# Id: user-conf/0.2.0-dev script/uc-colorize.sh

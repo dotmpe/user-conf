@@ -118,3 +118,5 @@ get_lines()
 
   tail -n +$line_number $file_name | head -n $1
 }
+
+# Sync: U-S:src/sh/lib/str.lib.sh
