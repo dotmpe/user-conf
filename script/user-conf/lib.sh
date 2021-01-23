@@ -1,70 +1,89 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Created: 2015-09-21
+
+test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
 
 set -e
+. "$sh_lib"/shell-uc.lib.sh
+shell_uc_lib_load
 
-# some sanity checks
-test -s "$uc_lib"/lib.sh || exit 99
-test -x "$uc_lib"/install.sh || exit 97
-test -x "$uc_lib"/init.sh || exit 98
-test -x "$uc_lib"/add.sh || exit 97
-test -x "$uc_lib"/stat.sh || exit 96
-test -x "$uc_lib"/update.sh || exit 95
+test $IS_BASH_SH -eq 1 && {
+  set -o nounset -o pipefail
 
-test -n "$sh_lib" || sh_lib="$(dirname $uc_lib)"
+  # setting errtrace allows our ERR trap handler to be propagated to functions,
+  #  expansions and subshells
+  set -o errtrace
 
-. "$sh_lib"/std.lib.sh
-. "$sh_lib"/str.lib.sh
-. "$sh_lib"/src.lib.sh
-. "$sh_lib"/match.lib.sh
-. "$sh_lib"/os.lib.sh
-. "$sh_lib"/date.lib.sh
-. "$sh_lib"/vc.lib.sh
-. "$sh_lib"/sys.lib.sh
-. "$sh_lib"/conf.lib.sh
+  # trap ERR to provide an error handler whenever a command exits nonzero
+  #  this is a more verbose version of set -o errexit
+  . "$sh_lib"/bash-uc.lib.sh
+  trap 'bash_uc_errexit' ERR
+}
 
-test -n "$UCONF" || UCONF="$UCONFDIR"
-test -n "$UCONF" || UCONF="$(dirname "$sh_lib")"
 
-test -n "$HOME" || error "no user dir set" 100
+test $IS_DASH_SH -eq 1 &&
+  set -o nounset
+
+# load and init lib parts
+. "$sh_lib"/std-uc.lib.sh
+. "$sh_lib"/str-uc.lib.sh
+. "$sh_lib"/src-uc.lib.sh
+. "$sh_lib"/match-uc.lib.sh
+. "$sh_lib"/os-uc.lib.sh
+. "$sh_lib"/date-uc.lib.sh
+. "$sh_lib"/vc-uc.lib.sh
+. "$sh_lib"/sys-uc.lib.sh
+. "$sh_lib"/conf-uc.lib.sh
+
+sys_uc_lib_load
+std_uc_lib_load
+os_uc_lib_load
+
+test -n "${HOME-}" || error "no user dir set" 100
 test -e "$HOME" || error "no user dir" 100
 
 # All boxes
-test -n "$os_kernel" || os_kernel="$(uname -s)"
-test -n "$os_release" || os_release="$(uname -r)"
-test -n "$machine_type" || machine_type="$(uname -m)"
-test -n "$machine_processor" || machine_processor="$(uname -p)"
+true "${os_kernel:="$(uname -s)"}"          # Eg. 'Linux'
+true "${os_release:="$(uname -r)"}"         # Version nr
+true "${machine_type:="$(uname -m)"}"       # Eg. x86_64
+true "${machine_processor:="$(uname -p)"}"
 
 # Not on Darwin
 test "$os_kernel" = "Darwin" && {
   os_name=
   machine_platform=
 } || {
-  test -n "$os_name" || os_name="$(uname -o || printf "" 2>/dev/null)"
-  test -n "$machine_platform" || machine_platform="$(uname -i || printf "" 2>/dev/null)"
+  true "${os_name:="$(uname -o)"}"
+  true "${machine_platform:="$(uname -i)"}"
 }
 
-test -n "$hostname" || {
-  test -e $HOME/.domain &&  {
-    hostname=$(cat $HOME/.domain | sed 's/^\([^\.]*\)\..*$/\1/g')
-    domain=$(cat $HOME/.domain | sed 's/^[^\.]*\.//g')
-  } || {
-    hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
-  }
+test -e $HOME/.statusdir/tree/domain &&  {
+  hostname=$(cat $HOME/.statusdir/tree/domain | sed 's/^\([^\.]*\)\..*$/\1/g')
+  domain=$(cat $HOME/.statusdir/tree/domain | sed 's/^[^\.]*\.//g')
+} || {
+  hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
+  domain="$(hostname -f | cut -c$(( ${#hostname} + 2 ))-)"
 }
-test -n "$username" || username=$(whoami)
-test -n "$verbosity" || verbosity=5
+hostdom=$hostname-$domain
+# XXX: vol_id=$disk_id-$part_id
 
-stdio_type 0
-stdio_type 1
-stdio_type 2
+true "${username:=$(whoami)}"
+test -z "${v-}" || verbosity=$v
+true "${verbosity:=5}"
+true "${choice_interactive:=$( test -t 0 && echo 1 || echo 0 )}"
+true "${human_out:=$( test -t 1 && echo 1 || echo 0 )}"
 
-# setup default options
-test -n "$choice_interactive" || {
-  case "$stdio_1_type" in t )
-    choice_interactive=true ;;
-  esac
+test -n "${TMP-}" -a -w "${TMP-}" || {
+	test -w /tmp && TMP=/tmp || {
+		TMP=$HOME/.local/tmp
+		mkdir -p $TMP
+	}
 }
 
+uc_cache_ttl=3600
+
+
+# Functions
 
 # User-config holds directives for current env/host, make a copy to
 # install/$hostname.u-c of the first existing path in
@@ -117,25 +136,13 @@ EOM
       note "Initialized $hostname from $tag boilerplate"
       break
     }
-    for path in install/boilerplate-$tag*.u-c
-    do
-      test -e "$path" || continue
-      echo "Found path for tag '$tag': $path"
-      printf "Use? [yN] " use
-      read -r use
-      case "$use" in Y|y)
-        cp -v $path $conf
-        note "Initialized $hostname"
-        return
-      esac
-    done
   done
 }
 
 uc__install()
 {
   local conf=
-  req_conf
+  req_conf || return
   exec_dirs install "$1" $conf || return $?
 }
 
@@ -143,8 +150,8 @@ uc__install()
 uc__update()
 {
   local conf=
-  req_conf
-  exec_dirs update "$1" $conf || return $?
+  req_conf || return
+  exec_dirs update "${1-}" $conf || return $?
 }
 
 # Compare host with provision and config directives
@@ -152,8 +159,8 @@ uc__update()
 uc__stat()
 {
   local conf=
-  req_conf
-  exec_dirs stat "$1" $conf || return $?
+  req_conf || return
+  exec_dirs stat "${1-}" $conf || return $?
 }
 
 # Add a new path to config (COPY directive only)
@@ -170,7 +177,7 @@ uc__add()
     basedir="$(cd $(dirname "$2"); pwd -P)"
   # Start off u-c env
   local pwd=$(pwd) conf=
-  req_conf
+  req_conf || return
 
   local toadd=$basedir/$basename
 
@@ -214,7 +221,7 @@ c_symlink()
 }
 
 # Run tests, some unittests on the Sh library
-c_test()
+uc__test()
 {
   test -n "$UCONF" || error "? $UCONF=" 1
   cd $UCONF || error "? cd $UCONF" 1
@@ -310,39 +317,55 @@ d_SYMLINK_stat()
 
 d_COPY() # SCM-Src-File Host-Target-File
 {
+  local sudor= sudow= sudod=
   test -e "$1" && set -- "$(realpath "$1")" "$2" "$1"
   test -f "$1" || {
     error "not a file: $1 ($(pwd))"
     return 1
   }
 
-  test -e "$2" -a -d "$2" && {
+  { test -r "$2" -o ! -e "$2" ;} && {
+    { test -w "$2" -o ! -e "$2" ;} || {
+      test ${warn_on_sudo:-1} -eq 0 || {
+        warn "Setting sudo to write '$2' (for '$1')"
+      }
+      sudow="sudo "
+    }
+  } || {
+    test ${warn_on_sudo:-1} -eq 0 || {
+      warn "Setting sudo to read '$2' (for '$1')"
+    }
+    sudor="sudo "
+  }
+
+  ${sudor}test -e "$2" -a -d "$2" && {
       copy_target="$(normalize_relative "$2/$(basename "$1")")"
       debug "Expanding '$2' to '$copy_target'"
       set -- "$1" "$copy_target"
   } || true
 
-  test -e "$2" && {
+  ${sudor}test -e "$2" && {
+    # Existing copy
 
     test -w "$1" -a -w "$2" || {
       warn "Setting sudo to access '$2' (for '$1')"
       sudo="sudo "
     }
     stat=0
-    test -f "$2" && {
+    ${sudor}test -f "$2" && {
       diff_copy "$1" "$2" || { stat=$?
-        ${sudo}diff -q "$1" "$2" && {
-           warn "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
+        ${sudor}diff -q "$1" "$2" && {
+           note "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
            return
         }
         # Check existing COPY version
-        trueish $choice_interactive && {
-          ${sudo}vimdiff "$1" "$2" </dev/tty >/dev/tty ||
+        test $choice_interactive -eq 1 && {
+          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty ||
             warn "Interactive Diff still non-zero ($?)"
         } || return 1
       }
     } || {
-      test ! -f "$2" && {
+      ${sudor}test ! -f "$2" && {
         error "Copy target path already exists and not a file '$2'"
         return 2
       }
@@ -350,7 +373,7 @@ d_COPY() # SCM-Src-File Host-Target-File
 
     case "$stat" in
       0 )
-          info "Up to date with '$1' at '$2'"
+          std_info "Up to date with '$1' at '$2'"
           return
         ;;
       2 )
@@ -365,7 +388,7 @@ d_COPY() # SCM-Src-File Host-Target-File
           return 1
         ;;
       update )
-          ${sudo}cp "$1" "$2" || {
+          ${sudow}cp "$1" "$2" || {
             log "Copy to $2 failed"
             return 1
           }
@@ -374,9 +397,12 @@ d_COPY() # SCM-Src-File Host-Target-File
 
   } || {
 
-    test -w "$1" -a -w "$(dirname "$2")" || {
-      warn "Setting sudo to access '$(dirname $2)' (for '$1')"
-      sudo="sudo "
+    # New copy
+    test -w "$(dirname "$2")" || {
+      test ${warn_on_sudo:-1} -eq 0 || {
+        warn "Setting sudo to access '$(dirname $2)' (for '$1')"
+      }
+      sudod="sudo "
     }
     case "$RUN" in
       stat )
@@ -384,7 +410,7 @@ d_COPY() # SCM-Src-File Host-Target-File
         return 1
         ;;
       update )
-        ${sudo}cp "$1" "$2" &&
+        ${sudod}cp "$1" "$2" &&
         log "New copy of '$1' at '$2'" || {
           warn "Unable to copy '$1' at '$2'"
           return 1
@@ -409,23 +435,25 @@ d_COPY_stat()
 
 d_WEB()
 {
-  test -n "$1" || error "expected url" 1
-  test -n "$2" || error "expected target path" 1
-  test -z "$4" || error "surplus params: '$4'" 1
+  test -n "$1" || error "expected url for $diridx:WEB" 1
+  test -n "$2" || error "expected target path for $dirix:WEB <$1>" 1
+  test $# -lt 4 || error "surplus params: '$4'" 1
 
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
-    || error "target must be existing directory or a new name in one: $2" 1
+    || error "target must be existing directory or a new name in one: $2 "\
+"(for $diridx:WEB)" 1
 
   test -d "$2" && {
       test "$(basename "$1")" != "$1" \
-        || error "cannot get target basename from URL '$1', please provide full path" 1
+        || error "cannot get target basename from URL '$1', please provide "\
+"full path (for $diridx:WEB)" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3"
   }
 
   case "$RUN" in update ) PREF= ;; stat ) PREF="echo '** DRY-RUN **: '" ;; esac
 
   test -e "$2" && {
-    tmpf=/tmp/$(uuidgen)
+    tmpf=$TMP/$(uuidgen)
     curl -sq $1 -o $tmpf || {
       error "Unable to fetch '$1' to $tmpf"
       return 1
@@ -436,7 +464,7 @@ d_WEB()
     }
 
     diff -bq $2 $tmpf && {
-      info "Up to date with web at $2"
+      std_info "Up to date with web at $2"
     } || {
       ${PREF}cp $tmpf $2
       note "Updated $2 from $1"
@@ -464,12 +492,12 @@ d_WEB_stat()
 
 d_GIT()
 {
-  test -n "$1" || error "expected url" 1
-  test -n "$2" || error "expected target path" 1
-  test -n "$3" || set -- "$1" "$2" "origin" "$4" "$5"
-  test -n "$4" || set -- "$1" "$2" "$3" "master" "$5"
-  test -n "$5" || set -- "$1" "$2" "$3" "$4" "clone"
-  test -z "$6" || error "surplus params: '$6'" 1
+  test -n "$1" || error "expected url for $diridx:GIT" 1
+  test -n "$2" || error "expected target path for $diridx:GIT <$1>" 1
+  test -n "${3-}" || set -- "$1" "$2" "origin" "${4-}" "${5-}"
+  test -n "${4-}" || set -- "$1" "$2" "$3" "master" "${5-}"
+  test -n "${5-}" || set -- "$1" "$2" "$3" "$4" "clone"
+  test $# -lt 6 || error "surplus params: '$6'" 1
 
   test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
     || error "target must be existing directory or a new name in one: $2" 1
@@ -481,7 +509,8 @@ d_GIT()
   test ! -e "$2" -a -d "$(dirname "$2")" || {
     test -e "$2/.git" && req_git_remote "$1" "$2" "$3" || {
       test "$(basename "$1" .git)" != "$1" \
-        || error "cannot get target basename from GIT '$1', please provide full checkout path" 1
+        || error "cannot get target basename from GIT <$1>, please provide "\
+"full check path (for $diridx:GIT)" 1
       set -- "$1" "$2/$(basename $1 .git)" "$3" "$4" "$5"
     }
   }
@@ -493,50 +522,70 @@ d_GIT()
   case "$5" in
 
     clone )
-      test -e "$2/.git" && {
-        cd $2; git diff --quiet && {
+      test -e "$2/.git" && { ( cd $2
+
+        git diff --quiet && {
           gitdir="$(vc_gitdir)"
-          test -d "$gitdir" || error "cannot determine gitdir at '$2'" 1
-          {
-            test -e $gitdir/FETCH_HEAD && {
+          test -d "$gitdir" || error "cannot determine gitdir at <$2>" 1
+          { { test -e $gitdir/FETCH_HEAD || {
+              std_info "No FETCH_HEAD in <$2>" ; false; }
+            } && {
               newer_than $gitdir/FETCH_HEAD $GIT_AGE
-            } || {
-              info "No FETCH_HEAD in $2"
-              test # break to '||' and do first-time fetch
             }
           } || {
-            info "Fetching $2 branch $4 from remote $3"
-            ${PREF}git fetch -q $3 $4 2>/dev/null || {
-              error "Error fetching remote $3 for $2"; return 1; }
+            std_info "Fetching <$2> branch '$4' from remote '$3'"
+            test "$RUN" = stat && {
+              git fetch --dry-run -q $3 $4 || true
+            } || {
+              git fetch -q $3 $4 2>/dev/null || {
+                error "Error fetching remote $3 for $2"; return 1; }
+            }
           }
-          debug "Comparing $2 branch $4 with remote $3 ref"
+          debug "Comparing <$2> branch '$4' with remote '$3' ref"
           git diff --quiet && {
+            git show-ref --quiet $3/$4 || {
+              warn "No ref '$3/$4'"
+              return 1
+            }
             git diff --quiet $3/$4..HEAD && {
               test "$4" = "master" \
-                && info "Checkout $2 clean and up-to-date" \
-                || info "Checkout $2 clean and up-to-date at branch $4"
+                && std_info "Checkout $2 clean and up-to-date" \
+                || std_info "Checkout $2 clean and up-to-date at branch $4"
             } || {
-              warn "Checkout $2 clean but not in sync with $3 at branch $4"
-              test # break and to co/pull
+
+              # Try to merge remote, but only not if bare. NOTE: need to keep .git
+              # at remote URLs for to denote bare, strip .../.git from checkout.
+              fnmatch "*/.git " "$1" && return
+
+              note "Checkout <$2> clean but not in sync with '$3' at branch '$4'"
+              false # break to co/pull
             }
           } || {
-            ${PREF}git checkout $4
-            ${PREF}git pull $3 $4
+            test -e ".git/refs/heads/$4" || {
+              ${PREF}git checkout -b $4 -t $3/$4 || return
+            }
+            ${PREF}git checkout $4 -- || return
+            ${PREF}git pull $3 $4 || return
+            test ! -e .gitmodules || { # XXX: assumes always need modules
+              git submodule update --init
+            }
             test "$4" = "master" \
-              && note "Updated $2 from remote $3" \
-              || note "Updated $2 from remote $3 (at branch $4)"
+              && note "Updated <$2> from remote '$3'" \
+              || note "Updated <$2> from remote '$3' (at branch $4)"
             case "$RUN" in update ) ;; * ) return 1 ;; esac
           }
         } || {
           test "$4" = "master" \
-            && warn "Checkout at $2 looks dirty" \
-            || warn "Checkout of $4 at $2 looks dirty"
+            && warn "Checkout at <$2> looks dirty" \
+            || warn "Checkout of '$4' at <$2> looks dirty"
           return 1
         }
+        ) || return
+
       } || {
         test "$4" = "master" \
-          && note "Checkout missing at $2" \
-          || note "Checkout of $4 missing at $2"
+          && note "Checkout missing at <$2>" \
+          || note "Checkout of '$4' missing at <$2>"
         ${PREF}git $5 "$1" "$2" --origin $3 --branch $4
         case "$RUN" in update ) ;; * ) return 1 ;; esac
       } ;;
@@ -605,14 +654,16 @@ d_BASH_exec()
 d_AGE_exec()
 {
   set -- $@
-  test -n "$1" || error "expected additional property for age" 1
-  test -n "$2" || error "expected age" 1
-  test -z "$3" || error "surplus params: '$3'" 1
+  test $# -lt 3 || error "AGE surplus params: '$3'" 1
+  test $# -eq 1 && set -- "CACHE" "$1"
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
     GIT )
       printf "export GIT_AGE=$2"
-      note "Max. GIT remote ref age to $2 seconds"
+      std_info "Max. GIT remote ref age to $2 seconds"
+    ;;
+    * )
+      printf "export %s_AGE=%s" "$@"
     ;;
   esac
 }
@@ -623,7 +674,7 @@ d_AGE_exec()
 # print missing/mismatching packages
 d_INSTALL_list_APT()
 {
-  out=/tmp/bin-apt-installed.list
+  out=$TMP/bin-apt-installed.list
   dpkg-query -l >$out
   for pack in $@
   do
@@ -638,7 +689,7 @@ d_INSTALL_list_BREW()
 
 d_INSTALL_list_PIP()
 {
-  out=/tmp/bin-pip-installed.list
+  out=$TMP/bin-pip-installed.list
   pip list >$out
   for pack in $@
   do
@@ -686,19 +737,39 @@ d_INSTALL_BIN()
 
 # Misc. utils
 
-# get conf env, and chdir to user-conf repo-checkout dir.
-req_conf() {
-  test -e Ucfile && conf=Ucfile \
-    || test -e Userconf && conf=Userconf \
-    || conf=install/$hostname.u-c
-  test -e $conf && return
-  cd $UCONF
-  conf=install/$hostname.u-c
+# get conf env: the u-c file for this host and all its includes
+req_conf ()
+{
+  test -n "$conf" ||
+    for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
+    do
+      test -e $UCONF/Ucfile &&
+        conf=$UCONF/Ucfile || {
+        test -e $UCONF/install/local.u-c && {
+          conf=$UCONF/install/local.u-c
+        } || {
+          test -e $UCONF/install/$hostname.u-c && {
+            conf=$UCONF/install/$hostname.u-c
+          }
+        }
+      }
+      test -n "${conf-}" && break
+    done
+
   test -e $conf || error "no such user-config $conf" 1
+
+  # Put UCONFDIR into static user env / profile to preempt and use single
+  # user-config dir [TODO-A]
+  true "${UCONF:="${UCONFDIR-"$(dirname "$(realpath "$conf")")"}"}"
+  true "${UCONFDIR:="$UCONF"}"
+
   conf="$(echo $conf $(verbose=false exec_dirs include $conf))"
+  note "Using U-c '$conf'"
 }
 
-prep_dir_func() {
+# Private helper for exec_dirs
+_prep_dir_func () # Action
+{
   test -n "$directive" || error "empty directive" 1
   directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
   arguments="$arguments_raw"
@@ -732,7 +803,7 @@ prep_dir_func() {
       test -n "$arguments" && {
         note "#$diridx $packager missing packages: $arguments"
       } || {
-        info "Nothing to install for #$diridx $packager"
+        std_info "Nothing to install for #$diridx $packager"
         return 1
       }
       ;;
@@ -751,7 +822,7 @@ prep_dir_func() {
     INCLUDE )
       case $1 in include) ;; * ) return ;; esac
       arguments="$(eval echo "$arguments_raw")"
-      echo $arguments
+      echo "$arguments"
       ;;
 
     * ) error "Unknown directive $directive" 1 ;;
@@ -759,21 +830,62 @@ prep_dir_func() {
   esac
 }
 
-# Eval/
-exec_dirs()
+# Set cache and result files
+uc_reset_report () # Index
 {
-  local dirs=$1 func_name= arguments= diridx=0 idx=$2
+  test -z "${1-}" && {
+    results=$TMP/$$-uc-$hostdom.list
+    uc_cache=$HOME/.statusdir/cache/uc-$hostdom.list
+  } || {
+    results=$TMP/$$-uc-$hostdom-$1.list
+    uc_cache=$HOME/.statusdir/cache/uc-$hostdom-$1.list
+  }
+}
+
+# Move last result to cache location
+uc_commit_report ()
+{
+  cat "$results" >"$uc_cache"
+  rm "$results"
+}
+
+# Load last results
+uc_report ()
+{
+  test -n "${uc_cache-}" || uc_reset_report
+  test -e "$uc_cache" || {
+    error "No results"
+    return 1
+  }
+
+  passed="$(grep '^ok ' "$uc_cache" | count_lines )"
+  failed="$(grep -v '^ok ' "$uc_cache" | count_lines )"
+  directives="$(count_lines "$uc_cache")"
+}
+
+# Dynamic Eval of directives from u-c file, pref-dir-func maps each directive
+# to a function with name ``d_<DIRECTIVE>_<function>()``.
+# Use index argument to select single line to execute
+exec_dirs () # Action Directive-Index read-args..
+{
+  test $# -ge 3 || return 98
+  local action=$1 func_name= arguments= diridx=0 idx=${2-}
+  uc_reset_report $2
   shift 2
-  rm -f /tmp/uc-$dirs-passed /tmp/uc-$dirs-failed
   read_nix_style_files $@ | while read directive arguments_raw
+  #OLDIFS="$IFS"
+  #IFS=$'\n'; for directive_line in $( read_nix_style_files $@ | lines )
   do
+    #IFS="$OLDIFS"
+    #directive="${directive_line/ *}"
+    #arguments_raw="${directive_line:$(( ${#directive} + 1 ))}"
     diridx=$(( $diridx + 1 ))
 
     #printf -- "'$directive' '$arguments_raw'\n"
     # look for function or skip
-    prep_dir_func $dirs || {
+    _prep_dir_func $action || {
       r=$?; test $r -gt 1 || continue
-      echo "prepare:$diridx" >>/tmp/uc-$dirs-failed
+      echo "err:$r prepare:$diridx $directive $arguments_raw" >>"$results"
       error "Error preparing directive $directive $arguments_raw" $r
     }
 
@@ -786,69 +898,38 @@ exec_dirs()
     # Evaluate before function
     test -n "$gen_eval" && {
       gen=$($gen_eval "$arguments")
+      local r
       eval $gen && {
-        info "evaluated $directive $arguments_raw"
-        echo "exec:$diridx" >>/tmp/uc-$dirs-passed
+        debug "evaluated $directive $arguments_raw"
+        echo "ok eval:$diridx $directive $arguments_raw" >>"$results"
         continue
-      } || {
-        error "Evaluation failure ($?): in $directive with '$arguments'"
-        echo "eval:$diridx" >>/tmp/uc-$dirs-failed
+      } || { r=$?
+        error "Evaluation failure ($r): in $directive with '$arguments'"
+        echo "fail:$r eval:$diridx $directive $arguments_raw" >>"$results"
         continue
       }
     } || true
 
     # Execute directive
+    local r
     $func_name $arguments && {
       debug "executed $directive $arguments_raw"
-      echo "exec:$diridx" >>/tmp/uc-$dirs-passed
+      echo "ok exec:$diridx $directive $arguments_raw" >>"$results"
       continue
     } || { r=$?
-      test "$RUN" = "stat" &&
-        error "Status warning ($r): $directive '$arguments'" ||
-        error "Failed ($r): $directive '$arguments'"
-      echo "exec:$diridx" >>/tmp/uc-$dirs-failed
+      test "${RUN:-}" = "stat" &&
+        std_info "Status warning ($r): $directive '$arguments'" ||
+        debug "Failed ($r): $directive '$arguments'"
+      echo "fail:$r exec:$diridx $directive $arguments_raw" >>"$results"
     }
 
   done
 
-  test -n "$verbose" || verbose=true
-
   local ret=0
 
-  trueish "$verbose" && {
-    local failed=0 passed=0
-    cln_out "/tmp/uc-$dirs-passed"; passed=$lines
-    cln_out "/tmp/uc-$dirs-failed"; failed=$lines
-
-    info "Passed: $passed, Failed: $failed"
-
-    test $passed -gt 0 -a $failed -eq 0 && {
-      note "All $passed directives passed"
-    }
-    test $passed -gt 0 || {
-      error "No directive ran successfully"
-      ret=1
-    }
-    test $failed -eq 0 || {
-      warn "Failed $failed directives"
-      ret=3
-    }
-  }
-
-  return $ret
+  uc_commit_report
+  uc__status
 }
-
-# Cleanup exec_dirs outputs after run
-cln_out()
-{
-  test ! -s "$1" && lines=0 || {
-    lines=$(wc -l $1 | awk '{print $1}')
-    rm -f $1
-    return 1
-  }
-  test ! -e "$1" || rm "$1"
-}
-
 
 # Get or set default GIT age
 req_git_age()
@@ -862,7 +943,7 @@ req_git_age()
 
   test -n "$GIT_AGE" || {
     GIT_AGE=$_5MIN
-    note "Max. GIT remote ref age set to $GIT_AGE seconds"
+    debug "Max. GIT remote ref age set to $GIT_AGE seconds"
   }
 }
 
@@ -871,12 +952,12 @@ req_git_remote()
   test -n "$1" || error "expected url" 1
   test -d "$2" || error "expected checkout dir '$2'" 1
   test -n "$3" || set -- "$1" "$2" "origin"
-  test -z "$4" || error "req-git-remote surplus arguments" 1
+  test $# -lt 4 || error "req-git-remote surplus arguments" 1
 
   gitdir="$(vc_gitdir "$2")"
   url="$(cd "$2"; git config remote.${3}.url)"
   test -n "$url" && {
-    test "$url" = "$1" || {
+    test "$url" = "$1" -o "$url" = "$1/.git" || {
       error "Checkout exists at path $2 for $3 <$url> not <$1>"
       return 1
     }
@@ -894,9 +975,9 @@ uc__commit()
 {
   test "$(pwd)" = "$UCONF" || cd $UCONF
   git diff --quiet && {
-    git commit -m "At $hostname"
-    git pull
-    git push
+    git commit -m "At $hostname" || return
+    git pull || return
+    git push || return
   } || {
     error "dir looks dirty"
   }
@@ -918,4 +999,83 @@ diff_copy() # SCM-File Other-File
       ;;
   esac
   return 2
+}
+
+uc__help ()
+{
+  echo "See doc/user-conf.rst"
+}
+
+uc__status ()
+{
+  local ret=0
+  uc_report
+
+  test $verbosity -ge 5 && {
+    ~/.conf/script/uc-colorize.sh <"$uc_cache"
+  } || {
+    test $verbosity -ge 3 && {
+      grep -v '^ok ' "$uc_cache" | ~/.conf/script/uc-colorize.sh
+    }
+  }
+
+  std_info "Passed: $passed, Failed: $failed"
+  test $passed -gt 0 -a $failed -eq 0 && {
+    note "All $passed directives passed"
+  }
+
+  test $passed -gt 0 || {
+    error "No directive ran successfully"
+    ret=1
+  }
+  test $failed -eq 0 || {
+    warn "Failed $failed directives"
+    ret=3
+  }
+
+  { test -e "$uc_cache" && newer_than "$uc_cache" $uc_cache_ttl
+  } || {
+    warn "Results are stale (>${uc_cache_ttl}s)"
+    ret=4
+  }
+
+  return $ret
+}
+
+# Quietly test for valid result
+uc__test ()
+{
+  test -n "${uc_cache-}" || uc_reset_report
+  test -e "$uc_cache" && newer_than "$uc_cache" $uc_cache_ttl || return
+  uc_report
+  test $failed -eq 0 -a $passed -gt 0
+}
+
+# Report on last result
+uc__report ()
+{
+  uc_report
+
+  local verbosity=6
+  std_info "Host-domain: $hostdom"
+  std_info "Passed: $passed"
+  std_info "Failed: $failed"
+  std_info "Total: $directives"
+}
+
+# Report on config and state
+uc__info ()
+{
+  local conf=
+  req_conf || return
+  local verbosity=6
+
+  std_info "U-c scripts: $uc_lib"
+  std_info "UConf: $UCONF"
+  config_name="$(test "$( basename $conf )" = "local" &&
+    basename $conf || basename $(realpath $conf) )"
+  std_info "Config: $conf"
+  std_info "Config-Name: $config_name"
+
+  uc__report
 }

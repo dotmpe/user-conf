@@ -1,0 +1,21 @@
+2017-10-07 TODO-1: get ``u-c`` installed on PATH. Maybe restructured project a bit. Fix man page.
+
+doc/Manual.rst:TODO: make stat into quick, cache or no-cache response
+doc/Manual.rst:TODO: install-dependencies.sh should be able to consolidate into INSTALL directives, and user-lib(s).
+doc/Manual.rst:TODO: should merge install action into update/stat cycle
+doc/Manual.rst:TODO: set UCONFDIR from sh_lib while none given
+doc/Specification.rst:  TODO: added +/- attriibutes. Iow. delete, but only known files.
+doc/Specification.rst:  TODO: Install user-commands using given package manager.
+doc/Specification.rst:  TODO: each path below dir is treated as a copy, symlink or git repo.
+doc/Specification.rst:  TODO: check or update certain plain-text file lines.
+doc/Specification.rst:TODO: Expand on notation for rule directives to allow instance parametrization.
+doc/Specification.rst:  TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments.
+script/conf-uc.lib.sh:# TODO: re-enable existing settings if line matches
+script/conf-uc.lib.sh:  echo 'TODO: setting-matches '$1' "'$2'"'
+script/conf-uc.lib.sh:  echo 'TODO: enable-line '$1' "'$2'"'
+script/conf-uc.lib.sh:  echo 'TODO: disable-line '$1:$2
+script/std-uc.lib.sh:  # TODO: turn this on and fix tests warn "err() is deprecated, see stderr()"
+script/user-conf/lib.sh:  #  # TODO: parse some expression for age: 1h 5min 5m etc.
+test/helper.bash:# currently usage is to mark test as skipped or 'TODO' per test case, based on
+
+2021-01-23 TODO-A: Make UCONFDIR fully configurable: fix cache

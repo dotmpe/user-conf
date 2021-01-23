@@ -1,8 +1,6 @@
 ReadMe.rst
 install-dependencies.sh
 .travis.yml
-tools/git/hooks/pre-commit-spaceindent-check.sh
-tools/git/hooks/pre-commit-tabindent-check.sh
-Makefile.example
+script/user-conf/main.sh
 libexec/u-c
-local-formats.sh
+.versioning-local-formats.sh

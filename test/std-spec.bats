@@ -3,8 +3,8 @@
 load helper
 base=std
 init
-. $lib/std.lib.sh
-. $lib/str.lib.sh
+. $lib/std-uc.lib.sh
+. $lib/str-uc.lib.sh
 
 
 @test "${lib}/${base} - std_v <n> should return 1 if <n> <= <verbosity>. No output." {

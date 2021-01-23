@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 # TODO: re-enable existing settings if line matches
 # XXX: <keyword><sp> syntax does not help with shell script variables
 # find a way to enable/disable #myshvar=foo
@@ -95,4 +93,3 @@ enable_setting()
   # Add enabled line
   add_setting $1 "" "$2"
 }
-
