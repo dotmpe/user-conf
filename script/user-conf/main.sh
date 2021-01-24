@@ -30,7 +30,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
           test $human_out -eq 1 && {
             {
               $func "$@" || exit
-            } 2>&1 | $UCONF/script/uc-colorize.sh >&2
+            } 2>&1 | $sh_lib/uc-colorize.sh >&2
           } || {
             $func "$@" || exit
           }

@@ -71,7 +71,8 @@ true "${username:=$(whoami)}"
 test -z "${v-}" || verbosity=$v
 true "${verbosity:=5}"
 true "${choice_interactive:=$( test -t 0 && echo 1 || echo 0 )}"
-true "${human_out:=$( test -t 1 && echo 1 || echo 0 )}"
+
+test -n "${human_out:-}" || { test -t 1 && human_out=1 || human_out=0; }
 
 test -n "${TMP-}" -a -w "${TMP-}" || {
 	test -w /tmp && TMP=/tmp || {
@@ -1012,10 +1013,10 @@ uc__status ()
   uc_report
 
   test $verbosity -ge 5 && {
-    ~/.conf/script/uc-colorize.sh <"$uc_cache"
+    cat "$uc_cache"
   } || {
     test $verbosity -ge 3 && {
-      grep -v '^ok ' "$uc_cache" | ~/.conf/script/uc-colorize.sh
+      grep -v '^ok ' "$uc_cache"
     }
   }
 
@@ -1056,11 +1057,18 @@ uc__report ()
 {
   uc_report
 
-  local verbosity=6
-  std_info "Host-domain: $hostdom"
-  std_info "Passed: $passed"
-  std_info "Failed: $failed"
-  std_info "Total: $directives"
+  test $human_out -eq 1 && {
+    local verbosity=6
+    std_info "Host-domain: $hostdom"
+    std_info "Passed: $passed"
+    std_info "Failed: $failed"
+    std_info "Total: $directives"
+  } || {
+    echo "hostdom=$hostdom"
+    echo "passed=$passed"
+    echo "failed=$failed"
+    echo "total=$directives"
+  }
 }
 
 # Report on config and state
@@ -1068,14 +1076,21 @@ uc__info ()
 {
   local conf=
   req_conf || return
-  local verbosity=6
 
-  std_info "U-c scripts: $uc_lib"
-  std_info "UConf: $UCONF"
   config_name="$(test "$( basename $conf )" = "local" &&
     basename $conf || basename $(realpath $conf) )"
-  std_info "Config: $conf"
-  std_info "Config-Name: $config_name"
-
+  test $human_out -eq 1 && {
+    local verbosity=6
+    std_info "U-c scripts: $uc_lib"
+    std_info "UConf: $UCONF"
+    std_info "Config: $conf"
+    std_info "Config-Name: $config_name"
+  } || {
+    echo "uc_lib=$uc_lib"
+    echo "sh_lib=$sh_lib"
+    echo "UCONF=$UCONF"
+    echo "conf=$conf"
+    echo "config_name=$config_name"
+  }
   uc__report
 }

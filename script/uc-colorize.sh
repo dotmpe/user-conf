@@ -1,5 +1,5 @@
-#!/bin/bash
-uname=$(uname)
+#!/bin/sh
+uname=$(uname | tr 'A-Z' 'a-z')
 
 case "$uname" in
 
@@ -9,7 +9,7 @@ case "$uname" in
 
   linux | cygwin_nt-* )
       # For GNU sed: \o033
-      esc=`echo -e '\o33'`
+      esc=`echo '\o33'`
 
       case "$(sed --version)" in *"This is not GNU sed"* )
               # For matchbox sed
@@ -18,16 +18,18 @@ case "$uname" in
       esac
     ;;
 
-  * ) error "No stdio-type for $uname" 1 ;;
+  * ) echo "No stdio-type for $uname" 1>&2 ; exit 1 ;;
 esac
 
 
 sed -E '
-    s/Error:/'$esc'[0;31mError:'$esc'[0m/g
+    s/^ok /'"$esc"'[0;32mOK: '"$esc"'[0m/g
+    s/^fail:([0-9]+) /'$esc'[0;31mFailure(\1): '$esc'[0m/g
 
+    s/Error:/'$esc'[0;31mError:'$esc'[0m/g
     s/(Warning|Failed.*):/'$esc'[0;33mWarning:'$esc'[0m/g
     s/Notice:/'$esc'[0;34mNotice:'$esc'[0m/g
-    s/^\[(.*)\]/'$esc'[1;30m\[\1\]'$esc'[0m/g
+    s/^\[(.*)\]/'"$esc"'[1;30m\[\1\]'"$esc"'[0m/g
   '
 
 #    s/^\[(.*)\]\ Error:/\\033[1;30m\[\1\]\\033[0;31m\ Error:\\033[0m/g

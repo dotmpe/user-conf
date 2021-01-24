@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 set -e
 
@@ -14,7 +14,7 @@ test -z "$Build_Deps_Default_Paths" || {
 
   test -n "$SRC_PREFIX" || {
     test -w /src/ \
-      && SRC_PREFIX=/src/ \
+      && SRC_PREFIX=/src \
       || SRC_PREFIX=$HOME/build
   }
 
@@ -50,148 +50,123 @@ test -d $PREFIX || ${pref} mkdir -vp $PREFIX
 install_uc()
 {
   stderr_ "Installing User-Conf"
+  basher list | grep -qF dotmpe/user-conf || {
+    basher install dotmpe/user-conf || return
+  }
   test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
-  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/bvberkum/user-conf.git
+  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/user-conf-repo.git
   test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
   test ! -d "$UCONF_DIR" || stderr_ "$UCONF_DIR exists" 1
-  git clone https://github.com/bvberkum/user-conf.git $UCONF_DIR
+  git clone $UCONF_REPO $UCONF_DIR || return
   cd $UCONF_DIR
-  git checkout $UCONF_BRANCH --
-  ./script/user-conf/init.sh
-  ./script/user-conf/update.sh
+  git checkout $UCONF_BRANCH -- || return
+  uc init || return
+  uc update
 }
+
 
 install_bats()
 {
   stderr_ "Installing bats"
-  test -n "$BATS_BRANCH" || BATS_BRANCH=master
-  test -n "$BATS_REPO" || BATS_REPO=https://github.com/bvberkum/bats.git
-  test -d $SRC_PREFIX/bats || {
-    git clone $BATS_REPO $SRC_PREFIX/bats || return $?
+  test -n "$BATS_VERSION" || BATS_VERSION=master
+  test -n "$BATS_REPO" || BATS_REPO=https://github.com/dotmpe/bats-core.git
+  local src=$SRC_PREFIX/github.com/$(
+    basename $(dirname $BATS_REPO))/$(basename $BATS_REPO .git)
+  test -d $src || {
+    git clone $BATS_REPO $src || return $?
   }
   (
-    cd $SRC_PREFIX/bats
-    git checkout $BATS_BRANCH
+    cd $src
+    git checkout $BATS_VERSION
     ${pref} ./install.sh $PREFIX
+    git clean -dfx
   )
 }
 
-install_composer()
+
+install_basher ()
 {
-  test -e $PREFIX/bin/composer || {
-    curl -sSf https://getcomposer.org/installer |
-      php -- --install-dir=$PREFIX/bin --filename=composer
+  test -n "$BASHER_BRANCH" || BASHER_BRANCH=feature/better-package-env
+  test -n "$BASHER_REPO" || BASHER_REPO=https://github.com/dotmpe/basher.git
+  test -d ~/.basher || {
+    git clone https://github.com/dotmpe/basher.git ~/.basher
   }
-  $PREFIX/bin/composer --version
-  . ~/.conf/bash/env.sh
-  test -x "$(which composer)" ||
-    stderr_ "Composer is installed but not found on PATH! Aborted. " 1
-  # XXX: cleanup
-  #test -e composer.json && {
-  #  test -e composer.lock && {
-  #    composer update
-  #  } || {
-  #    rm -rf vendor || noop
-  #    composer install
-  #  }
-  #} || {
-  #  stderr_ "No composer.json"
-  #}
+  (
+    cd ~/.basher && git checkout "$BASHER_BRANCH"
+  )
+  test -x "$(which basher)" &&
+    stderr_ "basher installed correctly" || stderr_ "$1: missing basher" 1
 }
 
-install_docopt()
+update_basher ()
 {
-  test -n "$install_f" || install_f="$py_setup_f"
-  local src=github.com/bvberkum/docopt-mpe
-
-  test -d $src || {
-    mkdir -p "$(dirname "$src")"
-    git clone "https://$src.git" "$SRC_PREFIX/$src"
-  }
-  ( cd $SRC_PREFIX/$src &&
-      git checkout 0.6.x &&
-      $pref python ./setup.py install $install_f &&
-      git checkout . && git clean -dfx )
-}
-
-install_git_versioning()
-{
-  git clone https://github.com/bvberkum/git-versioning.git $SRC_PREFIX/git-versioning
-  ( cd $SRC_PREFIX/git-versioning && ./configure.sh $PREFIX && ENV=production ./install.sh )
+  test -n "$BASHER_BRANCH" || BASHER_BRANCH=feature/better-package-env
+  ( cd ~/.basher
+    test "$(git rev-parse --abbrev-ref HEAD)" = "$BASHER_BRANCH" || {
+      stderr_ "Basher version is not set to '$BASHER_BRANCH'"
+      return 1
+    }
+    git pull origin "$BASHER_BRANCH"
+  )
 }
 
 
-main_entry()
+main_install_dependencies () # Tags...
 {
   test -n "$1" || set -- all
-  main_load
+  stderr_ "Running 'install-dependencies $*'"
 
-  case "$1" in all|project|test|git )
-      git --version >/dev/null ||
-        stderr_ "Sorry, GIT is a pre-requisite" 1
-    ;; esac
-
-  case "$1" in pip|python )
-      which pip >/dev/null || {
-        cd /tmp/ && wget https://bootstrap.pypa.io/get-pip.py && python get-pip.py; }
-      pip install -r requirements.txt
-    ;; esac
-
-  case "$1" in all|user-conf )
-      test -d ~/.conf || { install_uc || return $?; }
-    ;; esac
-
-  case "$1" in all|build|test|sh-test|bats )
-      test -x "$(which bats)" || { install_bats || return $?; }
-    ;; esac
-
-  case "$1" in dev|build|check|test|git-versioning )
-      test -x "$(which git-versioning)" || {
-        install_git_versioning || return $?; }
-    ;; esac
-
-  case "$1" in python|docopt )
-      # Using import seems more robust than scanning pip list
-      python -c 'import docopt' || { install_docopt || return $?; }
-    ;; esac
-
-  case "$1" in php|composer )
-      test -x "$(which composer)" \
-        || install_composer || return $?
-    ;; esac
-
-  case "$1" in dev|basher)
-      . bash/env.sh
-      test -x "$(which basher)" || {
-        git clone https://github.com/basherpm/basher.git ~/.basher
-        . bash/env.sh
-        test -x "$(which basher)" && stderr_ "basher installed correctly" || stderr_ "missing basher" 1
-      }
-      basher update
-    ;; esac
-
-  stderr_ "OK. All pre-requisites for '$1' checked"
-}
-
-main_load()
-{
-  #test -x "$(which tput)" && ...
-  log_pref="[install-dependencies] "
-  stderr_ "Loaded"
-}
-
-
-{
-  test "$(basename "$0")" = "install-dependencies.sh" ||
-  test "$(basename "$0")" = "bash" ||
-    stderr_ "0: '$0' *: $*" 1
-} && {
-  test -n "$1" -o "$1" = "-" || set -- all
-  while test -n "$1"
+  while test $# -gt 0
   do
-    main_entry "$1" || exit $?
+    case "$1" in all )
+      set -- all git bats basher user-conf git-versioning ;; esac
+
+    case "$1" in git )
+        git --version >/dev/null ||
+          stderr_ "Sorry, GIT is a pre-requisite" 1
+      ;; esac
+
+    case "$1" in user-conf )
+        test -d ~/.conf || { install_uc || return $?; }
+      ;; esac
+
+    case "$1" in bats )
+        test -x "$(which bats)" || { install_bats || return $?; }
+      ;; esac
+
+    case "$1" in git-versioning )
+        test -x "$(which git-versioning)" || {
+          install_git_versioning || return $?; }
+      ;; esac
+
+    case "$1" in basher )
+        test -x "$(which basher)" && {
+          update_basher || return
+        } || {
+          install_basher || return
+        }
+      ;; esac
+
+    stderr_ "OK. Pre-requisites for '$1' checked"
     shift
   done
-} || printf ""
+}
+
+
+main_load ()
+{
+  #test -x "$(which tput)" && ... TODO: colorize install-dependencies
+  log_pref="[install-dependencies] "
+
+  stderr_ "Loaded (pwd:$PWD, *:$*)"
+}
+
+
+case "$(basename "$0" .sh)" in
+
+    install-dependencies )
+      main_load && main_install_dependencies "$@" ;;
+
+esac
 
 # Id: user-conf/0.2.0-dev install-dependencies.sh
