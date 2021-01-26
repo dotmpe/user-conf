@@ -983,12 +983,11 @@ diff_copy() # SCM-File Other-File
 {
   case "$1" in
     "$UCONF*" )
-        GITDIR=$UCONF vc_gitdiff "$1" "$2"
+        GITDIR="$UCONF" vc_gitdiff "$1" "$2"
         return $?
       ;;
     * )
-        GITDIR="$(vc_isgit "$1" || return 2)" \
-          vc_gitdiff "$1" "$2"
+        GITDIR="$UCONF" vc_gitdiff "$1" "$2"
         return $?
       ;;
   esac
