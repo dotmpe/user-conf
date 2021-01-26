@@ -520,11 +520,11 @@ d_GIT()
 
         git diff --quiet && {
           GITDIR="$(vc_gitdir)"
-          test -d "$gitdir" || error "cannot determine gitdir at <$2>" 1
-          { { test -e $gitdir/FETCH_HEAD || {
+          test -d "$GITDIR" || error "cannot determine gitdir at <$2>" 1
+          { { test -e $GITDIR/FETCH_HEAD || {
               std_info "No FETCH_HEAD in <$2>" ; false; }
             } && {
-              newer_than $gitdir/FETCH_HEAD $GIT_AGE
+              newer_than $GITDIR/FETCH_HEAD $GIT_AGE
             }
           } || {
             std_info "Fetching <$2> branch '$4' from remote '$3'"
