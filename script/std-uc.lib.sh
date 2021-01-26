@@ -15,6 +15,7 @@ std_uc_lib_init()
   test -x "$(which readlink)" || error "readlink util required for stdio-type" 1
   test -x "$(which file)" || error "file util required for stdio-type" 1
 }
+
 log_src_id_var()
 {
   test -n "${log_key-}" || {
