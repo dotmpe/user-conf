@@ -3,12 +3,12 @@ uname=$(uname | tr 'A-Z' 'a-z')
 
 case "$uname" in
 
-  darwin )
+  darwin ) # BSD echo
       esc=`echo -e '\033'`
     ;;
 
   linux | cygwin_nt-* )
-      # For GNU sed: \o033
+      # For GNU echo/sed: \o033
       esc=`echo '\o33'`
 
       case "$(sed --version)" in *"This is not GNU sed"* )
