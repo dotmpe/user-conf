@@ -89,7 +89,7 @@ uc_cache_ttl=3600
 # User-config holds directives for current env/host, make a copy to
 # install/$hostname.u-c of the first existing path in
 # boilerplate-{$machine,$uname,$domain,default}.u-c
-uc__initialize()
+uc__initialize ()
 {
   test -n "$domain" || domain=default
   test "$hostname.$domain" = "$(hostname)" || {
@@ -219,15 +219,6 @@ c_copy()
 c_symlink()
 {
   c_add SYMLINK "$1"
-}
-
-# Run tests, some unittests on the Sh library
-uc__test()
-{
-  test -n "$UCONF" || error "? $UCONF=" 1
-  cd $UCONF || error "? cd $UCONF" 1
-  # Test script: run Bats tests
-  bats ./test/*-spec.bats
 }
 
 
@@ -1000,11 +991,6 @@ diff_copy() # SCM-File Other-File
       ;;
   esac
   return 2
-}
-
-uc__help ()
-{
-  echo "See doc/user-conf.rst"
 }
 
 uc__status ()

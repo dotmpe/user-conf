@@ -1,8 +1,38 @@
 #!/usr/bin/env bash
 
+version=0.2.0-dev # user-conf
+
 scriptname=uc
 
 # ----
+
+uc__version ()
+{
+  echo "$version"
+}
+
+uc__usage ()
+{
+  echo "$scriptname info"
+  echo "$scriptname initialize"
+  echo "$scriptname install [IDX]"
+  echo "$scriptname stat [IDX]"
+  echo "$scriptname update [IDX]"
+  echo "$scriptname add"
+  echo "$scriptname test"
+  echo "$scriptname commit"
+  echo "$scriptname status"
+  echo "$scriptname report"
+  echo
+  echo "$scriptname version"
+  echo "$scriptname help"
+}
+
+uc__help ()
+{
+  uc__usage
+  echo "See doc/user-conf.rst"
+}
 
 def_func=uc__info
 
