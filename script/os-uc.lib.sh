@@ -112,8 +112,26 @@ normalize_relative()
   esac
 }
 
+# Change cwd to parent dir with existing local path element (dir/file/..) $1, leave go_to_before var in env.
+go_to_dir_with () # ~ Local-Name
+{
+  test -n "$1" || error "go-to-dir: Missing filename arg" 1
+
+  # Find dir with metafile
+  go_to_before=.
+  while true
+  do
+    test -e "$1" && break
+    go_to_before=$(basename -- "$(pwd)")/$go_to_before
+    test "$(pwd)" = "/" && break
+    cd ..
+  done
+
+  test -e "$1" || return 1
+}
+
 # Count lines with wc (no EOF termination correction)
-count_lines ()
+count_lines () # ~ Source
 {
   test "${1-"-"}" = "-" && {
     wc -l | awk '{print $1}'
