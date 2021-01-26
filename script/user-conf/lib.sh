@@ -57,12 +57,14 @@ test "$os_kernel" = "Darwin" && {
   true "${machine_platform:="$(uname -i)"}"
 }
 
-test -e $HOME/.statusdir/tree/domain &&  {
-  hostname=$(cat $HOME/.statusdir/tree/domain | sed 's/^\([^\.]*\)\..*$/\1/g')
-  domain=$(cat $HOME/.statusdir/tree/domain | sed 's/^[^\.]*\.//g')
-} || {
-  hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
-  domain="$(hostname -f | cut -c$(( ${#hostname} + 2 ))-)"
+test -n "${hostname-}" -a -n "${domain-}" || {
+  test -e $HOME/.statusdir/tree/domain &&  {
+    hostname=$(cat $HOME/.statusdir/tree/domain | sed 's/^\([^\.]*\)\..*$/\1/g')
+    domain=$(cat $HOME/.statusdir/tree/domain | sed 's/^[^\.]*\.//g')
+  } || {
+    hostname="$(hostname -s | tr 'A-Z.' 'a-z-' | tr -s '-' '-' )"
+    domain="$(hostname -f | cut -c$(( ${#hostname} + 2 ))-)"
+  }
 }
 hostdom=$hostname-$domain
 # XXX: vol_id=$disk_id-$part_id
