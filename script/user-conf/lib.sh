@@ -1058,14 +1058,15 @@ uc__report ()
   }
 }
 
-# Report on config and state
-uc__info ()
+# Report on config and location
+uc__env ()
 {
   local conf=
   req_conf || return
 
   config_name="$(test "$( basename $conf )" = "local" &&
     basename $conf || basename $(realpath $conf) )"
+
   test $human_out -eq 1 && {
     local verbosity=6
     std_info "U-c scripts: $uc_lib"
@@ -1079,5 +1080,11 @@ uc__info ()
     echo "conf=$conf"
     echo "config_name=$config_name"
   }
+}
+
+# Report on config and state
+uc__info ()
+{
+  uc__env &&
   uc__report
 }
