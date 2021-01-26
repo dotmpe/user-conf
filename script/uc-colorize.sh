@@ -30,6 +30,8 @@ sed -E '
     s/(Warning|Failed.*):/'$esc'[0;33mWarning:'$esc'[0m/g
     s/Notice:/'$esc'[0;34mNotice:'$esc'[0m/g
     s/^\[(.*)\]/'"$esc"'[1;30m\[\1\]'"$esc"'[0m/g
+
+    s/^(.*)$/\1'"$esc"'[0;37m/g
   '
 
 #    s/^\[(.*)\]\ Error:/\\033[1;30m\[\1\]\\033[0;31m\ Error:\\033[0m/g
