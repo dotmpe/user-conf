@@ -519,7 +519,7 @@ d_GIT()
       test -e "$2/.git" && { ( cd $2
 
         git diff --quiet && {
-          gitdir="$(vc_gitdir)"
+          GITDIR="$(vc_gitdir)"
           test -d "$gitdir" || error "cannot determine gitdir at <$2>" 1
           { { test -e $gitdir/FETCH_HEAD || {
               std_info "No FETCH_HEAD in <$2>" ; false; }
@@ -948,7 +948,7 @@ req_git_remote()
   test -n "$3" || set -- "$1" "$2" "origin"
   test $# -lt 4 || error "req-git-remote surplus arguments" 1
 
-  gitdir="$(vc_gitdir "$2")"
+  GITDIR="$(vc_gitdir "$2")"
   url="$(cd "$2"; git config remote.${3}.url)"
   test -n "$url" && {
     test "$url" = "$1" -o "$url" = "$1/.git" || {
