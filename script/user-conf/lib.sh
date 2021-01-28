@@ -581,7 +581,7 @@ d_GIT()
           && note "Checkout missing at <$2>" \
           || note "Checkout of '$4' missing at <$2>"
         ${PREF}git $5 "$1" "$2" --origin $3 --branch $4
-        case "$RUN" in update ) ;; * ) return 1 ;; esac
+        case "$RUN" in update ) return $? ;; * ) return 1 ;; esac
       } ;;
 
     * ) error "Invalid GIT mode $5"; return 1 ;;
