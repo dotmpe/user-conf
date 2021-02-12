@@ -39,7 +39,9 @@ sys_uc_lib_load
 std_uc_lib_load
 os_uc_lib_load
 
-test -n "${HOME-}" || error "no user dir set" 100
+test -n "${HOME-}" || {
+  test -n "${username:-}" && HOME=/home/$username || error "no user dir set" 100
+}
 test -e "$HOME" || error "no user dir" 100
 
 # All boxes
@@ -758,7 +760,10 @@ req_conf ()
   true "${UCONFDIR:="$UCONF"}"
 
   conf="$(echo $conf $(verbose=false exec_dirs include $conf))"
-  note "Using U-c '$conf'"
+  test -n "$conf" && note "Using U-c '$conf'" || {
+      warn "No U-c found"
+      return 1
+    }
 }
 
 # Private helper for exec_dirs
@@ -1062,20 +1067,26 @@ uc__report ()
 uc__env ()
 {
   local conf=
-  req_conf || return
+  test $human_out -eq 1 && {
+    local verbosity=6
+      std_info "U-c scripts: $uc_lib"
+      std_info "Sh script libs: $sh_lib"
+  } || {
+      echo "uc_lib=$uc_lib"
+      echo "sh_lib=$sh_lib"
+  }
+
+  req_conf || return 0
 
   config_name="$(test "$( basename $conf )" = "local" &&
     basename $conf || basename $(realpath $conf) )"
 
   test $human_out -eq 1 && {
     local verbosity=6
-    std_info "U-c scripts: $uc_lib"
     std_info "UConf: $UCONF"
     std_info "Config: $conf"
     std_info "Config-Name: $config_name"
   } || {
-    echo "uc_lib=$uc_lib"
-    echo "sh_lib=$sh_lib"
     echo "UCONF=$UCONF"
     echo "conf=$conf"
     echo "config_name=$config_name"
