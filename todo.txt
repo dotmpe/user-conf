@@ -1,3 +1,5 @@
+2017-10-07 TODO-1: get ``u-c`` installed on PATH. Maybe restructured project a bit. Fix man page.
+
 TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments. src_name:Specification.rst src_line:217 _id:TODO
 - TODO: git directive submodule mode src_name:ReadMe.rst src_line:90 _id:ReadMe.rst:90
 - XXX: maybe new type of directives for configuration: cron, munin-node, src_name:ReadMe.rst src_line:92 _id:ReadMe.rst:92
@@ -26,3 +28,25 @@ echo 'TODO: disable-line '$1:$2 src_name:script/conf.lib.sh src_line:65 _id:scri
 # currently usage is to mark test as skipped or 'TODO' per test case, based on src_name:test/helper.bash src_line:76 _id:test/helper.bash:76
 # XXX: cleanup src_name:test/helper.bash src_line:130 _id:test/helper.bash:130
 # XXX: clean me up to a test-helper func src_name:test/util-lib-spec.bats src_line:10 _id:test/util-lib-spec.bats:10
+
+TODO cleanup tasks see ReadMe.rst dev section
+doc/Manual.rst:TODO: make stat into quick, cache or no-cache response
+doc/Manual.rst:TODO: install-dependencies.sh should be able to consolidate into INSTALL directives, and user-lib(s).
+doc/Manual.rst:TODO: should merge install action into update/stat cycle
+doc/Manual.rst:TODO: set UCONFDIR from sh_lib while none given
+doc/Specification.rst:  TODO: added +/- attriibutes. Iow. delete, but only known files.
+doc/Specification.rst:  TODO: Install user-commands using given package manager.
+doc/Specification.rst:  TODO: each path below dir is treated as a copy, symlink or git repo.
+doc/Specification.rst:  TODO: check or update certain plain-text file lines.
+doc/Specification.rst:TODO: Expand on notation for rule directives to allow instance parametrization.
+doc/Specification.rst:  TODO: provide test commands for INSTALL to use to check wether a user-command is installed. This is for commands that don't exit normally when executed without arguments.
+script/conf-uc.lib.sh:# TODO: re-enable existing settings if line matches
+script/conf-uc.lib.sh:  echo 'TODO: setting-matches '$1' "'$2'"'
+script/conf-uc.lib.sh:  echo 'TODO: enable-line '$1' "'$2'"'
+script/conf-uc.lib.sh:  echo 'TODO: disable-line '$1:$2
+script/std-uc.lib.sh:  # TODO: turn this on and fix tests warn "err() is deprecated, see stderr()"
+script/user-conf/lib.sh:  #  # TODO: parse some expression for age: 1h 5min 5m etc.
+test/helper.bash:# currently usage is to mark test as skipped or 'TODO' per test case, based on
+
+2021-01-23 TODO-A: Make UCONFDIR fully configurable: fix cache
+2021-01-23 XXX: unused functions: setting_matches enable_line older_than os_uc_lib_load file_replace_at_ed std_uc_lib_load std_uc_lib_init log_src_id_var emerg crit sys_uc_lib_load vc_gitremote

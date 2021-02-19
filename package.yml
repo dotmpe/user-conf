@@ -25,6 +25,7 @@
     documents:
       exts: .rst
 
+  # Usage `htd scripts run <script>`
   scripts:
     ci: # Builds the CI tests
       - git-versioning check
@@ -50,6 +51,9 @@
 
     tasks:
       #- htd tasks --Check-All-Tags --Check-All-Files
-      - Check_All_Tags=1 Check_All_Files=1 htd tasks scan
+      #- Check_All_Tags=1 Check_All_Files=1 htd tasks scan
+      - radical.py -u todo.txt --excludes .git/info/exclude .
 
+    build:
+      - compo-seq c-groups tools -- tools-main generate > install-dependencies.sh
 #

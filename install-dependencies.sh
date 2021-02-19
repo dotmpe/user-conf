@@ -8,13 +8,11 @@ stderr_()
   test -z "$2" || exit $2
 }
 
-test -z "$Build_Debug" || set -x
-
 test -z "$Build_Deps_Default_Paths" || {
 
   test -n "$SRC_PREFIX" || {
     test -w /src/ \
-      && SRC_PREFIX=/src \
+      && SRC_PREFIX=/src/local \
       || SRC_PREFIX=$HOME/build
   }
 
@@ -25,15 +23,6 @@ test -z "$Build_Deps_Default_Paths" || {
   }
 
   stderr_ "Setting default paths: SRC_PREFIX=$SRC_PREFIX PREFIX=$PREFIX"
-}
-
-test -n "$sudo" || sudo=
-test -z "$sudo" || pref="sudo $pref"
-test -z "$dry_run" || pref="echo $pref"
-
-test -w /usr/local || {
-  test -n "$sudo" || pip_flags=--user
-  test -n "$sudo" || py_setup_f="--user"
 }
 
 test -n "$SRC_PREFIX" ||
@@ -47,106 +36,232 @@ test -d $SRC_PREFIX || ${pref} mkdir -vp $SRC_PREFIX
 test -d $PREFIX || ${pref} mkdir -vp $PREFIX
 
 
-install_uc()
+install_Bash ()
 {
-  stderr_ "Installing User-Conf"
-  basher list | grep -qF dotmpe/user-conf || {
-    basher install dotmpe/user-conf || return
+  test -x "$(which bash)" || stderr_ "Sorry, Bash is required" 1
+}
+
+
+install_Basher ()
+{
+  test -n "${BASHER_REPO-}" || BASHER_REPO=https://github.com/dotmpe/basher.git
+  test -n "${BASHER_BRANCH-}" || BASHER_BRANCH=feature/better-package-env
+  test -n "${BASHER_BASE-}" || BASHER_BASE=$HOME/.basher
+  test -n "$BASHER_BASE" || {
+    BASHER_BASE="$SRC_PREFIX/$(basename "$(dirname "$BASHER_REPO")")/$(basename "$BASHER_REPO" .git)"
   }
-  test -n "$UCONF_BRANCH" || UCONF_BRANCH=master
-  test -n "$UCONF_REPO" || UCONF_REPO=https://github.com/dotmpe/user-conf-repo.git
-  test -n "$UCONF_DIR" || UCONF_DIR=~/.conf
-  test ! -d "$UCONF_DIR" || stderr_ "$UCONF_DIR exists" 1
-  git clone $UCONF_REPO $UCONF_DIR || return
-  cd $UCONF_DIR
-  git checkout $UCONF_BRANCH -- || return
+
+  test -d "$BASHER_BASE" || {
+    git clone "$BASHER_REPO" "$BASHER_BASE" || return
+  }
+  (
+    cd "$BASHER_BASE" &&
+    git checkout "$BASHER_BRANCH"
+  ) || return
+  export PATH=$BASHER_BASE/bin:$BASHER_BASE/cellar/bin:$PATH
+}
+
+
+uninstall_Basher ()
+{
+  test -n "${BASHER_BASE-}" || BASHER_BASE=$HOME/.basher
+  rm -rf "$BASHER_BASE"
+}
+
+
+install_Bats ()
+{
+  test -n "${BATS_REPO-}" || BATS_REPO=https://github.com/dotmpe/bats-core.git
+  test -n "${BATS_BRANCH-}" || BATS_BRANCH=master
+  test -n "${BATS_BASE-}" || BATS_BASE=$SRC_PREFIX/dotmpe/bats-core
+  test -n "$BATS_BASE" || {
+    BATS_BASE="$SRC_PREFIX/$(basename "$(dirname "$BATS_REPO")")/$(basename "$BATS_REPO" .git)"
+  }
+
+  test -d "$BATS_BASE" || {
+    git clone "$BATS_REPO" "$BATS_BASE" || return
+  }
+  (
+    cd "$BATS_BASE" &&
+    git checkout "$BATS_BRANCH"
+  ) || return
+  ( cd $BATS_BASE && ${pref} ./install.sh $PREFIX && git clean -dfx )
+
+}
+
+
+uninstall_Bats ()
+{
+  test -n "${BATS_BASE-}" || BATS_BASE=$SRC_PREFIX/dotmpe/bats-core
+  rm -rf "$BATS_BASE"
+}
+
+
+install_Git ()
+{
+  test -x "$(which git)" || stderr_ "Sorry, Git is required" 1
+}
+
+
+install_git_versioning ()
+{
+  test -n "${GIT_VERSIONING_REPO-}" || GIT_VERSIONING_REPO=https://github.com/dotmpe/git-versioning.git
+  test -n "${GIT_VERSIONING_BRANCH-}" || GIT_VERSIONING_BRANCH=master
+  test -n "${GIT_VERSIONING_BASE-}" || GIT_VERSIONING_BASE=
+  test -n "$GIT_VERSIONING_BASE" || {
+    GIT_VERSIONING_BASE="$SRC_PREFIX/$(basename "$(dirname "$GIT_VERSIONING_REPO")")/$(basename "$GIT_VERSIONING_REPO" .git)"
+  }
+
+  test -d "$GIT_VERSIONING_BASE" || {
+    git clone "$GIT_VERSIONING_REPO" "$GIT_VERSIONING_BASE" || return
+  }
+  (
+    cd "$GIT_VERSIONING_BASE" &&
+    git checkout "$GIT_VERSIONING_BRANCH"
+  ) || return
+  ( cd $GIT_VERSIONING_BASE && ${pref} ./install.sh $PREFIX && git checkout . && git clean -dfx )
+}
+
+
+uninstall_git_versioning ()
+{
+  test -n "${GIT_VERSIONING_BASE-}" || GIT_VERSIONING_BASE=
+  rm -rf "$GIT_VERSIONING_BASE"
+}
+
+
+install_User_Conf_dev ()
+{
+  test -n "${USER_CONF_DEV_REPO-}" || USER_CONF_DEV_REPO=https://github.com/dotmpe/user-conf.git
+  test -n "${USER_CONF_DEV_BRANCH-}" || USER_CONF_DEV_BRANCH=r0.2
+  test -n "${USER_CONF_DEV_BASE-}" || USER_CONF_DEV_BASE=
+  test -n "$USER_CONF_DEV_BASE" || {
+    USER_CONF_DEV_BASE="$SRC_PREFIX/$(basename "$(dirname "$USER_CONF_DEV_REPO")")/$(basename "$USER_CONF_DEV_REPO" .git)"
+  }
+
+  test -d "$USER_CONF_DEV_BASE" || {
+    git clone "$USER_CONF_DEV_REPO" "$USER_CONF_DEV_BASE" || return
+  }
+  (
+    cd "$USER_CONF_DEV_BASE" &&
+    git checkout "$USER_CONF_DEV_BRANCH"
+  ) || return
+  basher link $SRC_PREFIX/dotmpe/user-conf dotmpe/user-conf
+}
+
+
+uninstall_User_Conf_dev ()
+{
+  test -n "${USER_CONF_DEV_BASE-}" || USER_CONF_DEV_BASE=
+  rm -rf "$USER_CONF_DEV_BASE"
+}
+
+
+install_User_Conf_Repo ()
+{
+  test -n "${USER_CONF_REPO_REPO-}" || USER_CONF_REPO_REPO=https://github.com/dotmpe/user-conf-repo.git
+  test -n "${USER_CONF_REPO_BRANCH-}" || USER_CONF_REPO_BRANCH=master
+  test -n "${USER_CONF_REPO_BASE-}" || USER_CONF_REPO_BASE=$HOME/.conf
+  test -n "$USER_CONF_REPO_BASE" || {
+    USER_CONF_REPO_BASE="$SRC_PREFIX/$(basename "$(dirname "$USER_CONF_REPO_REPO")")/$(basename "$USER_CONF_REPO_REPO" .git)"
+  }
+
+  test -d "$USER_CONF_REPO_BASE" || {
+    git clone "$USER_CONF_REPO_REPO" "$USER_CONF_REPO_BASE" || return
+  }
+  (
+    cd "$USER_CONF_REPO_BASE" &&
+    git checkout "$USER_CONF_REPO_BRANCH"
+  ) || return
   uc init || return
   uc update
+  export PATH=$USER_CONF_REPO_BASE/path/Generic:$USER_CONF_REPO_BASE/path/Linux:$PATH
 }
 
 
-install_bats()
+uninstall_User_Conf_Repo ()
 {
-  stderr_ "Installing bats"
-  test -n "$BATS_VERSION" || BATS_VERSION=master
-  test -n "$BATS_REPO" || BATS_REPO=https://github.com/dotmpe/bats-core.git
-  local src=$SRC_PREFIX/github.com/$(
-    basename $(dirname $BATS_REPO))/$(basename $BATS_REPO .git)
-  test -d $src || {
-    git clone $BATS_REPO $src || return $?
-  }
-  (
-    cd $src
-    git checkout $BATS_VERSION
-    ${pref} ./install.sh $PREFIX
-    git clean -dfx
-  )
-}
-
-
-install_basher ()
-{
-  test -n "$BASHER_BRANCH" || BASHER_BRANCH=feature/better-package-env
-  test -n "$BASHER_REPO" || BASHER_REPO=https://github.com/dotmpe/basher.git
-  test -d ~/.basher || {
-    git clone https://github.com/dotmpe/basher.git ~/.basher
-  }
-  (
-    cd ~/.basher && git checkout "$BASHER_BRANCH"
-  )
-  test -x "$(which basher)" &&
-    stderr_ "basher installed correctly" || stderr_ "$1: missing basher" 1
-}
-
-update_basher ()
-{
-  test -n "$BASHER_BRANCH" || BASHER_BRANCH=feature/better-package-env
-  ( cd ~/.basher
-    test "$(git rev-parse --abbrev-ref HEAD)" = "$BASHER_BRANCH" || {
-      stderr_ "Basher version is not set to '$BASHER_BRANCH'"
-      return 1
-    }
-    git pull origin "$BASHER_BRANCH"
-  )
+  test -n "${USER_CONF_REPO_BASE-}" || USER_CONF_REPO_BASE=$HOME/.conf
+  rm -rf "$USER_CONF_REPO_BASE"
 }
 
 
 main_install_dependencies () # Tags...
 {
-  test -n "$1" || set -- all
+  test $# -gt 0 || set -- Basher Bats git-versioning User-Conf-dev User-Conf-Repo
   stderr_ "Running 'install-dependencies $*'"
 
+  for a in $@
+  do case "$a" in
+  esac; done
+
   while test $# -gt 0
-  do
-    case "$1" in all )
-      set -- all git bats basher user-conf git-versioning ;; esac
-
-    case "$1" in git )
-        git --version >/dev/null ||
-          stderr_ "Sorry, GIT is a pre-requisite" 1
-      ;; esac
-
-    case "$1" in user-conf )
-        test -d ~/.conf || { install_uc || return $?; }
-      ;; esac
-
-    case "$1" in bats )
-        test -x "$(which bats)" || { install_bats || return $?; }
-      ;; esac
-
-    case "$1" in git-versioning )
-        test -x "$(which git-versioning)" || {
-          install_git_versioning || return $?; }
-      ;; esac
-
-    case "$1" in basher )
-        test -x "$(which basher)" && {
-          update_basher || return
+  do case "$1" in
+    Bash )
+        test -x "$(which bash)" && {
+          type update_Bash >/dev/null 2>&1 || return 0
+          update_Bash || return
         } || {
-          install_basher || return
+          install_Bash || return
         }
-      ;; esac
+      ;;
 
+    Basher )
+        test -x "$(which basher)" && {
+          type update_Basher >/dev/null 2>&1 || return 0
+          update_Basher || return
+        } || {
+          install_Basher || return
+        }
+      ;;
+
+    Bats )
+        test -x "$(which bats)" && {
+          type update_Bats >/dev/null 2>&1 || return 0
+          update_Bats || return
+        } || {
+          install_Bats || return
+        }
+      ;;
+
+    Git )
+        test -x "$(which git)" && {
+          type update_Git >/dev/null 2>&1 || return 0
+          update_Git || return
+        } || {
+          install_Git || return
+        }
+      ;;
+
+    git-versioning )
+        test -x "$(which git-versioning)" && {
+          type update_git_versioning >/dev/null 2>&1 || return 0
+          update_git_versioning || return
+        } || {
+          install_git_versioning || return
+        }
+      ;;
+
+    User-Conf-dev )
+        test -x "$(which user-conf-dev)" && {
+          type update_User_Conf_dev >/dev/null 2>&1 || return 0
+          update_User_Conf_dev || return
+        } || {
+          install_User_Conf_dev || return
+        }
+      ;;
+
+    User-Conf-Repo )
+        test -x "$(which user-conf-repo)" && {
+          type update_User_Conf_Repo >/dev/null 2>&1 || return 0
+          update_User_Conf_Repo || return
+        } || {
+          install_User_Conf_Repo || return
+        }
+      ;;
+
+    * ) stderr_ "Unknown tool '$a'" 1 ;;
+    esac
     stderr_ "OK. Pre-requisites for '$1' checked"
     shift
   done
@@ -169,4 +284,5 @@ case "$(basename "$0" .sh)" in
 
 esac
 
+# Generated at 2021-02-16T20:52+01:00 using /home/hari/.local/composure/Tools/install-dependencies.scr
 # Id: user-conf/0.2.0-dev install-dependencies.sh

@@ -1,0 +1,54 @@
+tools:
+  Bash:
+    required: true
+
+  Basher:
+    bin: basher
+    installer: Git
+    branch: feature/better-package-env
+    repo: https://github.com/dotmpe/basher.git
+    base: $HOME/.basher
+    post-install:
+    - export PATH=$BASHER_BASE/bin:$BASHER_BASE/cellar/bin:$PATH
+
+  Bats:
+    installer: Git
+    branch: master
+    repo: https://github.com/dotmpe/bats-core.git
+    base: $SRC_PREFIX/dotmpe/bats-core
+    post-install: |
+      ( cd $BATS_BASE && ${pref} ./install.sh $PREFIX && git clean -dfx )
+
+  Git:
+    required: true
+
+  git-versioning:
+    installer: Git
+    repo: https://github.com/dotmpe/git-versioning.git
+    post-install:
+      ( cd $GIT_VERSIONING_BASE && ${pref} ./install.sh $PREFIX && git checkout . && git clean -dfx )
+
+  #User-Conf:
+  #  installer: Basher
+  #  package: dotmpe/user-conf
+  #  bin: uc
+
+  User-Conf-dev:
+    installer: Git
+    repo: https://github.com/dotmpe/user-conf.git
+    branch: r0.2
+    post-install:
+    - basher link $SRC_PREFIX/dotmpe/user-conf dotmpe/user-conf
+
+  User-Conf-Repo:
+    depends: User-Conf
+    installer: Git
+    repo: https://github.com/dotmpe/user-conf-repo.git
+    branch: master
+    base: $HOME/.conf
+    post-install:
+    - uc init || return
+    - uc update
+    - export PATH=$USER_CONF_REPO_BASE/path/Generic:$USER_CONF_REPO_BASE/path/Linux:$PATH
+
+#

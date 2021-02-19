@@ -1,3 +1,5 @@
+.. include:: .default.rst
+
 User-Config
 ===========
 :Created: 2015-10-03
@@ -115,5 +117,5 @@ Dev
   then maybe other tooling would be obsolete. Until then, ~/bin is to support.
 
 
-.. _Specification: Specification.rst
-.. _Manual: Manual.rst
+.. _Specification: doc/Specification.rst
+.. _Manual: doc/Manual.rst
