@@ -1,3 +1,5 @@
+scriptpath: script
+libs:
 tools:
   Bash:
     required: true
@@ -47,8 +49,8 @@ tools:
     branch: master
     base: $HOME/.conf
     post-install:
-    - uc init || return
-    - uc update
+    - uc init ${uc_profile-} || return
     - export PATH=$USER_CONF_REPO_BASE/path/Generic:$USER_CONF_REPO_BASE/path/Linux:$PATH
+    - uc install
 
 #

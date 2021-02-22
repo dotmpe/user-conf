@@ -144,6 +144,11 @@ EOM
   done
 }
 
+uc__init()
+{
+  uc__initialize "$@"
+}
+
 uc__install()
 {
   local conf=
