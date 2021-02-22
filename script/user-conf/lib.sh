@@ -95,6 +95,7 @@ uc_cache_ttl=3600
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 uc__initialize ()
 {
+  test -d ~/.statusdir/cache || mkdir -p ~/.statusdir/cache
   get_conf
   test -d "${UCONF-}" || error "No UCONF found" 1
   test "$hostname.$domain" = "$(hostname)" || {
