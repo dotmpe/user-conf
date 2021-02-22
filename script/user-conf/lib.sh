@@ -95,12 +95,12 @@ uc_cache_ttl=3600
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 uc__initialize ()
 {
-  test -n "$domain" || domain=default
+  get_conf
+  test -d "${UCONF-}" || error "No UCONF found" 1
   test "$hostname.$domain" = "$(hostname)" || {
     echo "$hostname.$domain" > $HOME/.domain
   }
-  test -n "$UCONF" || echo "? $UCONF" 1
-  cd "$UCONF" || echo "? cd $UCONF" 1
+  cd "$UCONF"
   local conf=install/$hostname.u-c \
     local_name_conf=local-$hostname-$domain.u-c \
     local_conf=local.u-c
@@ -739,7 +739,7 @@ d_INSTALL_BIN()
 # Misc. utils
 
 # get conf env: the u-c file for this host and all its includes
-req_conf ()
+get_conf ()
 {
   test -n "$conf" ||
     for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
@@ -757,13 +757,16 @@ req_conf ()
       test -n "${conf-}" && break
     done
 
-  test -e $conf || error "no such user-config $conf" 1
-
   # Put UCONFDIR into static user env / profile to preempt and use single
   # user-config dir [TODO-A]
   true "${UCONF:="${UCONFDIR-"$(dirname "$(realpath "$conf")")"}"}"
   true "${UCONFDIR:="$UCONF"}"
+}
 
+req_conf ()
+{
+  get_conf
+  test -e $conf || error "no such user-config $conf" 1
   conf="$(echo $conf $(verbose=false exec_dirs include $conf))"
   test -n "$conf" && note "Using U-c '$conf'" || {
       warn "No U-c found"
