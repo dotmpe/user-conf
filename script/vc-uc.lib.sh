@@ -51,7 +51,7 @@ vc_gitdiff()
   test -n "${GITDIR-}" || err "vc-gitdiff expected GITDIR env" 1
   test -d "$GITDIR" || err "vc-gitdiff GITDIR env is not a dir" 1
 
-  target_sha1="$(git hash-object "$2")"
+  target_sha1="$(${sudor:-} git hash-object "$2")"
   co_path="$(cd $GITDIR;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
   test -n "$co_path" -a "$1" = "$GITDIR/$co_path" && {
     # known state, file can be safely replaced

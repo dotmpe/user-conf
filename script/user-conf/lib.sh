@@ -326,18 +326,19 @@ d_COPY() # SCM-Src-File Host-Target-File
     return 1
   }
 
-  { test -r "$2" -o ! -e "$2" ;} && {
-    { test -w "$2" -o ! -e "$2" ;} || {
+  { test -w "$2" -o ! -e "$2" -a -w "$(dirname "$2")";} && {
+    { test -r "$2" -o ! -e "$2" ;} || {
       test ${warn_on_sudo:-1} -eq 0 || {
-        warn "Setting sudo to write '$2' (for '$1')"
+        warn "Setting sudo to read '$2' (for '$1')"
       }
-      sudow="sudo "
+      sudor="sudo "
     }
   } || {
     test ${warn_on_sudo:-1} -eq 0 || {
-      warn "Setting sudo to read '$2' (for '$1')"
+      warn "Setting sudo to write '$2' (for '$1')"
     }
-    sudor="sudo "
+    sudow="sudo "
+    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo "
   }
 
   ${sudor}test -e "$2" -a -d "$2" && {
@@ -349,10 +350,6 @@ d_COPY() # SCM-Src-File Host-Target-File
   ${sudor}test -e "$2" && {
     # Existing copy
 
-    test -w "$1" -a -w "$2" || {
-      warn "Setting sudo to access '$2' (for '$1')"
-      sudo="sudo "
-    }
     stat=0
     ${sudor}test -f "$2" && {
       diff_copy "$1" "$2" || { stat=$?
@@ -362,7 +359,7 @@ d_COPY() # SCM-Src-File Host-Target-File
         }
         # Check existing COPY version
         test $choice_interactive -eq 1 && {
-          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty ||
+          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && stat=0 ||
             warn "Interactive Diff still non-zero ($?)"
         } || return 1
       }
@@ -995,17 +992,7 @@ uc__commit()
 # Here, also allow file to exist in different repository.
 diff_copy() # SCM-File Other-File
 {
-  case "$1" in
-    "$UCONF*" )
-        GITDIR="$UCONF" vc_gitdiff "$1" "$2"
-        return $?
-      ;;
-    * )
-        GITDIR="$UCONF" vc_gitdiff "$1" "$2"
-        return $?
-      ;;
-  esac
-  return 2
+  GITDIR="$UCONF" vc_gitdiff "$1" "$2"
 }
 
 uc__status ()
