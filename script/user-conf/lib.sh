@@ -331,14 +331,14 @@ d_COPY() # SCM-Src-File Host-Target-File
       test ${warn_on_sudo:-1} -eq 0 || {
         warn "Setting sudo to read '$2' (for '$1')"
       }
-      sudor="sudo "
+      sudor="sudo -i "
     }
   } || {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to write '$2' (for '$1')"
     }
-    sudow="sudo "
-    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo "
+    sudow="sudo -i "
+    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo -i "
   }
 
   ${sudor}test -e "$2" -a -d "$2" && {
@@ -630,6 +630,22 @@ d_LINE_update()
   RUN=update d_LINE "$@" || return $?
 }
 
+d_DIR_stat ()
+{
+  local dir
+  for dir in $@
+  do test -d "$dir" || return
+  done
+}
+
+d_DIR_update ()
+{
+  local dir
+  for dir in $@
+  do test -d "$dir" || mkdir -p "$dir"
+  done
+}
+
 
 
 ## Meta
@@ -814,7 +830,7 @@ _prep_dir_func () # Action
       ;;
 
     # provision/config directives support stat or update
-    COPY | SYMLINK | GIT | WEB | LINE )
+    COPY | SYMLINK | GIT | WEB | LINE | DIR )
       case $1 in install) return 1 ;; esac
       func_name="d_${directive}_$1"
       arguments="$(eval echo "$arguments_raw")"
