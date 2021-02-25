@@ -248,19 +248,19 @@ d_SYMLINK()
       test -d "$2" && {
         set -- "$1" "$2/$(basename $1)"
       } || {
-        error "expected directory or symlink: $2"
+        error "expected directory or symlink '$2' for '$1'"
         return 1
       }
     }
   } || {
     test -d "$(dirname $2)" || {
-      error "no parent dir for target path $2"
+      error "no parent dir for target path '$2' for '$1'"
       return 1
     }
   }
   # remove broken link first
   test ! -h "$2" -o -e "$2" || {
-    log "Broken symlink $2"
+    log "Broken symlink '$2' for '$1'"
     case "$RUN" in
       stat )
         return 2
