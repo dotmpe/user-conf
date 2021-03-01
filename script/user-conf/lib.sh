@@ -352,14 +352,16 @@ d_COPY() # SCM-Src-File Host-Target-File
 
     stat=0
     ${sudor}test -f "$2" && {
-      diff_copy "$1" "$2" || { stat=$?
+      diff_copy "$1" "$2" || { stat=2
         ${sudor}diff -q "$1" "$2" && {
            note "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
            return
         }
         # Check existing COPY version
         test $choice_interactive -eq 1 && {
-          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && stat=0 ||
+          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && {
+            ${sudor}diff -q "$1" "$2" && stat=0 || return 1
+          } ||
             warn "Interactive Diff still non-zero ($?)"
         } || return 1
       }
@@ -607,27 +609,36 @@ d_GIT_update()
 
 ## LINE directive
 
-d_LINE()
+d_LINE_stat()
 {
   test -f "$1" || error "expected file path '$1'" 1
   test -n "$2" || error "expected one ore more lines" 1
 
+  eval "set -- $arguments_raw"
   file=$1
   shift 1
   for line in "$@"
   do
-    enable_setting $file "$line"
+    find_setting "$file" "$line" || {
+      error "Missing '$line' in '$file'"
+      return 1
+    }
   done
-}
-
-d_LINE_stat()
-{
-  RUN=stat d_LINE "$@" || return $?
 }
 
 d_LINE_update()
 {
-  RUN=update d_LINE "$@" || return $?
+  test -f "$1" || error "expected file path '$1'" 1
+  test -n "$2" || error "expected one ore more lines" 1
+
+  eval "set -- $arguments_raw"
+  file=$1
+  shift 1
+  for line in "$@"
+  do
+    std_info "Looking for '$line' in '$file'"
+    enable_setting $file "$line"
+  done
 }
 
 d_DIR_stat ()
