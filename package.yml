@@ -4,15 +4,12 @@
   main: user-conf
   id: user-conf
   version: 0.0.1-dev # user-conf
-  vendor: bvberkum
+  vendor: dotmpe
   distribution: public
   license: GPL
 
   repositories:
-    github: git@github.com:bvberkum/user-conf.git
-    notus.24-2: /srv/project-24-2-notus-brix/user-conf/.git
-    #notus.24-2: /srv/src-24-2-notus-brix/github.com/bvberkum/user-conf/.git
-    notus.24-2: /srv/scm-git-24-2-notus-brix/bvberkum/user-conf.git
+    github: git@github.com:dotmpe/user-conf.git
     dotmpe.origin: domains/dotmpe.com/htdocs/git/user-conf.git
 
   pd-meta:
