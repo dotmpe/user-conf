@@ -1,3 +1,4 @@
+default: User-Conf-dev
 scriptpath: script
 libs:
 tools:
@@ -5,7 +6,6 @@ tools:
     required: true
 
   Basher:
-    bin: basher
     installer: Git
     branch: feature/better-package-env
     repo: https://github.com/dotmpe/basher.git
@@ -20,6 +20,12 @@ tools:
     base: $SRC_PREFIX/dotmpe/bats-core
     post-install: |
       ( cd $BATS_BASE && ${pref} ./install.sh $PREFIX && git clean -dfx )
+    uninstall: |
+      ${pref} rm -rf $PREFIX/bin/bats \
+          $PREFIX/libexec/bats \
+          $PREFIX/share/man/man1/bats* \
+          $PREFIX/share/man/man7/bats*
+
 
   Git:
     required: true
@@ -27,30 +33,36 @@ tools:
   git-versioning:
     installer: Git
     repo: https://github.com/dotmpe/git-versioning.git
-    post-install:
-      ( cd $GIT_VERSIONING_BASE && ${pref} ./install.sh $PREFIX && git checkout . && git clean -dfx )
+    post-install: |
+      ( cd $GIT_VERSIONING_BASE &&
+         ./configure.sh $PREFIX &&
+        ENV_NAME=production ./install.sh &&
+        git checkout . && git clean -dfx )
 
-  #User-Conf:
-  #  installer: Basher
-  #  package: dotmpe/user-conf
-  #  bin: uc
+
+  User-Conf:
+    bin: uc
+    installer: Basher
+    package: dotmpe/user-conf
 
   User-Conf-dev:
+    bin: uc
     installer: Git
+    depends: Basher
     repo: https://github.com/dotmpe/user-conf.git
     branch: r0.2
     post-install:
-    - basher link $SRC_PREFIX/dotmpe/user-conf dotmpe/user-conf
+    - basher link $USER_CONF_DEV_BASE dotmpe/user-conf
 
-  User-Conf-Repo:
-    depends: User-Conf
+  User-Conf-repo:
+    #depends: User-Conf
     installer: Git
-    repo: https://github.com/dotmpe/user-conf-repo.git
+    repo: dotmpe:git-repos/conf-mpe.git
     branch: master
     base: $HOME/.conf
     post-install:
-    - uc init ${uc_profile-} || return
     - export PATH=$USER_CONF_REPO_BASE/path/Generic:$USER_CONF_REPO_BASE/path/Linux:$PATH
+    - uc init ${uc_profile-} || return
     - uc install
 
 #
