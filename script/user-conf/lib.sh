@@ -248,19 +248,19 @@ d_SYMLINK()
       test -d "$2" && {
         set -- "$1" "$2/$(basename $1)"
       } || {
-        error "expected directory or symlink: $2"
+        error "expected directory or symlink '$2' for '$1'"
         return 1
       }
     }
   } || {
     test -d "$(dirname $2)" || {
-      error "no parent dir for target path $2"
+      error "no parent dir for target path '$2' for '$1'"
       return 1
     }
   }
   # remove broken link first
   test ! -h "$2" -o -e "$2" || {
-    log "Broken symlink $2"
+    log "Broken symlink '$2' for '$1'"
     case "$RUN" in
       stat )
         return 2
@@ -331,14 +331,14 @@ d_COPY() # SCM-Src-File Host-Target-File
       test ${warn_on_sudo:-1} -eq 0 || {
         warn "Setting sudo to read '$2' (for '$1')"
       }
-      sudor="sudo "
+      sudor="sudo -i "
     }
   } || {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to write '$2' (for '$1')"
     }
-    sudow="sudo "
-    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo "
+    sudow="sudo -i "
+    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo -i "
   }
 
   ${sudor}test -e "$2" -a -d "$2" && {
@@ -352,14 +352,16 @@ d_COPY() # SCM-Src-File Host-Target-File
 
     stat=0
     ${sudor}test -f "$2" && {
-      diff_copy "$1" "$2" || { stat=$?
+      diff_copy "$1" "$2" || { stat=2
         ${sudor}diff -q "$1" "$2" && {
            note "Changes resolved but uncommitted for 'COPY \"$1\" \"$2\"'"
            return
         }
         # Check existing COPY version
         test $choice_interactive -eq 1 && {
-          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && stat=0 ||
+          ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && {
+            ${sudor}diff -q "$1" "$2" && stat=0 || return 1
+          } ||
             warn "Interactive Diff still non-zero ($?)"
         } || return 1
       }
@@ -607,27 +609,52 @@ d_GIT_update()
 
 ## LINE directive
 
-d_LINE()
+d_LINE_stat()
 {
   test -f "$1" || error "expected file path '$1'" 1
   test -n "$2" || error "expected one ore more lines" 1
 
+  eval "set -- $arguments_raw"
   file=$1
   shift 1
   for line in "$@"
   do
-    enable_setting $file "$line"
+    find_setting "$file" "$line" || {
+      error "Missing '$line' in '$file'"
+      return 1
+    }
   done
-}
-
-d_LINE_stat()
-{
-  RUN=stat d_LINE "$@" || return $?
 }
 
 d_LINE_update()
 {
-  RUN=update d_LINE "$@" || return $?
+  test -f "$1" || error "expected file path '$1'" 1
+  test -n "$2" || error "expected one ore more lines" 1
+
+  eval "set -- $arguments_raw"
+  file=$1
+  shift 1
+  for line in "$@"
+  do
+    std_info "Looking for '$line' in '$file'"
+    enable_setting $file "$line"
+  done
+}
+
+d_DIR_stat ()
+{
+  local dir
+  for dir in $@
+  do test -d "$dir" || return
+  done
+}
+
+d_DIR_update ()
+{
+  local dir
+  for dir in $@
+  do test -d "$dir" || mkdir -p "$dir"
+  done
 }
 
 
@@ -814,7 +841,7 @@ _prep_dir_func () # Action
       ;;
 
     # provision/config directives support stat or update
-    COPY | SYMLINK | GIT | WEB | LINE )
+    COPY | SYMLINK | GIT | WEB | LINE | DIR )
       case $1 in install) return 1 ;; esac
       func_name="d_${directive}_$1"
       arguments="$(eval echo "$arguments_raw")"
