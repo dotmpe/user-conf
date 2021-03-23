@@ -641,6 +641,7 @@ d_LINE_update()
   done
 }
 
+# TODO: add sudo for both FILE and DIR directives
 d_DIR_stat ()
 {
   local dir
@@ -654,6 +655,22 @@ d_DIR_update ()
   local dir
   for dir in $@
   do test -d "$dir" || mkdir -p "$dir"
+  done
+}
+
+d_FILE_stat ()
+{
+  local file
+  for file in $@
+  do test -f "$file" || return
+  done
+}
+
+d_FILE_update ()
+{
+  local file
+  for file in $@
+  do test -f "$file" || touch "$file"
   done
 }
 
