@@ -326,19 +326,18 @@ d_COPY() # SCM-Src-File Host-Target-File
     return 1
   }
 
-  { test -w "$2" -o ! -e "$2" -a -w "$(dirname "$2")";} && {
-    { test -r "$2" -o ! -e "$2" ;} || {
-      test ${warn_on_sudo:-1} -eq 0 || {
-        warn "Setting sudo to read '$2' (for '$1')"
-      }
-      sudor="sudo -i "
+  { test ! -r "$2" -o ! -r "$(dirname "$2")";} && {
+    test ${warn_on_sudo:-1} -eq 0 || {
+      warn "Setting sudo to read '$2' (for '$1')"
     }
-  } || {
+    sudor="sudo -i "
+  }
+
+  { test ! -w "$2" -o ! -w "$(dirname "$2")";} && {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to write '$2' (for '$1')"
     }
     sudow="sudo -i "
-    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo -i "
   }
 
   ${sudor}test -e "$2" -a -d "$2" && {
@@ -544,6 +543,7 @@ d_GIT()
           }
           debug "Comparing <$2> branch '$4' with remote '$3' ref"
           git diff --quiet && {
+            git show-ref --quiet $3/$4 || git fetch $3
             git show-ref --quiet $3/$4 || {
               warn "No ref '$3/$4'"
               return 1
