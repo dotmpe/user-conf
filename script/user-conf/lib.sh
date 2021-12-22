@@ -637,7 +637,16 @@ d_LINE_update()
   for line in "$@"
   do
     std_info "Looking for '$line' in '$file'"
-    enable_setting $file "$line"
+    test -w "$file" && {
+      enable_setting $file "$line" || return
+    } || {
+      local bn="$(basename "$file")"
+      sudo mv "$file" "/tmp/$bn"
+      sudo chown $USER "/tmp/$bn"
+      enable_setting "/tmp/$bn" "$line" || return
+      sudo cp "/tmp/$bn" "$file"
+      rm "/tmp/$bn"
+    }
   done
 }
 
