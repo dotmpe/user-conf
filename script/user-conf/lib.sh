@@ -68,7 +68,7 @@ test -n "${hostname-}" -a -n "${domain-}" || {
     domain="$(hostname -f | cut -c$(( ${#hostname} + 2 ))-)"
   }
 }
-hostdom=$hostname-$domain
+hostdom=$hostname-${domain:-local}
 # XXX: vol_id=$disk_id-$part_id
 
 true "${username:=$(whoami)}"
@@ -889,6 +889,7 @@ uc_reset_report () # Index
     results=$TMP/$$-uc-$hostdom-$1.list
     uc_cache=$HOME/.statusdir/cache/uc-$hostdom-$1.list
   }
+  test -e ~/.statusdir/cache || mkdir ~/.statusdir/cache
 }
 
 # Move last result to cache location
