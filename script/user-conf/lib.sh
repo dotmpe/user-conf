@@ -24,6 +24,8 @@ test $IS_BASH_SH -eq 1 && {
 test $IS_DASH_SH -eq 1 &&
   set -o nounset
 
+log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
+
 # load and init lib parts
 . "$sh_lib"/std-uc.lib.sh
 . "$sh_lib"/str-uc.lib.sh
