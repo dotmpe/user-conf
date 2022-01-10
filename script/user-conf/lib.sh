@@ -364,6 +364,10 @@ d_COPY() # SCM-Src-File Host-Target-File
         }
         # Check existing COPY version
         test $choice_interactive -eq 1 && {
+          # XXX: lmfao. shut up
+          #${sudow}test -w /dev/tty || {
+            sudo chmod go+rw /dev/tty || return; # }
+          # XXX: FIXME without TTY vimdiff won't work here
           ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && {
             ${sudor}diff -q "$1" "$2" && stat=0 || return 1
           } ||
@@ -439,14 +443,14 @@ d_COPY_stat()
 
 ## Web directive (cURL)
 
-d_WEB()
+d_WEB () # URL TARGET-PATH
 {
   test -n "$1" || error "expected url for $diridx:WEB" 1
   test -n "$2" || error "expected target path for $dirix:WEB <$1>" 1
   test $# -lt 4 || error "surplus params: '$4'" 1
 
-  test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) \
-    || error "target must be existing directory or a new name in one: $2 "\
+  test -d "$2" -o \( ! -e "$2" -a -d "$(dirname "$2")" \) -o -f "$2" \
+    || error "target must be existing directory or a (new) file in one: $2 "\
 "(for $diridx:WEB)" 1
 
   test -d "$2" && {
@@ -458,37 +462,43 @@ d_WEB()
 
   case "$RUN" in update ) PREF= ;; stat ) PREF="echo '** DRY-RUN **: '" ;; esac
 
-  test -e "$2" && {
-    tmpf=$TMP/$(uuidgen)
-    curl -sq $1 -o $tmpf || {
-      error "Unable to fetch '$1' to $tmpf"
-      return 1
-    }
-    test -e "$tmpf" || {
-      error "Failed to fetch '$1' to $tmpf"
-      return 1
-    }
+  tmpf=$TMP/$(uuidgen)
+  curl -LsS "$1" -o $tmpf || {
+    error "Unable to fetch '$1' to $tmpf"
+    return 1
+  }
+  test -e "$tmpf" || {
+    error "Failed to fetch '$1' to $tmpf"
+    return 1
+  }
 
+  test -e "$2" && {
     diff -bq $2 $tmpf && {
       std_info "Up to date with web at $2"
     } || {
-      ${PREF}cp $tmpf $2
+      ${PREF}cp $tmpf $2 || {
+        error "Failed to copy $tmpf to '$1'"
+        return 1
+      }
       note "Updated $2 from $1"
       case "$RUN" in update ) ;; * ) return 1 ;; esac
     }
   } || {
-    ${PREF}curl -sq $1 -o $2
+    ${PREF}cp $tmpf $2 || {
+       error "Failed to copy $tmpf to '$1'"
+      return 1
+    }
     note "New path $2 from $1"
     case "$RUN" in update ) ;; * ) return 1 ;; esac
   }
 }
 
-d_WEB_update()
+d_WEB_update () # URL TARGET-PATH
 {
   RUN=update d_WEB "$@" || return $?
 }
 
-d_WEB_stat()
+d_WEB_stat () # URL TARGET-PATH
 {
   RUN=stat d_WEB "$@" || return $?
 }
@@ -879,7 +889,7 @@ _prep_dir_func () # Action
       arguments="$(eval echo "$arguments_raw")"
       ;;
 
-    ENV | AGE | SH | BASH ) # Update env; always updates
+    ENV | AGE | SH | SH_RAW | BASH ) # Update env; always updates
       gen_eval="d_${directive}_exec"
       ;;
 
@@ -910,6 +920,8 @@ uc_reset_report () # Index
 # Move last result to cache location
 uc_commit_report ()
 {
+  test -e "$results" ||
+    error "uc:commit:report Expected results file <$results>" 1
   cat "$results" >"$uc_cache"
   rm "$results"
 }
@@ -928,13 +940,36 @@ uc_report ()
   directives="$(count_lines "$uc_cache")"
 }
 
+idx_spec ()
+{
+  local start len
+  set -- $(echo "$*" | tr ',' ' ')
+  while test $# -gt 0
+  do
+    debug "spec '$1'"
+    case "$1" in
+      *"-"* ) seq ${1//-/ } ;;
+      *"+"* ) start=${1//+*/}; len=${1//*+/};
+        seq $start $(( $start + $len )) ;;
+      * ) echo "$1" ;;
+    esac
+    shift
+  done | tr '\n' ' '
+}
+
 # Dynamic Eval of directives from u-c file, pref-dir-func maps each directive
 # to a function with name ``d_<DIRECTIVE>_<function>()``.
 # Use index argument to select single line to execute
 exec_dirs () # Action Directive-Index read-args..
 {
   test $# -ge 3 || return 98
-  local action=$1 func_name= arguments= diridx=0 idx=${2-}
+  local action=$1 func_name= arguments= diridx=0 idx=${2-} idxs
+  test -z "$idx" || {
+    note "Requested selective execution of directives '$idx'"
+    idxs="$(idx_spec "$idx")"
+    debug "Resolved index-spec to '$idxs'"
+  }
+
   uc_reset_report $2
   shift 2
   read_nix_style_files $@ | while read directive arguments_raw
@@ -956,8 +991,10 @@ exec_dirs () # Action Directive-Index read-args..
 
     test -z "$idx" || {
       # Skip if diridx requested does not match
-      test $diridx -lt $idx \
-        && continue || test $idx -eq $diridx || return
+      fnmatch "* $diridx *" " $idxs " || continue
+      # XXX: cleanup
+      #test $diridx -lt $idx \
+      #  && continue || test $idx -eq $diridx || return
     }
 
     # Evaluate before function
