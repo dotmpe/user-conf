@@ -24,6 +24,8 @@ test $IS_BASH_SH -eq 1 && {
 test $IS_DASH_SH -eq 1 &&
   set -o nounset
 
+log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
+
 # load and init lib parts
 . "$sh_lib"/std-uc.lib.sh
 . "$sh_lib"/str-uc.lib.sh
@@ -68,7 +70,7 @@ test -n "${hostname-}" -a -n "${domain-}" || {
     domain="$(hostname -f | cut -c$(( ${#hostname} + 2 ))-)"
   }
 }
-hostdom=$hostname-$domain
+hostdom=$hostname-${domain:-local}
 # XXX: vol_id=$disk_id-$part_id
 
 true "${username:=$(whoami)}"
@@ -326,19 +328,18 @@ d_COPY() # SCM-Src-File Host-Target-File
     return 1
   }
 
-  { test -w "$2" -o ! -e "$2" -a -w "$(dirname "$2")";} && {
-    { test -r "$2" -o ! -e "$2" ;} || {
-      test ${warn_on_sudo:-1} -eq 0 || {
-        warn "Setting sudo to read '$2' (for '$1')"
-      }
-      sudor="sudo -i "
+  { test ! -r "$2" -o ! -r "$(dirname "$2")";} && {
+    test ${warn_on_sudo:-1} -eq 0 || {
+      warn "Setting sudo to read '$2' (for '$1')"
     }
-  } || {
+    sudor="sudo -i "
+  }
+
+  { test ! -w "$2" -o ! -w "$(dirname "$2")";} && {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to write '$2' (for '$1')"
     }
     sudow="sudo -i "
-    { test -r "$2" -o ! -e "$2" ;} || sudor="sudo -i "
   }
 
   ${sudor}test -e "$2" -a -d "$2" && {
@@ -554,6 +555,7 @@ d_GIT()
           }
           debug "Comparing <$2> branch '$4' with remote '$3' ref"
           git diff --quiet && {
+            git show-ref --quiet $3/$4 || git fetch $3
             git show-ref --quiet $3/$4 || {
               warn "No ref '$3/$4'"
               return 1
@@ -647,7 +649,16 @@ d_LINE_update()
   for line in "$@"
   do
     std_info "Looking for '$line' in '$file'"
-    enable_setting $file "$line"
+    test -w "$file" && {
+      enable_setting $file "$line" || return
+    } || {
+      local bn="$(basename "$file")"
+      sudo mv "$file" "/tmp/$bn"
+      sudo chown $USER "/tmp/$bn"
+      enable_setting "/tmp/$bn" "$line" || return
+      sudo cp "/tmp/$bn" "$file"
+      rm "/tmp/$bn"
+    }
   done
 }
 
@@ -899,6 +910,7 @@ uc_reset_report () # Index
     results=$TMP/$$-uc-$hostdom-$1.list
     uc_cache=$HOME/.statusdir/cache/uc-$hostdom-$1.list
   }
+  test -e ~/.statusdir/cache || mkdir ~/.statusdir/cache
 }
 
 # Move last result to cache location
