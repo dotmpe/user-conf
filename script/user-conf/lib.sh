@@ -317,17 +317,8 @@ d_SYMLINK_stat()
 }
 
 
-## Copy directive
-
-d_COPY() # SCM-Src-File Host-Target-File
+uc_sudo_path_target ()
 {
-  local sudor= sudow= sudod=
-  test -e "$1" && set -- "$(realpath "$1")" "$2" "$1"
-  test -f "$1" || {
-    error "not a file: $1 ($(pwd))"
-    return 1
-  }
-
   { test ! -r "$2" -o ! -r "$(dirname "$2")";} && {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to read '$2' (for '$1')"
@@ -341,6 +332,19 @@ d_COPY() # SCM-Src-File Host-Target-File
     }
     sudow="sudo -i "
   }
+}
+
+## Copy directive
+
+d_COPY() # SCM-Src-File Host-Target-File
+{
+  local sudor= sudow= sudod=
+  test -e "$1" && set -- "$(realpath "$1")" "$2" "$1"
+  test -f "$1" || {
+    error "not a file: $1 ($(pwd))"
+    return 1
+  }
+  uc_sudo_path_target "$@"
 
   ${sudor}test -e "$2" -a -d "$2" && {
       copy_target="$(normalize_relative "$2/$(basename "$1")")"
