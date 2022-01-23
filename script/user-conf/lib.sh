@@ -336,6 +336,7 @@ uc_sudo_path_target ()
 
 ## Copy directive
 
+# TODO: make copy update permission bits
 d_COPY() # SCM-Src-File Host-Target-File
 {
   local sudor= sudow= sudod=
