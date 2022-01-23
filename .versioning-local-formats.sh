@@ -31,4 +31,4 @@ applyVersion_local()
   esac
 }
 
-# Id: user-conf/0.2.0-dev local-formats.sh
+# Id: user-conf/0.2.0 .versioning-local-formats.sh

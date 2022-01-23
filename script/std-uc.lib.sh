@@ -111,4 +111,4 @@ debug()
   stderr "Debug" "$1" ${2-}
 }
 
-# Id: user-conf/0.2.0-dev script/std-uc.lib.sh
+# Id: user-conf/0.2.0 script/std-uc.lib.sh

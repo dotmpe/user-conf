@@ -9,7 +9,10 @@
 (0.2.x)
   XXX: probably keep using current repo as seed.
 
-(0.2.0-dev)
+0.2.0
    - Rewrote history to move config files to boilerplate branches.
+   - Accumulated changes. Moving to new version as I don't want all installs on
+     dev line. [2022-01-23]
 
+(0.2.1-dev)
   See TODO.txt

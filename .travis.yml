@@ -1,7 +1,7 @@
 
 install: ./install-dependencies.sh all test
 
-version: 0.2.0-dev # user-conf
+version: 0.2.0 # user-conf
 
 branches:
   only:

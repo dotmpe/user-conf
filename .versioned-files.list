@@ -1,6 +1,7 @@
 ReadMe.rst
-install-dependencies.sh
 .travis.yml
-script/user-conf/main.sh
-libexec/u-c
 .versioning-local-formats.sh
+libexec/u-c
+script/std-uc.lib.sh
+script/uc-colorize.sh
+script/user-conf/main.sh

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-version=0.2.0-dev # user-conf
+version=0.2.0 # user-conf
 
 scriptname=uc
 
@@ -78,4 +78,4 @@ case "$0" in "" ) ;; "-*" ) ;; * )
 
 esac
 
-# Id: user-conf/0.2.0-dev script/user-conf/main.sh
+# Id: user-conf/0.2.0 script/user-conf/main.sh
