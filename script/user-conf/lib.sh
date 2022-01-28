@@ -921,10 +921,12 @@ uc_reset_report () # Index
 # Move last result to cache location
 uc_commit_report ()
 {
-  test -e "$results" ||
-    error "uc:commit:report Expected results file <$results>" 1
-  cat "$results" >"$uc_cache"
-  rm "$results"
+  test -s "$results" && {
+    cat "$results" >"$uc_cache"
+  }  || {
+    error ":commit-report Expected results file or nothing done <$results>"
+  }
+  rm -f "$results"
 }
 
 # Load last results
