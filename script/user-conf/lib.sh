@@ -3,6 +3,8 @@
 
 test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
 
+true "${LOG:?Require log handler}"
+
 . ${sh_lib}/../tools/u-c/env.sh
 INIT_LOG=$LOG
 
@@ -48,6 +50,8 @@ log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
 . "$sh_lib"/date-uc.lib.sh
 . "$sh_lib"/vc-uc.lib.sh
 . "$sh_lib"/sys-uc.lib.sh
+. "$sh_lib"/stdlog-uc.lib.sh
+#. "$sh_lib"/syslog-uc.lib.sh
 . "$sh_lib"/conf-uc.lib.sh
 
 sys_uc_lib_load
@@ -70,19 +74,34 @@ test -n "${HOME-}" || {
 test -e "$HOME" || error "no user dir" 100
 
 # All boxes
-true "${os_kernel:="$(uname -s)"}"          # Eg. 'Linux'
-true "${os_release:="$(uname -r)"}"         # Version nr
-true "${machine_type:="$(uname -m)"}"       # Eg. x86_64
-true "${machine_processor:="$(uname -p)"}"
+#true "${OS_NAME:="$(uname -o)"}"           # Eg. 'GNU/Linux'
+true "${OS_KERNEL:="$(uname -s)"}"          # Eg. 'Linux', also 'OS name'
+true "${OS_RELEASE:="$(uname -r)"}"         # Version nr
+true "${HARDWARE_MACHINE:="$(uname -m)"}"   # Eg. x86_64
+#true "${HARDWARE_PLATFORM:="$(uname -i)"}" # Eg. x86_64
+true "${HARDWARE_PROCESSOR:="$(uname -p)"}" # Idem. to machine-type on x86
 
-# Not on Darwin
-test "$os_kernel" = "Darwin" && {
-  os_name=
-  machine_platform=
-} || {
-  true "${os_name:="$(uname -o)"}"
-  true "${machine_platform:="$(uname -i)"}"
-}
+if test -e /etc/os-release
+then
+  _os_dist () { sed 's/^/DIST_/g' /etc/os-release; }
+  eval $(_os_dist)     # Eg. DIST_ID=debian or ubuntu
+                       # And DIST_NAME='Debian GNU/Linux'
+                       #  or DIST_NAME=Ubuntu
+else
+  DIST_ID=
+  DIST_NAME=
+  DIST_VERSION=
+  DIST_VERSION_ID=
+fi
+
+if test "$OS_KERNEL" = "Darwin" # BSD/Darwin
+then
+  OS_NAME=
+  HARDWARE_PLATFORM=
+else
+  true "${OS_NAME:="$(uname -o)"}"
+  true "${HARDWARE_PLATFORM:="$(uname -i)"}"
+fi
 
 test -n "${hostname-}" -a -n "${domain-}" || {
   test -e $HOME/.statusdir/tree/domain &&  {
@@ -117,7 +136,6 @@ uc_cache_ttl=3600
 # boilerplate-{$machine,$uname,$domain,default}.u-c
 uc__initialize ()
 {
-  test -d ~/.statusdir/cache || mkdir -p ~/.statusdir/cache
   get_conf
   test -d "${UCONF-}" || error "No UCONF found" 1
   test "$hostname.$domain" = "$(hostname)" || {
@@ -935,7 +953,7 @@ uc_reset_report () # Index
     results=$TMP/$$-uc-$hostdom-$1.list
     uc_cache=$HOME/.statusdir/cache/uc-$hostdom-$1.list
   }
-  test -e ~/.statusdir/cache || mkdir ~/.statusdir/cache
+  test -d ~/.statusdir/cache || mkdir -vp ~/.statusdir/cache
 }
 
 # Move last result to cache location
@@ -953,6 +971,7 @@ uc_report ()
   test -n "${uc_cache-}" || uc_reset_report
   test -e "$uc_cache" || {
     error "No results"
+    passed= failed= directives=
     return 1
   }
 

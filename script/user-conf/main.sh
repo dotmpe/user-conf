@@ -41,6 +41,7 @@ def_func=uc__info
 
 case "$0" in "" ) ;; "-*" ) ;; * )
 
+  # Go to user-conf script-dir, load everything
   true "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"
   . "$uc_lib"/lib.sh
 

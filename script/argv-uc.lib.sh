@@ -8,9 +8,8 @@ argv_uc__argc () # ~ evttag argc test expectedc
 {
   local tag="${1:-":(args)"}" test="${3:-"eq"}" expc="${4:-0}"
   test ${2:--1} -$test $expc || {
-    uc_fail 64 "$tag" \
-      error "Expected argument count $test $expc, got ${2:--1}" ||
-        return
+    ${uc_log:-$LOG} error "$tag" "Expected argument count $test $expc, got ${2:--1}"
+    return $_E_GAE
   }
 }
 
