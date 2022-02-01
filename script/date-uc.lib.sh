@@ -10,23 +10,33 @@ _1DAY=86400
 _1WEEK=604800
 
 
-# File mtime is newer than seconds
+# newer-than FILE SECONDS, filemtime must be greater-than Now - SECONDS
 newer_than() # FILE SECONDS
 {
-  test -n "${1-}" || error "newer-than expected path" 1
-  test -e "$1" || error "newer-than expected existing path" 1
-  test -n "${2-}" || error "newer-than expected timestamp argument" 1
-  test -z "${3-}" || error "newer-than surplus arguments" 1
+  us_fail $_E_GAE --\
+    std_argv eq 2 $# "Newer-than argc expected" --\
+    assert_ n "${1-}" "Newer-than expected path" --\
+    assert_ e "${1-}" "Newer-than expected existing path" --\
+    assert_ n "${2-}" "Newer-than expected delta seconds argument" || return
 
+  # XXX: requires a bunch more functions
+  #test $(date_epochsec "$2") -lt $(filemtime "$1")
+
+  fnmatch "@*" "$2" || set -- "$1" "-$2"
   test $(( $(date +%s) - $2 )) -lt $(filemtime $1) && return 0 || return 1
 }
 
 # older-than FILE SECONDS, filemtime must be less-than Now - SECONDS
-older_than()
+older_than ()
 {
-  test -n "${1-}" || error "older-than expected path" 1
-  test -e "$1" || error "older-than expected existing path" 1
-  test -n "${2-}" || error "older-than expected timestamp argument" 1
-  test -z "${3-}" || error "older-than surplus arguments" 1
+  us_fail $_E_GAE --\
+    std_argv eq 2 $# "Older-than argc expected" --\
+    assert_ n "${1-}" "Older-than expected path" --\
+    assert_ e "${1-}" "Older-than expected existing path" --\
+    assert_ n "${2-}" "Older-than expected delta seconds argument" || return
+
+  fnmatch "@*" "$2" || set -- "$1" "-$2"
   test $(( $(date +%s) - $2 )) -gt $(filemtime $1) && return 0 || return 1
 }
+
+#

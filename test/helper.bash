@@ -3,6 +3,26 @@
 # FIXME: move to init
 test -n "$UCONF" && test -e "$UCONF"
 
+# XXX: conflicts with ztombl assert's lib
+type fail >/dev/null 2>&1 || {
+  fail()
+  {
+    test -n "$1" && echo "Reason: $1" >>"$BATS_OUT"
+    exit 1
+  }
+}
+
+type diag >/dev/null 2>&1 || {
+  # Note: without failing test, output will not show up in std Bats install
+  diag()
+  {
+    #BATS_TEST_DIAGNOSTICS=1
+    #echo "$1" >>"$BATS_OUT"
+    # XXX: since Bats 1.2.0?
+    echo "# $1" >&3
+  }
+}
+
 type stdfail >/dev/null 2>&1 || {
   stdfail()
   {
@@ -25,11 +45,51 @@ type test_ok_empty >/dev/null 2>&1 || {
   }
 }
 
+type test_nok_empty >/dev/null 2>&1 || {
+  test_nok_empty()
+  {
+    test ${status} -ne 0 && test -z "${lines[*]}"
+  }
+}
+
+type test_nonempty >/dev/null 2>&1 || {
+  test_nonempty()
+  {
+    test -n "${lines[*]}" || return $?
+    for match in "$@"
+    do
+        case "$match" in
+
+          # Test line-count if number given.
+          # NOTE BATS 0.4 strips empty lines! not blank lines.
+          # As wel as combining stdout/err
+          [0-9]|[0-9][0-9]|[0-9][0-9][0-9] )
+            test "${#lines[*]}" = "$1"  || return $? ;;
+
+          # Each match applies to entire line list otherwise
+          * ) fnmatch "$1" "${lines[*]}" || return $? ;;
+
+        esac
+    done
+  }
+}
+
 type test_ok_nonempty >/dev/null 2>&1 || {
   test_ok_nonempty()
   {
     test ${status} -eq 0 && test -n "${lines[*]}" && {
-      test -z "$1" || fnmatch "$1" "${lines[*]}"
+      test -n "$*" || return 0
+      test_nonempty "$@"
+    }
+  }
+}
+
+type test_nok_nonempty >/dev/null 2>&1 || {
+  test_nok_nonempty()
+  {
+    test ${status} -ne 0 && test -n "${lines[*]}" && {
+      test -n "$*" || return 0
+      test_nonempty "$@"
     }
   }
 }

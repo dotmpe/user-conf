@@ -42,7 +42,7 @@ Install
 
 
 Guide
-------
+-----
 Each host::
 
   cd $UCONF; ./script/user-conf/init.sh
@@ -66,55 +66,18 @@ Or to dry-run::
 See Manual_ and Specification_ for user documentation.
 
 
-Dev
+Bugs
 ----
-- Think about domain and some kind of preferential wildcard
-  matching based on that.
+While not experimental code, this a heavy work-in-progress at the moment.
 
-  Still using one file per host.
-  But want a bit more flexible variable expansion to improve reuse.
-
-  replace $domain in COPY/SYMLINK src argument with first match
-  starting with full hostname.
-
-  E.g. with box.example.net, vim/rc.$domain expands to first existing path from::
-
-   rc.box.example.net
-   rc.example.net
-   rc.net
-   rc(.default)
+This document should be updated to reflect the current version but will be lagging a bit until I catch up.
 
 
-- 2015-12-19 TODO: git directive submodule mode
+Versions
+--------
+Expect a long way to go to any definite 1.0 version, if any.
 
-- 2015-12-20 XXX: maybe new type of directives for configuration: cron, munin-node,
-  hostname, hosts and fstab maybe. XXX: first try to use LINE for this?
-
-- 2016-06-13 TODO: config may need interactive init. But can be avoided for now.
-
-- 2015-12-20 TODO: add a simple frontend script to put in $PATH.
-
-- 2015-10-03 TODO: handling of sudo. Can determine wether paths are writable, and do auto
-  root. Maybe stick a decorator to directive to always run with sudo.
-
-- 2015-10-03 TODO: a source directive. As new directives are added it should be useful
-  create generic bits of ufile with var. directives and distribute ucfiles in bits.
-
-- 2015-10-03 XXX: maybe use installer glob for INSTALL. But would need to map package names
-  then too.
-
-- 2015-10-03 XXX: make directives optional. Maybe stick an asterix or q-mark to the keyword. Then
-  expand init to initialize paths, and let stat and update only deal with
-  existing paths and leave new-paths if the directive is optional?
-
-- 2015-10-04 XXX: at some point, replace cat $conf with something that handles SOURCE
-  directives. Current set up does seem to handle multilines using '\' trailer.
-
-- 2015-12-20 XXX: DIR directive, and consolidation asks for kind of interaction
-  that makes scripts complex. Not sure wether to include that here.
-
-  Also GIT does not take note of cruft (yet). If that is made an option,
-  then maybe other tooling would be obsolete. Until then, ~/bin is to support.
+Development release listing in ``ChangeLog.rst``.
 
 
 .. _Specification: doc/Specification.rst

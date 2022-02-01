@@ -60,10 +60,15 @@ case "$0" in "" ) ;; "-*" ) ;; * )
           test $# -eq 0 || shift 1
           test $human_out -eq 1 && {
             {
-              $func "$@" || exit
-            } 2>&1 | $sh_lib/uc-colorize.sh >&2
+              $func "$@" || exit $?
+            } 2>&1 | {
+              $sh_lib/uc-colorize.sh >&2
+            }
+            exit $?
+
           } || {
-            $func "$@" || exit
+            $func "$@"
+            exit $?
           }
         } || {
           error "no command '$cmd' ($func)"

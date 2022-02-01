@@ -4,21 +4,21 @@
 
 os_uc_lib_load()
 {
-  true "${uname:="$(uname -s | tr '[:upper:]' '[:lower:]')"}"
-  true "${hostname:="$(hostname -s | tr 'A-Z' 'a-z')"}"
-  true "${os:="$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+  true "${uname:="$(uname -s)"}"
+  true "${hostname:="$(hostname -s)"}"
+  true "${os:="$(uname -s)"}"
 
   test -n "${gsed-}" || case "$uname" in
-      linux ) gsed=sed ;; * ) gsed=gsed ;;
+      Linux ) gsed=sed ;; * ) gsed=gsed ;;
   esac
   test -n "${ggrep-}" || case "$uname" in
-      linux ) ggrep=grep ;; * ) ggrep=ggrep ;;
+      Linux ) ggrep=grep ;; * ) ggrep=ggrep ;;
   esac
   test -n "${gdate-}" || case "$uname" in
-      linux ) gdate=date ;; * ) gdate=gdate ;;
+      Linux ) gdate=date ;; * ) gdate=gdate ;;
   esac
   test -n "${gstat-}" || case "$uname" in
-      linux ) gstat=stat ;; * ) gstat=gstat ;;
+      Linux ) gstat=stat ;; * ) gstat=gstat ;;
   esac
 }
 
@@ -43,13 +43,13 @@ filesize() # File
   while test $# -gt 0
   do
     case "$uname" in
-      darwin )
+      Darwin )
           stat -L -f '%z' "$1" || return 1
         ;;
-      linux | cygwin_nt-6.1 )
+      Linux | CYGWIN_NT-6.1 )
           stat -L -c '%s' "$1" || return 1
         ;;
-      * ) $LOG error "os" "filesize: $1?" "" 1 ;;
+      * ) $LOG error ":os-uc.lib" "filesize: $uname?" "" 1 ;;
     esac; shift
   done
 }
@@ -57,25 +57,36 @@ filesize() # File
 # Use `stat` to get modification time (in epoch seconds)
 filemtime() # File
 {
+  local flags=- ; file_stat_flags
   while test $# -gt 0
   do
     case "$uname" in
-      darwin )
-          stat -L -f '%m' "$1" || return 1
+      Darwin )
+          trueish "${file_names-}" && pat='%N %m' || pat='%m'
+          stat -f "$pat" $flags "$1" || return 1
         ;;
-      linux | cygwin_nt-6.1 )
-          stat -L -c '%Y' "$1" || return 1
+      Linux | CYGWIN_NT-6.1 )
+          trueish "${file_names-}" && pat='%N %Y' || pat='%Y'
+          stat -c "$pat" $flags "$1" || return 1
         ;;
-      * ) $LOG error "os" "filemtime: $1?" "" 1 ;;
+      * ) $LOG error ":os-uc.lib" "filemtime: $uname?" "" 1 ;;
     esac; shift
   done
 }
 
+file_stat_flags()
+{
+  test -n "$flags" || flags=-
+  test ${file_deref:-0} -eq 0 || flags=${flags}L
+  test "$flags" != "-" || flags=
+}
+
+
 read_nix_style_file()
 {
-  test -n "$1" || return 1
-  test -z "$2" || error "read-nix-style-file: surplus arguments '$2'" 1
-  cat $cat_f "$1" | grep -Ev '^\s*(#.*|\s*)$' || return 1
+  test -n "${1-}" || return 1
+  test -z "${2-}" || error "read-nix-style-file: surplus arguments '$2'" 1
+  cat ${cat_f-} "$1" | grep -Ev '^\s*(#.*|\s*)$' || return 1
 }
 
 normalize_relative()

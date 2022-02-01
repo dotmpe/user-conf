@@ -3,7 +3,11 @@
 
 test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
 
+. ${sh_lib}/../tools/u-c/env.sh
+INIT_LOG=$LOG
+
 set -e
+
 . "$sh_lib"/shell-uc.lib.sh
 shell_uc_lib_load
 
@@ -14,22 +18,31 @@ test $IS_BASH_SH -eq 1 && {
   #  expansions and subshells
   set -o errtrace
 
+  set -E
+
+  # Leave a path of line-numbers in array BASH_LINENO
+  # thate tells where functions where called.
+  set -o functrace
+
   # trap ERR to provide an error handler whenever a command exits nonzero
   #  this is a more verbose version of set -o errexit
   . "$sh_lib"/bash-uc.lib.sh
   trap 'bash_uc_errexit' ERR
+  # trap 'echo "$LINENO" "$BASH_LINENO" "${BASH_COMMAND}" "${?}"' ERR
 }
-
 
 test $IS_DASH_SH -eq 1 &&
   set -o nounset
 
+
 log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
 
 # load and init lib parts
+. "$sh_lib"/argv-uc.lib.sh
 . "$sh_lib"/std-uc.lib.sh
 . "$sh_lib"/str-uc.lib.sh
 . "$sh_lib"/src-uc.lib.sh
+. "$sh_lib"/ansi-uc.lib.sh
 . "$sh_lib"/match-uc.lib.sh
 . "$sh_lib"/os-uc.lib.sh
 . "$sh_lib"/date-uc.lib.sh
@@ -40,6 +53,16 @@ log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
 sys_uc_lib_load
 std_uc_lib_load
 os_uc_lib_load
+ansi_uc_lib_load
+
+case "${TERM-}" in
+  "" ) ;;
+  dumb ) ;;
+  * ) COLORIZE=1 ;;
+esac
+
+std_uc_lib_init
+ansi_uc_lib_init
 
 test -n "${HOME-}" || {
   test -n "${username:-}" && HOME=/home/$username || error "no user dir set" 100
@@ -74,9 +97,6 @@ hostdom=$hostname-${domain:-local}
 # XXX: vol_id=$disk_id-$part_id
 
 true "${username:=$(whoami)}"
-test -z "${v-}" || verbosity=$v
-true "${verbosity:=5}"
-true "${choice_interactive:=$( test -t 0 && echo 1 || echo 0 )}"
 
 test -n "${human_out:-}" || { test -t 1 && human_out=1 || human_out=0; }
 
@@ -364,7 +384,7 @@ d_COPY() # SCM-Src-File Host-Target-File
            return
         }
         # Check existing COPY version
-        test $choice_interactive -eq 1 && {
+        test $STD_INTERACTIVE -eq 1 && {
           # XXX: lmfao. shut up
           #${sudow}test -w /dev/tty || {
             sudo chmod go+rw /dev/tty || return; # }
@@ -1193,3 +1213,153 @@ uc__info ()
   uc__env &&
   uc__report
 }
+
+# XXX: consolidate
+
+: "${DOMAIN:=}"
+: "${HOST:="$(hostname --long)"}"
+
+: "${UC_CONFIG_NAME:="local $DOMAIN $HOST-$USER $hostname-$USER host $HOST $hostname user $USER generic default"}"
+
+: "${UC_CONFIG_INSTALL_EXT:="u-c"}"
+: "${UC_DEFAULT_GROUPS:="etc"}"
+
+# Lookup file anywhere in UCONF repo, based on its filename and location.
+uc__config () # ~ [NAME][.EXT] [--] [GROUP [GROUP...]]
+{
+  argv_uc__argc :uc:config $# ge 1 || return
+  local name ext groups
+  fnmatch "*.*" "$1" && {
+    # EXT is the last '.'-separated part of the name
+    ext="${1##*.}"
+    # NAME is minus last EXT
+    name="${1%.*}"
+  } || name="$1"
+  shift
+
+  test "${1-}" = '--' || set -- "$@" ${UC_DEFAULT_GROUPS}
+  test "${1-}" = "--" && shift
+  set -- $name "$@"
+  $LOG debug :uc:config "Looking for config at" "$*"
+
+  test -n "${ext-}" || {
+
+    # Look-up exts for most specific NAME with exts
+    ext=`uc__resolve_env EXT $(reverse "$@")` || {
+      $LOG error :uc:config "Cannot find EXT" "" 1
+    }
+  }
+
+  $LOG note :uc:config "Looking for config file" "$name.$ext"
+
+  while test $# -gt 0
+  do
+    local path lname
+
+    for path in `uc__resolve_path $(reverse "$@") | while IFS= read -r path; \
+      do \
+        first=true; \
+        while $first || test "$path" != "./" -a "$path" != "//"; \
+        do \
+          first=false; \
+          echo "$path"; \
+          path=$(dirname "$path")/; \
+        done; \
+      done || true`
+    do
+      for lname in `uc__resolve_env "$@" || echo "$1"`
+      do
+        test -e "$UCONF/$path/$lname.$ext" || continue
+        break 2
+      done
+    done
+    shift
+
+    test -n "${lname-}" -a -n "${path-}" -a -e "$UCONF/${path-}/${lname-}.$ext" && {
+      echo "$UCONF/$path$lname.$ext"
+      break
+    } || {
+      test $# -gt 0 || return
+    }
+  done
+}
+
+## Lookup actual file(s) named 'FILE' in a location specified by GROUP's.
+uc__resolve () # ~ [[...GROUP] GROUP] FILE[.EXT]
+{
+  true
+}
+
+## Lookup actual directory named by GROUP's.
+uc__resolve_path () # ~ GROUP [GROUP...]
+{
+  test $# -gt 0 || return 64
+
+  $LOG note :resolve-path "Lookup existing path for groups" "$*"
+  {
+    local last=false
+    while test $# -gt 0
+    do
+      local name=
+      for name in $(uc__resolve_env $(reverse "$@") || true)
+      do
+        test -d "$name" || continue
+        break
+      done
+      test -n "$name" || name="$1"
+      shift
+      test -d "$name" || return
+      cd "$name"
+      echo "$name"
+    done
+  } | {
+    tr -s "$IFS" '/'; echo;
+  }
+}
+
+## Lookup ``UC_{<GROUP>_,}<VAR>``-keyed value in shell env.
+uc__resolve_env () # ~ VAR [GROUP [GROUP...]]
+{
+  test $# -gt 0 || return 64
+
+  local v var="$1" uc_resolve_prefix
+  uc_resolve_prefix="${UC_RESOLVE_PREFIX:-"Uc Config "}"
+  shift
+  # Reverse arguments Bash-style
+  set -- $(for (( i=$#;i>0;i-- ));do echo "${!i}"; done)
+  $LOG note :resolve-env "Lookup env var" "NAME=$var GROUPS=$*"
+
+  # Loop until either varref exists or no args left
+  while true
+  do
+    varref="$uc_resolve_prefix$(test $# -eq 0 || printf '%s ' "$@")$var"
+    v="$(printf '%s' "$varref" | tr -c 'A-Za-z0-9_' '_')"
+    v="${v^^}"
+    #echo varref=$varref varname=$v >&2
+    v="${!v-}"
+    test -n "$v" -o $# -eq 0 && break
+    shift
+  done
+  # Abort or print
+  test -n "${v-}" || return
+  printf -- '%s' "$v"
+}
+
+uc__has_config ()
+{
+  uc__config >&2
+}
+
+uc__user_has_config ()
+{
+  true
+}
+
+reverse ()
+{
+  for (( i=$#;i>0;i-- ))
+  do echo "${!i}"
+  done
+}
+
+#

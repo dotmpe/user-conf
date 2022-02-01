@@ -42,7 +42,8 @@ test_inc_sh=". $(echo $test_inc | sed 's/\ / \&\& . /g')"
 
   run bash -c 'no_such_function'
   test $status -eq 127
-  test "${lines[0]}" = "bash: no_such_function: command not found"
+  echo "${lines[*]}"
+  test "${lines[0]}" = "bash: line 1: no_such_function: command not found"
 }
 
 
