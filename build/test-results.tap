@@ -1,8 +1,0 @@
-1..12
-ok 1 ./script/../test/helper.bash - is_skipped: returns 0 if ENV_SKIP=1 or 1, no output
-ok 2 ./script/../test/helper.bash - current_test_env no args: echos valid env (TEST_ENV, host or user name), returns 0
-ok 3 ./script/../test/helper.bash - check_skipped_envs: returns 0 or 1, no output
-ok 4 ./script/../test/helper.bash - check_skipped_envs: check current env
-ok 5 ./script/std - std_v <n> should return 1 if <n> <= <verbosity>. No output.
-ok 6 ./script/std - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. 
-exit 0 ok

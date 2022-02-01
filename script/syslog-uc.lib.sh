@@ -45,7 +45,7 @@ syslog_uc_lib_load ()
 
   # XXX: this could be off at 'dumb' and non-interactive by default
   # not sure when/if to toggle this yet.
-  #test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:"severity colorize"}"
+  test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:"severity colorize"}"
 }
 
 syslog_uc_lib_init () # ~
@@ -201,6 +201,9 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   } || {
     opts="$opts --no-act"
   }
+
+  # Silence error if logger has been turned off delibarately
+  test -s /etc/log || opts="$opts --socket-errors=off"
 
   local tags="$(printf '%s:' "$@")"
   logger $opts -t "${tags:0:-1}" -p "$fac.$lvl" "$msg"

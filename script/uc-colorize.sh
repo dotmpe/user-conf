@@ -18,20 +18,26 @@ case "$uname" in
       esac
     ;;
 
-  * ) echo "No stdio-type for $uname" 1>&2 ; exit 1 ;;
+  * ) $LOG error "" "No ansi-escape -type for $uname" ; return 1 ;;
 esac
 
+normal=$esc'[0m'
+boldblack=$esc'[1;30m'
+green=$esc'[0;32m'
+red=$esc'[0;31m'
+yellow=$esc'[0;33m'
+blue=$esc'[0;34m'
 
 sed -E '
-    s/^ok /'"$esc"'[0;32mOK: '"$esc"'[0m/g
-    s/^fail:([0-9]+) /'$esc'[0;31mFailure(\1): '$esc'[0m/g
+    s/^ok /'$green'OK: '$esc'[0m/g
+    s/^fail:([0-9]+) /'$red'Failure(\1): '$esc'[0m/g
 
-    s/Error:/'$esc'[0;31mError:'$esc'[0m/g
-    s/(Warning|Failed.*):/'$esc'[0;33mWarning:'$esc'[0m/g
-    s/Notice:/'$esc'[0;34mNotice:'$esc'[0m/g
-    s/^\[(.*)\]/'"$esc"'[1;30m\[\1\]'"$esc"'[0m/g
+    s/Error:/'$red'Error:'$esc'[0m/g
+    s/(Warning|Failed.*):/'$yellow'Warning:'$esc'[0m/g
+    s/Notice:/'$blue'Notice:'$esc'[0m/g
+    s/^\[(.*)\]/'$boldblack'\[\1\]'"$esc"'[0m/g
 
-    s/^(.*)$/\1'"$esc"'[0;37m/g
+    s/^(.*)$/\1'$esc'[0;37m/g
   '
 
 #    s/^\[(.*)\]\ Error:/\\033[1;30m\[\1\]\\033[0;31m\ Error:\\033[0m/g

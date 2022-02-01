@@ -1,27 +1,39 @@
 jobs:
   build:
     # Circle CI (base image):
-    # Each command line is run in `/bin/bash -eo pipefail`.
     # The start dir is ~/project, there is a helper to create the checkout
     docker:
-      - image: cimg/base:2020.01
+      - image: dotmpe/treebox:edge
     steps:
-    - run: sudo apt-get update && sudo apt-get install -y bc moreutils curl npm
-    - run: sudo npm install -g git+https://github.com/dotmpe/tap-xunit.git
+    #- run: sudo apt-get update && sudo apt-get install -y bc moreutils curl npm
 
     # Invoke CCI helper.
     - checkout
 
     - run:
-        name: Build
+        name: Setup
         command: |
-            set -euo pipefail; \
-            ./bin/uc info
+          . ~/.profile
+          . ./tools/ci/setup.sh
+          echo export scriptname=Circle-CI >> ~/.profile
 
-    #- store_artifacts:
-    #    path: user-conf/.build/reports
+    - run:
+        name: Unit tests
+        command: |
+          . ./test-env.sh
+          . ./tools/ci/test.sh
+          . ./tools/ci/convert.sh
 
-    #- store_test_results:
-    #    path: reports
+    - run:
+        name: Test
+        command: |
+          . ./test-env.sh
+          . ./tools/ci/run.sh
+
+    - store_artifacts:
+        path: build/
+
+    - store_test_results:
+        path: build/
 
 # Id: U-S:circleci/config.yml

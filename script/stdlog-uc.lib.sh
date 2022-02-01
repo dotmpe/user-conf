@@ -18,10 +18,13 @@ stdlog_uc_lib_load ()
 {
   true "${STDLOG_UC_LEVEL:=6}"
   true "${STDLOG_UC_EXITS:=3}"
-  #true "${STDLOG_UC_ANSI:=0}"
+  #true "${STDLOG_UC_ANSI:=1}"
 }
 
-stdlog_uc_lib_init () { true; }
+stdlog_uc_lib_init ()
+{
+  true
+}
 
 
 stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
@@ -108,71 +111,63 @@ log()
   printf -- "[$(log_src_id)] $1\n"
 }
 
-err()
-{
-  # TODO: turn this on and fix tests warn "err() is deprecated, see stderr()"
-  log "$1" 1>&2
-  test -z "${2-}" || exit $2
-}
-
 stderr()
 {
   case "$(echo $1 | tr 'A-Z' 'a-z')" in
-    warn*|err*|notice ) err "$1: $2" "${3-}" ;;
-    * ) err "$2" "${3-}" ;;
+    warn*|err*|notice ) log "$1: $2" 1>&2 ;;
+    * ) log "$2" 1>&2 ;;
   esac
 }
 
 # std-v <level>
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
-std_v()
+std_v ()
 {
-  test -z "$verbosity" && return || {
-    test $verbosity -ge $1 && return || return 1
-  }
+  test -z "${verbosity-}" -o "${verbosity-}" -ge $1
 }
 
 std_exit () # [exit-at-level]
 {
   test -n "${1-}" || return 0
-  test "$1" != "0" && return 0 || exit $1
+  true ${std_exit:=exit}
+  $std_exit $1
 }
 
 emerg()
 {
-  std_v 1 || { std_exit ${2-} && return 0; }
-  stderr "Emerg" "$1" ${2-}
+  std_v 0 && stderr "Emerg" "$1"
+  std_exit ${2-}
 }
 crit()
 {
-  std_v 2 || { std_exit ${2-} && return 0; }
-  stderr "Crit" "$1" ${2-}
+  std_v 2 && stderr "Crit" "$1"
+  std_exit ${2-}
 }
 error()
 {
-  std_v 3 || { std_exit ${2-} && return 0; }
-  stderr "Error" "$1" ${2-}
+  std_v 3 && stderr "Error" "$1"
+  std_exit ${2-}
 }
 warn()
 {
-  std_v 4 || { std_exit ${2-} && return 0; }
-  stderr "Warning" "$1" ${2-}
+  std_v 4 && stderr "Warning" "$1"
+  std_exit ${2-}
 }
 note()
 {
-  std_v 5 || { std_exit ${2-} && return 0; }
-  stderr "Notice" "$1" ${2-}
+  std_v 5 && stderr "Notice" "$1"
+  std_exit ${2-}
 }
 notice() { note "$@"; }
 std_info()
 {
-  std_v 6 || { std_exit ${2-} && return 0; }
-  stderr "Info" "$1" ${2-}
+  std_v 6 stderr "Info" "$1"
+  std_exit ${2-}
 }
 debug()
 {
-  std_v 7 || { std_exit ${2-} && return 0; }
-  stderr "Debug" "$1" ${2-}
+  std_v 7 && stderr "Debug" "$1"
+  std_exit ${2-}
 }
 
 stdlog_to_syslog () # {slog,r} ~ [Line-Type] [Header] Msg [Ctx] [Exit]
@@ -191,41 +186,18 @@ stdlog_to_syslog () # {slog,r} ~ [Line-Type] [Header] Msg [Ctx] [Exit]
 # XXX: filter on syslog tail output
 stdlog_uc__syslog_colorize ()
 {
-  # XXX: These may take a bit more to all to be set as shell/term/prompt has not
-  # been sourced
-  # See sh-ansi-tpl-uc.lib
+  local b=${BOLD-} n=${NORMAL-} B=${BLACK-} y=${YELLOW-} w=${WHITE-} \
+    g=${GREEN-} l=${BLUE-} r=${RED-}
 
-  : "${BLACK:="$(tput setaf 0)"}"
-  : "${RED:="$(tput setaf 1)"}"
-  : "${GREEN:="$(tput setaf 2)"}"
-  : "${YELLOW:="$(tput setaf 3)"}"
-  : "${BLUE:="$(tput setaf 4)"}"
-  : "${CYAN:="$(tput setaf 5)"}"
-  : "${MAGENTA:="$(tput setaf 6)"}"
-  : "${WHITE:="$(tput setaf 7)"}"
-
-  : "${BG_BLACK:="$(tput setab 0)"}"
-  : "${BG_RED:="$(tput setab 1)"}"
-  : "${BG_GREEN:="$(tput setab 2)"}"
-  : "${BG_YELLOW:="$(tput setab 3)"}"
-  : "${BG_BLUE:="$(tput setab 4)"}"
-  : "${BG_CYAN:="$(tput setab 5)"}"
-  : "${BG_MAGENTA:="$(tput setab 6)"}"
-  : "${BG_WHITE:="$(tput setab 7)"}"
-
-  : "${REVERSE:=}"
-  : "${BOLD:="$(tput bold)"}"
-  : "${NORMAL:="$(tput sgr0)"}"
-
-  # XXX: I use bold-black a lot
-  local bb=$BOLD$BLACK
+  # I use bold-black a lot with terminal 'show bold lighter' option on.
+  local bb=${b}${B}
 
   sed 's/^<\([0-9]*\)>/\1 /g' | while read PRI rest
   do
     fnmatch "[0-9]*" "$PRI" || {
 
       # All non-logger lines are yellow
-      echo "$NORMAL$YELLOW$PRI $rest$NORMAL"
+      echo "${n}${y}$PRI $rest${n}"
       continue
     }
 
@@ -238,22 +210,22 @@ stdlog_uc__syslog_colorize ()
       fname=$(syslog_facility_name "$flvl"|| echo "(unknown)")
       sname=$(syslog_level_name "$slvl"|| echo "(unknown)")
 
-      printf "$bb%2s\%1i.$NORMAL" "$fname" "$flvl"
+      printf "$bb%2s\%1i.${n}" "$fname" "$flvl"
     } || {
-      printf "$bb%i.$NORMAL" "$flvl"
+      printf "$bb%i.${n}" "$flvl"
     }
 
     # Assign detail color for log-line based on severity-level
     local slvlc
     case "$slvl" in
-      0 ) slvlc="$BOLD$WHITE$BG_RED" ;; # emerg
-      1 ) slvlc="$BOLD$RED" ;; # alert
-      2 ) slvlc="$BOLD$YELLOW" ;; # crit
-      3 ) slvlc="$RED" ;; # error
-      4 ) slvlc="$YELLOW" ;; # warn
-      5 ) slvlc="$BLUE" ;; # notice
-      6 ) slvlc="$GREEN" ;; # info
-      7 ) slvlc="$BOLD$BLACK" ;; # debug
+      0 ) slvlc="${b}${w}$BG_${r}" ;; # emerg
+      1 ) slvlc="${b}${r}" ;; # alert
+      2 ) slvlc="${b}${y}" ;; # crit
+      3 ) slvlc="${r}" ;; # error
+      4 ) slvlc="${y}" ;; # warn
+      5 ) slvlc="${l}" ;; # notice
+      6 ) slvlc="${g}" ;; # info
+      7 ) slvlc="${b}${B}" ;; # debug
     esac
 
     # Optionally display name-codes besides numral facility.severity levels
@@ -262,20 +234,20 @@ stdlog_uc__syslog_colorize ()
     } || {
       printf "$slvlc%i$bb" "$slvl"
     }
-    printf "$bb<$NORMAL$slvlc$PRI$bb>"
+    printf "$bb<${n}$slvlc$PRI$bb>"
 
     # Color rest of logger line, including our stdlog '<context>' part
     # <date-time dark> <sylog-tag default/normal> <message bold> '<'<context green>'>'
     printf "$rest\n" | sed -E '
-s/\<E[0-9]+\>/'$YELLOW'&'$GREEN'/g
-s/^([^ ]+ [0-9]+ [0-9:]+) ([A-Za-z_])/\1 '$NORMAL'\2/g
-s/: ([^<]*)/'$bb': '$NORMAL$BOLD'\1'$NORMAL'/g
-s/: ([^<]*)</'$bb': '$NORMAL$BOLD'\1'$bb'</g
-s/<([^>]*)>/<'$NORMAL$GREEN'\1'$bb'>'$NORMAL'/g
+s/\<E[0-9]+\>/'${y}'&'${g}'/g
+s/^([^ ]+ [0-9]+ [0-9:]+) ([A-Za-z_])/\1 '${n}'\2/g
+s/: ([^<]*)/'$bb': '${n}${b}'\1'${n}'/g
+s/: ([^<]*)</'$bb': '${n}${b}'\1'$bb'</g
+s/<([^>]*)>/<'${n}${g}'\1'$bb'>'${n}'/g
     '
 
 # Coloring other separators just doesn't work well
-#s/(:|\[[0-9]+\])/'$bb'\1'$NORMAL'/g
+#s/(:|\[[0-9]+\])/'$bb'\1'${n}'/g
 
   done
 }

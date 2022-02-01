@@ -41,6 +41,10 @@ def_func=uc__info
 
 case "$0" in "" ) ;; "-*" ) ;; * )
 
+  set -e
+  RET=
+  test -z "${DEBUG-}" || set -x
+
   # Go to user-conf script-dir, load everything
   true "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"
   . "$uc_lib"/lib.sh
@@ -48,7 +52,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
   # Do something if script invoked as 'uc' or 'main'
   case "${base:=$(basename -- $0 .sh)}" in
 
-    $scriptname | main )
+    ( $scriptname | main )
 
         # invoke with function name first argument,
         cmd=${1-}
@@ -61,27 +65,31 @@ case "$0" in "" ) ;; "-*" ) ;; * )
           test $# -eq 0 || shift 1
           test $human_out -eq 1 && {
             {
-              $func "$@" || exit $?
+              $func "$@"
             } 2>&1 | {
               $sh_lib/uc-colorize.sh >&2
             }
-            exit $?
+            RET=$?
 
           } || {
             $func "$@"
-            exit $?
+            RET=$?
           }
         } || {
           error "no command '$cmd' ($func)"
+          RET=1
         }
-
       ;;
 
-    * )
-      echo "Not a frontend for '$base' ($scriptname)"
+    ( * )
+        echo "Not a frontend for '$base' ($scriptname)"
+        RET=1
+      ;;
 
   esac
+  test -z "${DEBUG-}" || set +x
 
+  exit ${RET-}
 esac
 
 # Id: user-conf/0.2.0 script/user-conf/main.sh
