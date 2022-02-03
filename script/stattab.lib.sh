@@ -20,7 +20,6 @@ stattab_lib_init ()
   }
 }
 
-
 # Assuming entry is updated replace or add to Stat-Tab
 stattab_commit () # ~
 {
@@ -154,6 +153,16 @@ stattab_grep () # ~ <Sttab-Id> [<Search-Type>] [<Stat-Tab>]
 stattab_ids ()
 {
   $gsed -E 's/^[0-9 T+-]+ ([A-Za-z0-9:$%&@_\.+-]+):.*$/\1/'
+}
+
+stattab_init ()
+{
+  test -s "$STTTAB" || return
+  { cat <<EOM
+# [Status] [BTime] CTime MTime [Dirs Pass Skip Err Fail Tot] Name-Id: Short @Ctx +Proj
+# Id: _CONF                                                        ex:ft=todo:
+EOM
+} >"$STTTAB"
 }
 
 # List ST-Id's only from tab output
