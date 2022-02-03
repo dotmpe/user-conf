@@ -18,6 +18,7 @@ docker run \
   --volume $(realpath ~/.ssh/known_hosts):/home/treebox/.ssh/known_hosts \
   --volume $(pwd -P):/src/github.com/dotmpe/user-conf:ro \
   -u treebox \
+  -e USER=treebox \
   -w /src/github.com/dotmpe/user-conf \
   $image "$@" </dev/tty
 
