@@ -1,11 +1,11 @@
 jobs:
   build:
-    # Circle CI (base image):
+
     # The start dir is ~/project, there is a helper to create the checkout
     docker:
       - image: dotmpe/treebox:edge
+
     steps:
-    #- run: sudo apt-get update && sudo apt-get install -y bc moreutils curl npm
 
     # Invoke CCI helper.
     - checkout
@@ -15,7 +15,9 @@ jobs:
         command: |
           . ~/.profile
           . ./tools/ci/setup.sh
-          echo export scriptname=Circle-CI >> ~/.profile
+          { echo "# Added by $0:Setup on $(date --iso=min)"
+            echo export scriptname=Circle-CI
+          } >> ~/.profile
 
     - run:
         name: Unit tests

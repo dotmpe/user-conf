@@ -1,12 +1,9 @@
-#!/bin/sh
-set -e
+#!/usr/bin/env bash
+set -eu
 
-# docker rm -f user-conf-dev || true
+docker rm -f user-conf-dev || true
 
 image=dotmpe/treebox:edge
-  #--volume /src/local/user-conf-dev:/home/treebox/.basher/cellar/packages/dotmpe/user-conf \
-  #--volume /src/local/user-conf-dev:$HOME/project/user-conf-dev \
-  #--volume /etc/profile.d/uc-profile.sh:/etc/profile.d/uc-profile.sh \
 
 PPWD=$(pwd -P)
 gh_keyfile=~/.ssh/id_rsa
@@ -20,7 +17,7 @@ docker run \
   --volume $(realpath /etc/localtime):/etc/localtime:ro \
   --volume $(realpath $gh_keyfile):/home/treebox/.ssh/$kbn \
   --volume $(realpath ~/.ssh/known_hosts):/home/treebox/.ssh/known_hosts \
-  --volume $PPWD:/usr/lib/user-conf \
+  --volume /srv/project-local/user-scripts:/srv/project-local/user-scripts \
   --volume $PPWD:$PPWD \
   -u treebox \
   -e UC_LOG_LEVEL=7 \

@@ -53,7 +53,7 @@ std_uc_lib_init ()
   true ${STD_INTERACTIVE:=`eval "$std_interactive"; printf $?`}
 
   std_uc_env_def
-  $INIT_LOG debug "" "Initialized std-uc.lib" "$0"
+  $INIT_LOG "debug" "" "Initialized std-uc.lib" "$*"
 }
 
 

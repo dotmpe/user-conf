@@ -33,7 +33,7 @@ sed -E '
     s/^fail:([0-9]+) /'$red'Failure(\1): '$esc'[0m/g
 
     s/Error:/'$red'Error:'$esc'[0m/g
-    s/(Warning|Failed.*):/'$yellow'Warning:'$esc'[0m/g
+    s/(Warning:|Failed[^ :]*:)/'$yellow'Warning:'$esc'[0m/g
     s/Notice:/'$blue'Notice:'$esc'[0m/g
     s/^\[(.*)\]/'$boldblack'\[\1\]'"$esc"'[0m/g
 

@@ -22,7 +22,7 @@ os_uc_lib_load()
   esac
 }
 
-read_nix_style_file()
+read_nix_style_file () # [cat_f=] ~ File [Grep-Filter]
 {
   test $# -eq 1 -a -e "${1-}" || return 64
   cat $1 | grep -Ev '^\s*(#.*|\s*)$'
@@ -82,7 +82,54 @@ file_stat_flags()
 }
 
 
-read_nix_style_file()
+# Go over arguments and echo. If no arguments given, or on argument '-' the
+# standard input is cat instead or in-place respectively. Strips empty lines.
+# (Does not open filenames and read from files). Multiple '-' arguments are
+# an error, as the input is not buffered and rewounded. This simple setup
+# allows to use arguments as stdin, insert arguments-as-lines before or after
+# stdin, and the pipeline consumer is free to proceed.
+#
+# If this routine is given no data is hangs indefinitely. It does not have
+# indicators for data availble at stdin.
+foreach ()
+{
+  {
+    test -n "$*" && {
+      while test $# -gt 0
+      do
+        test "$1" = "-" && {
+          # XXX: echo foreach_stdin=1
+          cat -
+          # XXX: echo foreach_stdin=0
+        } || {
+          printf -- '%s\n' "$1"
+        }
+        shift
+      done
+    } || cat -
+  } | grep -v '^$'
+}
+
+
+# Read `foreach` lines and act, default is echo ie. same result as `foreach`
+# but with p(refix) and s(uffix) wrapped around each item produced. The
+# unwrapped loop-var is _S.
+foreach_do ()
+{
+  test -n "${p-}" || local p= # Prefix string
+  test -n "${s-}" || local s= # Suffix string
+  test -n "${act-}" || local act="echo"
+  foreach "$@" | while read -r _S ; do S="$p$_S$s" && $act "$S" ; done
+}
+
+
+ignore_sigpipe()
+{
+  local r=$?
+  test $r -eq 141 || return $r # For bash: 128+signal where signal=SIGPIPE=13
+}
+
+read_nix_style_file ()
 {
   test -n "${1-}" || return 1
   test -z "${2-}" || error "read-nix-style-file: surplus arguments '$2'" 1

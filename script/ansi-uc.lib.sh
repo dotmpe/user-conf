@@ -3,10 +3,12 @@
 
 ansi_uc_lib_load ()
 {
-  : ${ncolors:=$(tput colors)}
+  true ${ncolors:=$(tput colors)}
 
   # Load term-part to set this to more sensible default
-  #: ${COLORIZE:=0}
+  true "${COLORIZE:=0}"
+
+  test $COLORIZE -eq 1 || ansi_uc_env_def
 }
 
 ansi_uc_env_def ()
@@ -26,21 +28,22 @@ ansi_uc_env_def ()
 ansi_uc_lib_init ()
 {
   test ${COLORIZE:-1} -eq 1 || {
-    ansi_uc_env_def
-    return 0
+    declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def
+    return
   }
 
   local tset
   case "$TERM" in xterm | screen ) ;; ( * ) false ;; esac && tset=set ||
   case "$TERM" in xterm-256color | screen-256color ) ;; ( * ) false ;; esac &&
   case ${ncolors:-0} in
-    ( 8 ) tset=set ;;
+    (   8 ) tset=set ;;
     ( 256 ) tset=seta ;;
-    ( * ) false ;;
+    (   * ) false ;;
   esac || {
     # If no color support found, simply set vars and return zero-status.
     # Maybe want to fail trying to init ANSI.lib later...
-    bash_env_exists _f0 || ansi_uc_env_def; return;
+    #bash_env_exists _f0 || ansi_uc_env_def; return;
+    declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
   }
 
   : ${REVERSE:=$(tput rev)}
@@ -132,4 +135,21 @@ ansi_uc_esc ()
   esac
 }
 
-#
+ansi_uc_less ()
+{
+  ##LESS man page colors
+  # Purple section titles and alinea leader IDs
+  export LESS_TERMCAP_md=$'\E[01;35m'
+  # Green keywords
+  export LESS_TERMCAP_us=$'\E[01;32m'
+  # Black on Yellow statusbar
+  export LESS_TERMCAP_so=$'\E[00;43;30m'
+  # Normal text
+  export LESS_TERMCAP_me=$'\E[0m'
+  export LESS_TERMCAP_ue=$'\E[0m'
+  export LESS_TERMCAP_se=$'\E[0m'
+  # Red?
+  export LESS_TERMCAP_mb=$'\E[01;31m'
+}
+
+# Id: Uc:

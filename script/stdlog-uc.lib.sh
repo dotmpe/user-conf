@@ -123,7 +123,7 @@ stderr()
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
 std_v ()
 {
-  test -z "${verbosity-}" -o "${verbosity-}" -ge $1
+  test -z "${verbosity:-}" -o ${verbosity:--1} -ge $1
 }
 
 std_exit () # [exit-at-level]
@@ -135,37 +135,44 @@ std_exit () # [exit-at-level]
 
 emerg()
 {
+  test $# -le 2 || return 64
   std_v 0 && stderr "Emerg" "$1"
   std_exit ${2-}
 }
 crit()
 {
+  test $# -le 2 || return 64
   std_v 2 && stderr "Crit" "$1"
   std_exit ${2-}
 }
 error()
 {
+  test $# -le 2 || return 64
   std_v 3 && stderr "Error" "$1"
   std_exit ${2-}
 }
 warn()
 {
+  test $# -le 2 || return 64
   std_v 4 && stderr "Warning" "$1"
   std_exit ${2-}
 }
 note()
 {
+  test $# -le 2 || return 64
   std_v 5 && stderr "Notice" "$1"
   std_exit ${2-}
 }
 notice() { note "$@"; }
 std_info()
 {
-  std_v 6 stderr "Info" "$1"
+  test $# -le 2 || return 64
+  std_v 6 && stderr "Info" "$1"
   std_exit ${2-}
 }
 debug()
 {
+  test $# -le 2 || return 64
   std_v 7 && stderr "Debug" "$1"
   std_exit ${2-}
 }

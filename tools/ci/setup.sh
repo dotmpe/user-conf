@@ -1,6 +1,7 @@
 #!/bin/sh
 
 { cat <<EOM
+# Added by Uc:tools/ci/setup.sh <$0> on $(date --iso=min)"
 export LOG=\$PWD/tools/sh/log.sh
 export TERM=xterm-256color
 export USER=circleci
@@ -11,8 +12,10 @@ export STDLOG_UC_ANSI=1
 export STDLOG_UC_LEVEL=7
 EOM
 } > ~/.profile
+
 mkdir -vp ~/.local/lib
 ln -s ~/project ~/.local/lib/user-conf
+
 { cat <<EOM
 . ~/.profile
 set -euTEo pipefail
