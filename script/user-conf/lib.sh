@@ -3,10 +3,10 @@
 
 test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
 
+true "${LOG:?Require log handler}"
+
 . ${sh_lib}/../tools/u-c/env.sh
 INIT_LOG=$LOG
-
-set -e
 
 . "$sh_lib"/shell-uc.lib.sh
 shell_uc_lib_load
@@ -14,26 +14,33 @@ shell_uc_lib_load
 test $IS_BASH_SH -eq 1 && {
   set -o nounset -o pipefail
 
+  # This triggers
+  #/etc/profile.d/uc-profile.sh: /usr/share/bashdb/bashdb-main.inc: No such file or directory
+  #/etc/profile.d/uc-profile.sh: warning: cannot start debugger; debugging mode disabled
+  # at t460s but only sometimes.
+  #shopt -s extdebug
+
   # setting errtrace allows our ERR trap handler to be propagated to functions,
   #  expansions and subshells
-  set -o errtrace
-
-  set -E
+  set -o errtrace # same as -E
 
   # Leave a path of line-numbers in array BASH_LINENO
-  # thate tells where functions where called.
-  set -o functrace
+  # thate tells where functions where called
+  set -o functrace # same as -T
 
   # trap ERR to provide an error handler whenever a command exits nonzero
   #  this is a more verbose version of set -o errexit
   . "$sh_lib"/bash-uc.lib.sh
   trap 'bash_uc_errexit' ERR
-  # trap 'echo "$LINENO" "$BASH_LINENO" "${BASH_COMMAND}" "${?}"' ERR
+
+} || {
+
+  $LOG warn "" "Non-Bash TO-TEST"
 }
 
-test $IS_DASH_SH -eq 1 &&
+test $IS_DASH_SH -eq 1 && {
   set -o nounset
-
+}
 
 log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
 
@@ -48,17 +55,21 @@ log_key=$USER@$(hostname):$scriptname:${1-} # FIXME why is default not working
 . "$sh_lib"/date-uc.lib.sh
 . "$sh_lib"/vc-uc.lib.sh
 . "$sh_lib"/sys-uc.lib.sh
+. "$sh_lib"/stdlog-uc.lib.sh
+#. "$sh_lib"/syslog-uc.lib.sh
 . "$sh_lib"/conf-uc.lib.sh
 
 sys_uc_lib_load
 std_uc_lib_load
 os_uc_lib_load
 ansi_uc_lib_load
+stdlog_uc_lib_load
+#syslog_uc_lib_load
 
 case "${TERM-}" in
   "" ) ;;
   dumb ) ;;
-  * ) COLORIZE=1 ;;
+  * ) true "${COLORIZE:=1}" ;;
 esac
 
 std_uc_lib_init
@@ -70,19 +81,34 @@ test -n "${HOME-}" || {
 test -e "$HOME" || error "no user dir" 100
 
 # All boxes
-true "${os_kernel:="$(uname -s)"}"          # Eg. 'Linux'
-true "${os_release:="$(uname -r)"}"         # Version nr
-true "${machine_type:="$(uname -m)"}"       # Eg. x86_64
-true "${machine_processor:="$(uname -p)"}"
+#true "${OS_NAME:="$(uname -o)"}"           # Eg. 'GNU/Linux'
+true "${OS_KERNEL:="$(uname -s)"}"          # Eg. 'Linux', also 'OS name'
+true "${OS_RELEASE:="$(uname -r)"}"         # Version nr
+true "${HARDWARE_NAME:="$(uname -m)"}"   # Eg. x86_64
+#true "${HARDWARE_PLATFORM:="$(uname -i)"}" # Eg. x86_64
+true "${HARDWARE_PROCESSOR:="$(uname -p)"}" # Idem. to machine-type on x86
 
-# Not on Darwin
-test "$os_kernel" = "Darwin" && {
-  os_name=
-  machine_platform=
-} || {
-  true "${os_name:="$(uname -o)"}"
-  true "${machine_platform:="$(uname -i)"}"
-}
+if test -e /etc/os-release
+then
+  _os_dist () { sed 's/^/DIST_/g' /etc/os-release; }
+  eval $(_os_dist)     # Eg. DIST_ID=debian or ubuntu
+                       # And DIST_NAME='Debian GNU/Linux'
+                       #  or DIST_NAME=Ubuntu
+else
+  DIST_ID=
+  DIST_NAME=
+  DIST_VERSION=
+  DIST_VERSION_ID=
+fi
+
+if test "$OS_KERNEL" = "Darwin" # BSD/Darwin
+then
+  OS_NAME=
+  HARDWARE_PLATFORM=
+else
+  true "${OS_NAME:="$(uname -o)"}"
+  true "${HARDWARE_PLATFORM:="$(uname -i)"}"
+fi
 
 test -n "${hostname-}" -a -n "${domain-}" || {
   test -e $HOME/.statusdir/tree/domain &&  {
@@ -114,10 +140,9 @@ uc_cache_ttl=3600
 
 # User-config holds directives for current env/host, make a copy to
 # install/$hostname.u-c of the first existing path in
-# boilerplate-{$machine,$uname,$domain,default}.u-c
+# boilerplate{,-{$machine,$uname,$domain}}.u-c
 uc__initialize ()
 {
-  test -d ~/.statusdir/cache || mkdir -p ~/.statusdir/cache
   get_conf
   test -d "${UCONF-}" || error "No UCONF found" 1
   test "$hostname.$domain" = "$(hostname)" || {
@@ -125,42 +150,23 @@ uc__initialize ()
   }
   cd "$UCONF"
   local conf=install/$hostname.u-c \
-    local_name_conf=local-$hostname-$domain.u-c \
     local_conf=local.u-c
 
-  test -e "install/$local_name_conf" && {
-    test "$(readlink install/$local_name_conf)" = "$(basename $conf)" ||
-      rm install/$local_name_conf
-  }
-  test -e "install/$local_name_conf" ||
-    ln -s $(basename $conf) install/$local_name_conf
-
-  test -e "install/$local_conf" && {
-    test "$(readlink install/$local_conf)" = "$local_name_conf" ||
-      rm install/$local_conf
-  }
   test -e "install/$local_conf" ||
-    ln -s $local_name_conf install/$local_conf
+    ln -s $(basename $conf) install/$local_conf
 
   test ! -e "$conf" || {
     note "Already initialized: $conf"
     return
   }
+
   local tpl=
-
-  { cat <<EOM
-
-install/boilerplate-$hostname.u-c
-install/boilerplate-$machine_type-$machine_processor.u-c
-install/boilerplate-$machine_type.u-c
-install/boilerplate-$os_kernel-$os_release.u-c
-install/boilerplate-$os_kernel.u-c
-
-EOM
-} | while read tpl
+  for tag in $hostname $HARDWARE_NAME-$HARDWARE_PROCESSOR $HARDWARE_PROCESSOR \
+    $HARDWARE_NAME $OS_KERNEL-$OS_RELEASE $OS_KERNEL $OS_RELEASE ""
   do
+    tpl=install/boilerplate${tag:+-}${tag}.u-c
     test ! -e "$tpl" || {
-      cp -v $tpl $conf
+      cp -v $UCONF/$tpl $UCONF/$conf
       note "Initialized $hostname from $tag boilerplate"
       break
     }
@@ -829,7 +835,7 @@ d_INSTALL_BIN()
 # get conf env: the u-c file for this host and all its includes
 get_conf ()
 {
-  test -n "$conf" ||
+  test -n "${conf-}" ||
     for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
     do
       test -e $UCONF/Ucfile &&
@@ -935,7 +941,7 @@ uc_reset_report () # Index
     results=$TMP/$$-uc-$hostdom-$1.list
     uc_cache=$HOME/.statusdir/cache/uc-$hostdom-$1.list
   }
-  test -e ~/.statusdir/cache || mkdir ~/.statusdir/cache
+  test -d ~/.statusdir/cache || mkdir -vp ~/.statusdir/cache
 }
 
 # Move last result to cache location
@@ -953,6 +959,7 @@ uc_report ()
   test -n "${uc_cache-}" || uc_reset_report
   test -e "$uc_cache" || {
     error "No results"
+    passed= failed= directives=
     return 1
   }
 

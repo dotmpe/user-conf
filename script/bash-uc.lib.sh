@@ -55,6 +55,16 @@ bash_uc_errexit ()
     #printf "$(date) $USER@$HOST $SHELL_NAME[$$] ${n}\n"
     printf "${n}\n"
 
+    {
+      true
+      #shopt -q extdebug
+      #case "$-" in ( *E* ) ;; ( * ) false ;; esac
+      #case "$-" in ( *T* ) ;; ( * ) false ;; esac
+    } || {
+      $LOG warn ":bash-uc.lib:errexit" "Cannot display full trace without ..." "-=$-"
+      return 1
+    }
+
     declare frame=0
     declare argv_offset=0
 

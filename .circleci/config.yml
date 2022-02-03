@@ -1,49 +1,38 @@
 jobs:
   build:
     # Circle CI (base image):
-    # Each command line is run in `/bin/bash -eo pipefail`.
     # The start dir is ~/project, there is a helper to create the checkout
     docker:
-      - image: cimg/base:2020.01
+      - image: dotmpe/treebox:edge
     steps:
-
-    - run: sudo apt-get update && sudo apt-get install -y bc moreutils curl npm
-    - run: sudo npm install -g git+https://github.com/dotmpe/tap-xunit.git
 
     # Invoke CCI helper.
     - checkout
 
-    # Go move checkout to a default build location ~/project/user-conf
     - run:
-        name: Move checkout
+        name: Setup
         command: |
-            echo "$(whoami)@$(hostname -f):$PWD"; cd; \
-            mv ~/project/ ~/user-conf; \
-            mkdir ~/project; \
-            mv ~/user-conf/ ~/project/; \
-            ln -s ~/project/user-conf ~/bin; \
-            cd ~/project/user-conf
+          . ~/.profile
+          . ./tools/ci/setup.sh
+          echo export scriptname=Circle-CI >> ~/.profile
 
     - run:
-        name: Build
+        name: Unit tests
         command: |
-            cd ~/project/user-conf; \
-            set -euo pipefail; \
-            export TERM=xterm \
-              VND_SRC_PREFIX=$HOME/build \
-              U_S=$PWD \
-              ENV_DEV=1 \
-              SCRIPT_SHELL=bash \
-              CS=dark \
-              CTX_PID=$$ \
-              CTX_P= \
-              ;
-            ./sh-ci
+          . ./test-env.sh
+          . ./tools/ci/test.sh
+          . ./tools/ci/convert.sh
+
+    - run:
+        name: Test
+        command: |
+          . ./test-env.sh
+          . ./tools/ci/run.sh
 
     - store_artifacts:
-        path: user-conf/.build/reports
+        path: build/
 
     - store_test_results:
-        path: reports
+        path: build/
 
 # Id: U-S:circleci/config.yml

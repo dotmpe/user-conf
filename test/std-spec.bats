@@ -4,6 +4,7 @@ load helper
 base=std
 init
 . $lib/std-uc.lib.sh
+. $lib/stdlog-uc.lib.sh
 . $lib/str-uc.lib.sh
 
 
@@ -37,29 +38,33 @@ init
 
 @test "${lib}/${base} - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. " {
 
-  exit(){ echo 'exit '$1' ok'; }
+  mockexit () { echo "exit $1 ok"; exit $1; }
+  std_exit=mockexit
 
   run std_exit
-  test ${status} -eq 1
-  test -z "${lines[*]}"
+  { test ${status} -eq 0 -a "exit 0 ok" = "${lines[*]}"
+  } || stdfail 1
+
+type mockexit
+  run std_exit 0
+  { test ${status} -eq 0 -a "exit 0 ok" = "${lines[*]}"
+  } || stdfail 2
 
   run std_exit 1
-  test ${status} -eq 0
-  test "exit 1 ok" = "${lines[*]}"
+  { test ${status} -eq 1 -a "exit 1 ok" = "${lines[*]}"
+  } || stdfail 3
 
-  run std_exit 0
-  test ${status} -eq 0
-  test "exit 0 ok" = "${lines[*]}"
+  unset -f mockexit
 }
 
 
 @test "${lib}/${base} - error should echo at verbosity>=3" {
 
   verbosity=2
-  test "$(type -t info)" = "function"
-  run info "test"
-  test ${status} -eq 0
-  test -z "${lines[*]}"
+  test "$(type -t std_info)" = "function"
+  run std_info "test"
+  { test ${status} -eq 0 -a -z "${lines[*]}"
+  } || stdfail 1
 
   exit(){ echo 'exit '$1' call'; command exit $1; }
 
@@ -84,34 +89,34 @@ init
 @test "${lib}/${base} - info should echo at verbosity>=6" {
 
   verbosity=4
-  run info "test" 0
+  run std_info "test" 0
   test ${status} -eq 0
   test -z "${lines[*]}"
 
   verbosity=5
-  run info "test info exit" 3
+  run std_info "test info exit" 3
   test ${status} -eq 3
   test -z "${lines[*]}"
 
   verbosity=6
-#  run info "test info exit" 3
+#  run std_info "test info exit" 3
 #  test ${status} -eq 3
 #  fnmatch "*test info exit*" "${lines[*]}"
 #
 #  verbosity=6
-#  run info "test info exit" 0
+#  run std_info "test info exit" 0
 #  test ${status} -eq 0
 #  fnmatch "*test info exit*" "${lines[*]}"
 #  return
 
 #  verbosity=5
-#  run info "test" 0
+#  run std_info "test" 0
 #  test ${status} -eq 0
 #  test -z "${lines[*]}"
 #
 #  exit(){ echo 'exit '$1' call'; command exit $1; }
 #  verbosity=6
-#  run info "test" 0
+#  run std_info "test" 0
 #  test ${status} -eq 0
 #  fnmatch "*exit 0 call" "${lines[*]}"
 }

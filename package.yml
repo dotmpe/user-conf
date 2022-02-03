@@ -40,9 +40,7 @@
 
     test:
       - ./run-dev.sh ./bin/uc info
-      - ./run-dev.sh dash -lic './bin/uc info'
-      - ./run-dev.sh bash -lic './bin/uc info'
-      #- ./run-dev.sh dash -lic './bin/uc init'
+      #- ./run-dev.sh dash -lic '. ./bin/uc'
       #- htd run ci
 
     update:
