@@ -139,6 +139,12 @@ emerg()
   std_v 0 && stderr "Emerg" "$1"
   std_exit ${2-}
 }
+std_alert()
+{
+  test $# -le 2 || return 64
+  std_v 1 && stderr "Alert" "$1"
+  std_exit ${2-}
+}
 crit()
 {
   test $# -le 2 || return 64

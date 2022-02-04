@@ -10,6 +10,8 @@ export UC_PROFILE_LOG_FILTERS=colorize
 export UC_LOG_LEVEL=7
 export STDLOG_UC_ANSI=1
 export STDLOG_UC_LEVEL=7
+export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
+export XDG_CACHE_HOME=\$PWD/build/cache
 EOM
 } > ~/.profile
 

@@ -96,11 +96,16 @@ stattab_lib_init
 
 RT_HOME=${XDG_RUNTIME_HOME:=/run/user/$(id -u)}
 CACHE_HOME=${XDG_CACHE_HOME:=$HOME/.cache}
-STATE_HOME=${XDG_STATE_HOME:=$HOME/.local/state}
+#STATE_HOME=${XDG_STATE_HOME:=$HOME/.local/state}
 
-mkdir -vp $RT_HOME/user-conf
-mkdir -vp $CACHE_HOME/user-conf
-mkdir -vp $STATE_HOME/user-conf
+{
+  mkdir -vp $RT_HOME/user-conf &&
+  mkdir -vp $CACHE_HOME/user-conf
+  #mkdir -vp $STATE_HOME/user-conf
+} || {
+  $LOG crit "" "Unable to get required directories, check XDG_{RUNTIME,CACHE}_HOME settings"
+  return 1
+}
 
 
 # Gather some facts to use in the installation profile
