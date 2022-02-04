@@ -15,8 +15,10 @@ export XDG_CACHE_HOME=\$PWD/build/cache
 EOM
 } > ~/.profile
 
-mkdir -vp ~/.local/lib
-ln -s ~/project ~/.local/lib/user-conf
+test -e ~/.local/lib/user-conf || {
+  mkdir -vp ~/.local/lib
+  ln -s ~/project ~/.local/lib/user-conf
+}
 
 { cat <<EOM
 . ~/.profile
