@@ -33,8 +33,8 @@ uc_conf_get () # ~
       do
         for tag in `uc___names`
         do
-          conf=install/${tag}.u-c
-          test -e $UCONF/$conf && break 2
+          conf=$UCONF/install/${tag}.u-c
+          test -e $conf && break 2
           unset conf
         done
       done
@@ -126,9 +126,18 @@ uc_commit_report ()
     rm "$uc_results"
   }
   stattab_fetch "$tag" || return
-  uc_report
-  local ctime="$(date +'%s')" utime="$(filemtime "$uc_cache")"
-  stattab_update $status "" "$ctime" "$utime" "$directives" "$passed" "" """ $failed"
+
+  uc_report || return
+  local ctime utime
+  utime="$(filemtime "$uc_cache")" || return
+
+  stattab_update $status "" "" "$utime" "$directives" "$passed" "" "" "$failed" || return
+
+  # Don't change file if entry is the same as fetched
+  test "$(stattab_entry)" = "$stttab_entry" && return
+
+  ctime="$(date +'%s')" &&
+  stattab_update "" "" "$ctime" &&
   stattab_commit
 }
 
@@ -338,26 +347,30 @@ reverse ()
 req_domain ()
 {
   local nameraw=${1:-$host_fqdn}
-  unset domain_tld domain 2>&1 >/dev/null || true
 
   # Auto extract domain if attached to 'fqdn'
   # If TLD has periods set Uc-Domain-Tld-D >1
 
+  domainname=
+  domain_tld=
+  domain=
+
   # Set = 0 to force empty and no match on domain
   test ${UC_DOMAIN_TLD_D:-1} -eq 0 && {
-    host_domain=$host_fqdn
-    domainname=
-    domain_tld=
-    domain=
+    host_domain=$nameraw
   } || {
-    lvls=$(echo $nameraw | tr -dc '.')
-    host_domain=$(echo $nameraw |
-      cut -d. --output-delimiter . -f-$(( 1 + ${#lvls} - ${UC_DOMAIN_TLD_D:-1} )) )
+    lvls=$(echo $nameraw | tr -dc .)
+    test ${#lvls} -eq 0 && {
+      host_domain=$nameraw
+    } || {
+      dlvls=$(( 1 + ${#lvls} - ${UC_DOMAIN_TLD_D:-1} ))
+      host_domain=$(echo $nameraw | cut -d. --output-delimiter . -f-$dlvls)
+      domainname=${host_domain:$(( 1 + ${#hostname} ))}
+      domain_tld=${nameraw:$(( 1 + ${#host_domain} ))}
+      domain=$domainname.$domain_tld
+      unset dlvls
+    }
     unset lvls
-
-    domainname=${host_domain:$(( 1 + ${#hostname} ))}
-    domain_tld=${nameraw:$(( 1 + ${#host_domain} ))}
-    domain=$domainname.$domain_tld
   }
 }
 

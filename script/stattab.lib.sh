@@ -35,9 +35,10 @@ stattab_commit () # ~
   }
 }
 
+# Parse date-id
 stattab_date ()
 {
-  fnmatch "@*" "$1" && echo "$1" || date_pstat "$1"
+  fnmatch "@*" "$1" && echo "${1:2}" || date_pstat "$1"
 }
 
 # Prepare env for Stat-Id
@@ -69,7 +70,7 @@ stattab_entry_id () # STVID [STID]
 
 stattab_entry_init () # STVID [STID]
 {
-  stattab_entry_id "$@"
+  stattab_entry_id "$@" &&
   echo "$stttab_id" | grep -q '^[A-Za-z_][A-Za-z0-9_-]*$' ||
       error "Illegal ST name '$stttab_id'" 1
 }
@@ -100,7 +101,7 @@ stattab_entry_env_reset ()
 
 stattab_entry_defaults () # Tags
 {
-  local now="$(date --iso=min)"
+  local now="$(date +'%s')"
   stattab_value "${stttab_btime:-}" || stttab_btime=$now
   stattab_value "${stttab_ctime:-}" || stttab_ctime=$now
 }
@@ -157,9 +158,10 @@ stattab_ids ()
 
 stattab_init ()
 {
-  test -s "$STTTAB" || return
+  test -s "$STTTAB" && return
+  mkdir -vp "$(dirname "$STTTAB")" &&
   { cat <<EOM
-# [Status] [BTime] CTime MTime [Dirs Pass Skip Err Fail Tot] Name-Id: Short @Ctx +Proj
+# [Status] [BTime] CTime UTime [Dirs Pass Skip Err Fail Tot] Name-Id: Short @Ctx +Proj
 # Id: _CONF                                                        ex:ft=todo:
 EOM
 } >"$STTTAB"
@@ -176,6 +178,7 @@ stattab_list () # ? LIST
 stattab_parse () # ~ <Grep-Line>
 {
   test $# -gt 0 || return 64
+  test -n "$*" || return 60
   stattab_entry_env_reset
   # Remove grep-line filename/linenumber from entry and parse
   stttab_entry="$*"
@@ -207,6 +210,7 @@ stattab_parse_STD_stat () # ~ [Status] [BTime] [CTime] [UTime] [Dirs] [Passed] [
 stattab_record () # ~ <Entry>
 {
   test $# -gt 0 || return 64
+  test -n "$*" || return 60
   stattab_entry_env_reset
   stttab_entry="$*"
   stattab_entry_parse &&

@@ -89,6 +89,8 @@ esac
 
 std_uc_lib_init
 ansi_uc_lib_init
+
+test -s "$STTTAB" || stattab_init
 stattab_lib_init
 
 
@@ -216,7 +218,9 @@ uc__commit ()
   uc_conf_req || return
   # re-commit report values to Stat-Tab XXX: should o this once after exec-dirs?
   uc_commit_report
+
   return
+# XXX:
   test "$(pwd)" = "$UCONF" || cd $UCONF
   git diff --quiet && {
     git commit -m "At $hostname" || return
@@ -294,28 +298,29 @@ uc__initialize ()
 
     # Default name for new config file
     tag=$(eval echo \"$UC_LOCAL_TPL\")
-    conf=install/$tag.u-c
+    conf=$UCONF/install/$tag.u-c
     note "Set new configuration $tag"
   }
   test -e "$UCONF/install/$local_conf" ||
     ln -vs $(basename $conf) $UCONF/install/$local_conf
 
-  test -e "$UCONF/${conf-}" && {
+  test -e "${conf-}" && {
     note "Using existing $tag configuration"
 
-    stattab_record $tag $UC_STAT_TPL @Local
+    stattab_record $tag: $UC_STAT_TPL @Local
     return
   } ||
-    for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
+    local UCONF_
+    for UCONF_ in $PWD ${UCONFDIR:-$HOME/.conf}
     do
       local tpl= bp_tag
       for bp_tag in `uc___names`
       do
-        tpl=install/boilerplate${bp_tag:+-}${bp_tag}.u-c
-        test -e "$UCONF/$tpl" || continue
+        tpl=$UCONF_/install/boilerplate${bp_tag:+-}${bp_tag}.u-c
+        test -e "$tpl" || continue
 
-        cp -v $UCONF/$tpl $UCONF/$conf
-        stattab_record $tag $UC_STAT_TPL @$bp_tag
+        cp -v $tpl $conf
+        stattab_record $tag: $UC_STAT_TPL @$bp_tag
 
         note "Initialized config $tag from $bp_tag boilerplate"
         break 2
@@ -339,15 +344,15 @@ uc__list ()
   echo "# Listing config paths. First would be selected as config." >&2
   test -e Ucfile && echo $PWD/Ucfile
 
-  local conf
-  for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
+  local conf UCONF_
+  for UCONF_ in $PWD ${UCONFDIR:-$HOME/.conf}
   do
     for tag in `uc___names`
     do
-      conf=install/boilerplate-${tag}.u-c
-      test -e $UCONF/$conf && echo $conf
-      conf=install/${tag}.u-c
-      test -e $UCONF/$conf && echo $conf
+      conf=$UCONF_/install/boilerplate-${tag}.u-c
+      test -e $conf && echo $conf
+      conf=$UCONF_/install/${tag}.u-c
+      test -e $conf && echo $conf
     done
   done | remove_dupes
 }
