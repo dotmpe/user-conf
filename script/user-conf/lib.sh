@@ -121,39 +121,10 @@ true "${UC_LOCAL_TPL:="\$hostname.\$domainname"}"
 
 true "${UC_STAT_TPL:="\$(git_ref)"}"
 
-# All boxes
-#true "${os_name:="$(uname -o)"}"            # Eg. 'GNU/Linux'
-true "${OS_KERNEL:="$(uname -s)"}"           # Eg. 'Linux', also 'OS name'
-true "${os_release:="$(uname -r)"}"          # Version nr
-true "${hardware_name:="$(uname -m)"}"       # Eg. x86_64
-#true "${hardware_platform:="$(uname -i)"}"  # Eg. x86_64
-true "${hardware_processor:="$(uname -p)"}"  # Idem. to machine-type on x86
+# Get basic facts about box from uname and networking config
 
-if test -e /etc/os-release
-then
-  _os_dist () { sed 's/^/DIST_/g' /etc/os-release | tr 'A-Z' 'a-z'; }
-  eval $(_os_dist)                           # Eg. DIST_ID=debian or ubuntu
-                                             # And DIST_NAME='Debian GNU/Linux'
-                                             #  or DIST_NAME=Ubuntu
-else
-  dist_id=
-  dist_name=
-  dist_version=
-  dist_version_id=
-fi
-
-if test "$OS_KERNEL" = "Darwin" # BSD/Darwin
-then
-  os_name=
-  hardware_platform=
-else
-  true "${os_name:="$(uname -o)"}"
-  true "${hardware_platform:="$(uname -i)"}"
-fi
-
-true "${host_fqdn:=$(hostname -f)}"
-
-req_domain
+uc_req_uname_facts
+uc_req_network_facts
 
 test -n "${human_out:-}" || { test -t 1 && human_out=1 || human_out=0; }
 
