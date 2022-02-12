@@ -3,10 +3,11 @@
 
 ansi_uc_lib_load ()
 {
-  true ${ncolors:=$(tput colors)}
+  test "${TERM:-dumb}" = "dumb" &&
+    true "${ncolors:=0}" || true ${ncolors:=$(tput colors)}
 
   # Load term-part to set this to more sensible default
-  true "${COLORIZE:=0}"
+  true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
 
   test $COLORIZE -eq 1 || ansi_uc_env_def
 }

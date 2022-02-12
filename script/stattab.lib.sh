@@ -2,6 +2,7 @@
 
 stattab_lib_load ()
 {
+  test -n "${HOME-}" || HOME=/srv/home-local
   test -n "${STTTAB-}" || STTTAB=$HOME/.local/var/stttab.list
 }
 

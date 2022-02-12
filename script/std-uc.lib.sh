@@ -50,7 +50,7 @@ std_uc_lib_init ()
   test -n "${LOG-}" && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
   test -z "${v-}" || verbosity=$v
 
-  true ${STD_INTERACTIVE:=`eval "$std_interactive"; printf $?`}
+  true ${STD_INTERACTIVE:=$(eval "$std_interactive" && printf 1 || printf 0)}
 
   std_uc_env_def
   $INIT_LOG "debug" "" "Initialized std-uc.lib" "$*"

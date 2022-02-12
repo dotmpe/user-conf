@@ -237,6 +237,11 @@ uc__env ()
   }
 }
 
+uc__env_keys ()
+{
+  echo uc_lib sh_lib UCONF conf config_names
+}
+
 uc__copy ()
 {
   uc__add COPY "$1"

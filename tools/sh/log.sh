@@ -8,8 +8,19 @@
 test -d "/usr/lib/user-conf" && true "${U_C:="/usr/lib/user-conf"}"
 test -d "/usr/local/lib/user-conf" && true "${U_C:="/usr/local/lib/user-conf"}"
 test -d "$HOME/.local/lib/user-conf" && true "${U_C:="$HOME/.local/lib/user-conf"}"
+test -d "/src/local/user-conf" && true "${U_C:="/src/local/user-conf"}"
+
+test -d "$U_C" || {
+  echo "Unable to find Uc path <$U_C>" >&2
+  exit 1
+}
 
 true "${UC_LIB_PATH:="$U_C/script"}"
+
+test -d "$UC_LIB_PATH" || {
+  echo "Unable to find Uc lib path <$UC_LIB_PATH>" >&2
+  exit 1
+}
 
 # The path to this executable
 true "${UC_SELF:="$U_C/tools/sh/log.sh"}"
