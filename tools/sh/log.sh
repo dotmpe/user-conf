@@ -69,7 +69,7 @@ uc_main_log () # ~ (env|[log] <log-args>)
 
     emerg|alert|crit|err|warning|notice|info|debug|panic|error|warn ) ;;
 
-    * ) echo ":log()" "Expected priority, found '$1'" >&2; exit 60 ;;
+    * ) echo ":log()" "Expected priority, found '$1' ('$*')" >&2; return 60 ;;
   esac
 
   $uc_log "$@"

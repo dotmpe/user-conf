@@ -3,18 +3,17 @@
 
 # Main
 
-
 $LOG info ":tools/u-c:init" "Starting entry..." "0:$0 -:$-"
 
-# XXX: set -uo pipefail
 true "${scriptpathname:="${0}"}"
 true "${UCONF:="$HOME/.conf"}"
 true "${scriptpath:=$HOME/.conf/script}"
 
-export PATH=$PATH:$scriptpath
+export PATH=$PATH:$U_S/src/sh/lib:$U_C/script:$scriptpath
 
-true "${default_sh_lib:="sys-uc std-uc os-uc shell-uc statusdir-uc"}"
-true "${uc_sh_lib_rest:="str-uc vc-uc sd-uc sh-ansi-tpl-uc volume-uc context-uc todotxt-uc"}"
+true "${default_sh_lib:="str-uc sys-uc std-uc os-uc shell-uc statusdir-uc"}"
+true "${uc_sh_lib_rest:="vc-uc sd-uc sh-ansi-tpl-uc volume-uc context-uc todotxt-uc"}"
+
 
 test -n "${scriptname-}" || scriptname="$(basename -- "$scriptpathname" .sh)"
 test -n "${verbosity-}" || verbosity=5
@@ -34,7 +33,9 @@ case "$uc_init_act" in
       test -n "${scriptpath-}" || scriptpath="$(dirname "$scriptpathname")/script"
       # XXX: . $UCONF/script/user-conf/lib.sh
       true "${sh_lib:="$UCONF/script"}"
-      . $sh_lib/uc-lib.lib.sh
+      . $sh_lib/uc-lib.lib.sh || {
+        $LOG error ":u-c:init" "Error loading uc lib" "$sh_lib" 1
+      }
 
       uc_lib_load $default_sh_lib || {
         $LOG error ":u-c:init" "Error loading script libs" "$default_sh_lib" 1

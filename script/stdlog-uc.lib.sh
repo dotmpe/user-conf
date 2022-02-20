@@ -73,7 +73,8 @@ $name () # ~ [Line-Type] [Header] Msg [Ctx] [Exit]
       echo "2>&1 | $filters 1>&2 ")
 
   test -z "\${r-}" || return \$r
-  # test \${STDLOG_UC_EXITS:-1} -eq 0 -o -z "\${5-}" || exit \$5
+  # XXX: test \${STDLOG_UC_EXITS:-1} -eq 0 -o -z "\${5-}" || exit \$5
+  return \${5:-0}
 }
 EOM
       )"

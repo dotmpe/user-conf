@@ -4,14 +4,20 @@
 
 sys_uc_lib_load()
 {
-  true "${uname:="$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+  true "${uname:="$(uname -s)"}"
   true "${hostname:="$(hostname -s | tr 'A-Z' 'a-z')"}"
+}
+
+func_exists ()
+{
+  type $1 2> /dev/null 1> /dev/null || return $?
+  return 0
 }
 
 # Error unless non-empty and true-ish
 trueish () # Str
 {
-  test -n "$1" || return 1
+  test $# -eq 1 -a -n "${1-}" || return
   case "$1" in
     [Oo]n|[Tt]rue|[Yyj]|[Yy]es|1)
       return 0;;
@@ -22,20 +28,21 @@ trueish () # Str
 
 add_env_path() # Prepend-Value Append-Value
 {
-  test -e "$1" -o -e "$2" || {
+  test $# -ge 1 -a -n "$1" -o -n "${2:-}" || return 64
+  test -e "$1" -o -e "${2-}" || {
     echo "No such file or directory '$*'" >&2
     return 1
   }
   test -n "$1" && {
     case "$PATH" in
       $1:* | *:$1 | *:$1:* ) ;;
-      * ) export PATH=$1:$PATH ;;
+      * ) eval PATH=$1:$PATH ;;
     esac
   } || {
     test -n "$2" && {
       case "$PATH" in
         $2:* | *:$2 | *:$2:* ) ;;
-        * ) export PATH=$PATH:$2 ;;
+        * ) eval PATH=$PATH:$2 ;;
       esac
     }
   }
@@ -49,21 +56,22 @@ add_env_path() # Prepend-Value Append-Value
 # Add an entry to colon-separated paths, ie. PATH, CLASSPATH alike lookup paths
 add_env_path_lookup() # Var-Name Prepend-Value Append-Value
 {
-  local val="$(eval echo "\$$1")"
-  test -e "$2" -o -e "$3" || {
+  test $# -ge 2 -a $# -le 3 || return 64
+  local val="$(eval echo "\${$1-}")"
+  test -e "$2" -o -e "${3-}" || {
     echo "No such file or directory '$*'" >&2
     return 1
   }
   test -n "$2" && {
     case "$val" in
       $2:* | *:$2 | *:$2:* ) ;;
-      * ) test -n "$val" && export $1=$2:$val || export $1=$2;;
+      * ) test -n "$val" && eval $1=$2:$val || eval $1=$2;;
     esac
   } || {
     test -n "$3" && {
       case "$val" in
         $3:* | *:$3 | *:$3:* ) ;;
-        * ) test -n "$val" && export $1=$val:$3 || export $1=$3;;
+        * ) test -n "$val" && eval $1=$val:$3 || eval $1=$3;;
       esac
     }
   }
