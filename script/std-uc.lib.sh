@@ -26,7 +26,7 @@ std_uc_lib_load ()
 
   # The deeper get within subshells, the more likely stdio is re-routed from
   # tty. This test should be performed in the scripts main.
-  true "${std_interactive:=std_term 0}"
+  true "${std_interactive:="std_term 0"}"
 
   # Result of std_interactive test. Defaulted in init.
   #STD_INTERACTIVE=[01]
@@ -50,7 +50,9 @@ std_uc_lib_init ()
   test -n "${LOG-}" && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
   test -z "${v-}" || verbosity=$v
 
-  true ${STD_INTERACTIVE:=$(eval "$std_interactive" && printf 1 || printf 0)}
+  test -n "${STD_INTERACTIVE-}" || {
+    eval "$std_interactive" && STD_INTERACTIVE=1 || STD_INTERACTIVE=0
+  }
 
   std_uc_env_def
   $INIT_LOG "debug" "" "Initialized std-uc.lib" "$*"
