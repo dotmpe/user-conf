@@ -63,6 +63,10 @@ case "$0" in "" ) ;; "-*" ) ;; * )
         debug "Starting main function '$func'..."
         type $func >/dev/null 2>&1 && {
           test $# -eq 0 || shift 1
+
+          uc_main_start $cmd $func "$@" ||
+            error "Error preparing to run <$cmd:E$?>"
+
           test $human_out -eq 1 && {
             {
               $func "$@"

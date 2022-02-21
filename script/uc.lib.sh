@@ -1,11 +1,63 @@
 #!/usr/bin/env bash
 
-## Misc. utils
+## Misc. utils for u-c
 
 
-check_facts ()
+uc_lib_load ()
 {
   true
+}
+
+uc_lib_init ()
+{
+  # Some more things hardcoded, ripe for clean-up
+  uc_main_init || return
+
+  uc_env_defaults
+}
+
+uc_env_defaults ()
+{
+  # Finally put Uc default settings
+  true "${human_out:=$STD_INTERACTIVE}"
+
+  true "${uc_cache_ttl:="3600"}"
+
+  true "${UC_NAMES_TPL:="\$username@\$hostname\\n\$username\\n\$hostname\\n\$domainname\\n\$hostname.\$domain\\n\$domain\\n\$hardware_name-\$hardware_processor\\n\$hardware_processor\\n\
+  \$hardware_name\\n\$OS_KERNEL-\$os_release\\n\$os_release\\n\$OS_KERNEL\\n"}"
+
+  true "${UC_LOCAL_TPL:="\$hostname.\$domainname"}"
+
+  true "${UC_STAT_TPL:="\$(git_ref)"}"
+
+  true "${UC_PATHS_TPL:="\$PWD\\n\${CONFDIR:-\$UCONF}\\n\${CONFDIR:-\$UCONF}/etc/profile.d\\n"}"
+}
+
+uc_main_init ()
+{
+  # XXX: force Git color output
+  #git -c color.status=always status
+
+  RT_HOME=${XDG_RUNTIME_HOME:=/run/user/$(id -u)}
+  CACHE_HOME=${XDG_CACHE_HOME:=$HOME/.cache}
+  #STATE_HOME=${XDG_STATE_HOME:=$HOME/.local/state}
+
+  {
+    mkdir -vp $RT_HOME/user-conf &&
+    mkdir -vp $CACHE_HOME/user-conf
+    #mkdir -vp $STATE_HOME/user-conf
+  } || {
+    $LOG crit "" "Unable to get required directories, check XDG_{RUNTIME,CACHE}_HOME settings"
+    return 1
+  }
+
+  # FIXME: better tmp setup, see ram-tmpdir
+  test -n "${TMP-}" -a -w "${TMP-}" || {
+    test -w /tmp && TMP=/tmp || {
+      TMP=$HOME/.local/tmp
+      mkdir -p $TMP
+    }
+  }
 }
 
 # Use vc-gitdiff to check the file's checkout path and SHA1 object.
@@ -15,21 +67,22 @@ diff_copy () # ~ SCM-File Other-File
   GITDIR="$UCONF" vc_gitdiff "$1" "$2"
 }
 
+uc_check_facts ()
+{
+  false # TODO: gather/verify-facts?
+  #   What if static record has changed from previously build.
+}
+
 # get conf env: set matching u-c file for this host
-# XXX: and all its includes
+# XXX: and all its includes...
 uc_conf_get () # ~
 {
-  # XXX:
-  # Put UCONFDIR into static user env / profile to preempt and use single
-  # user-config dir [TODO-A]
-  #true "${UCONF:="${UCONFDIR-"$(dirname "$(realpath "$conf")")"}"}"
-  #true "${UCONFDIR:="$UCONF"}"
-
   test -n "${conf-}" || {
-    test -e Ucfile && conf=$PWD/Ucfile
 
+    test -e Ucfile && conf=$PWD/Ucfile
     test -e "${conf-}" ||
-      for UCONF in $PWD ${UCONFDIR:-$HOME/.conf}
+
+      for UCONF in `uc___paths`
       do
         for tag in `uc___names`
         do
@@ -43,18 +96,54 @@ uc_conf_get () # ~
   test -e "${conf-}" && tag=$(basename "$conf" .u-c)
 }
 
+#
+uc_conf_load () # ~ <Subcmd-Name>
+{
+  for tag in `uc___names`
+  do
+    stattab_exists $tag && break
+  done
+  stattab_exists $tag || {
+    case $1 in
+      ( init | list | names | -names | -path | -paths | list-records )
+            error "No static config found. Did you run init?" ;;
+      ( * ) error "No static config found. Did you run init?" 1 ;;
+    esac
+  }
+
+  std_info "Loading config for '$tag'..."
+  stattab_fetch $tag
+
+# FIXME: want to eval/source in sequence as defined in record
+
+  eval "$(echo "$stttab_meta" | tr ':' '=')"
+
+  local ref ref_path
+  for ref in $stttab_refs
+  do
+    ref_path=$(uc__path "$ref") || {
+      error "Cannot find source file for '$ref'"
+      continue
+    }
+
+    . $ref_path && std_info "Sourced <$ref_path>"
+  done
+
+  note "Loaded config $tag: '$stttab_short'"
+}
+
 uc_conf_req ()
 {
   uc_conf_get
   test -e "${conf:-}" || error "no user-config ${conf-}" 1
-  conf="$(echo $conf $(verbose=false exec_dirs include $conf))"
+  conf="$(echo $conf $(verbose=false uc_exec_dirs include $conf))"
   test -n "$conf" && note "Using U-c '$conf'" || {
       warn "No U-c found"
       return 1
     }
 }
 
-# Private helper for exec_dirs
+# Private helper for uc_exec_dirs
 _prep_dir_func () # Action
 {
   test -n "$directive" || error "empty directive" 1
@@ -141,79 +230,16 @@ uc_commit_report ()
   stattab_commit
 }
 
-# Load last results
-uc_report ()
-{
-  test -n "${uc_cache-}" || uc_reset_report
-  test -e "$uc_cache" || {
-    error "No results"
-    passed= failed= directives=
-    return 1
-  }
-
-  passed="$(grep '^ok ' "$uc_cache" | count_lines )"
-  failed="$(grep -v '^ok ' "$uc_cache" | count_lines )"
-  directives="$(count_lines "$uc_cache")"
-
-  # XXX: pass real status from scripts?
-  test $passed -gt 0 -a $failed -eq 0 && {
-    status=0
-  }
-
-  test $passed -gt 0 || {
-    status=1
-  }
-# TODO: more complex report parsing, notice missing/errors as well...
-#  test $erred -eq 0 || {
-#    status=2
-#  }
-  test $failed -eq 0 || {
-    status=3
-  }
-
-  return
-# XXX: change status if results turn stale?
-  { test -e "$uc_cache" && newer_than "$uc_cache" $uc_cache_ttl
-  } || {
-    status=4
-  }
-}
-
-# Set cache and result files
-uc_reset_report () # Index
-{
-  set -- $tag${1:+-}${1:-}.list
-  uc_results=$RT_HOME/user-conf/uc:$$:$1
-  uc_cache=$CACHE_HOME/user-conf/uc:$1
-}
-
-idx_spec ()
-{
-  local start len
-  set -- $(echo "$*" | tr ',' ' ')
-  while test $# -gt 0
-  do
-    debug "spec '$1'"
-    case "$1" in
-      *"-"* ) seq ${1//-/ } ;;
-      *"+"* ) start=${1//+*/}; len=${1//*+/};
-        seq $start $(( $start + $len )) ;;
-      * ) echo "$1" ;;
-    esac
-    shift
-  done | tr '\n' ' '
-}
-
 # Dynamic Eval of directives from u-c file, pref-dir-func maps each directive
 # to a function with name ``d_<DIRECTIVE>_<function>()``.
 # Use index argument to select single line to execute
-exec_dirs () # Action Directive-Index read-args..
+uc_exec_dirs () # Action Directive-Index read-args..
 {
   test $# -ge 3 || return 98
   local action=$1 func_name= arguments= diridx=0 idx=${2-} idxs
   test -z "$idx" || {
     note "Requested selective execution of directives '$idx'"
-    idxs="$(idx_spec "$idx")"
+    idxs="$(uc_idx_spec "$idx")"
     debug "Resolved index-spec to '$idxs'"
   }
 
@@ -320,6 +346,69 @@ req_git_remote ()
   }
 }
 
+uc_idx_spec ()
+{
+  local start len
+  set -- $(echo "$*" | tr ',' ' ')
+  while test $# -gt 0
+  do
+    debug "spec '$1'"
+    case "$1" in
+      *"-"* ) seq ${1//-/ } ;;
+      *"+"* ) start=${1//+*/}; len=${1//*+/};
+        seq $start $(( $start + $len )) ;;
+      * ) echo "$1" ;;
+    esac
+    shift
+  done | tr '\n' ' '
+}
+
+# Load last results
+uc_report ()
+{
+  test -n "${uc_cache-}" || uc_reset_report
+  test -e "$uc_cache" || {
+    error "No results"
+    passed= failed= directives=
+    return 1
+  }
+
+  passed="$(grep '^ok ' "$uc_cache" | count_lines )"
+  failed="$(grep -v '^ok ' "$uc_cache" | count_lines )"
+  directives="$(count_lines "$uc_cache")"
+
+  # XXX: pass real status from scripts?
+  test $passed -gt 0 -a $failed -eq 0 && {
+    status=0
+  }
+
+  test $passed -gt 0 || {
+    status=1
+  }
+# TODO: more complex report parsing, notice missing/errors as well...
+#  test $erred -eq 0 || {
+#    status=2
+#  }
+  test $failed -eq 0 || {
+    status=3
+  }
+
+  return
+# XXX: change status if results turn stale?
+  { test -e "$uc_cache" && newer_than "$uc_cache" $uc_cache_ttl
+  } || {
+    status=4
+  }
+}
+
+# Set cache and result files
+uc_reset_report () # Index
+{
+  set -- $tag${1:+-}${1:-}.list
+  uc_results=$RT_HOME/user-conf/uc:$$:$1
+  uc_cache=$CACHE_HOME/user-conf/uc:$1
+}
+
 uc_sudo_path_target ()
 {
   { test ! -r "$2" -o ! -r "$(dirname "$2")";} && {
@@ -393,20 +482,34 @@ uc_req_domain () # ~ [FQDN]
   domain_tld=
   domain=
 
-  # Set = 0 to force empty and no match on domain
+  # TOTEST: Set = 0 to force empty and no match on domain
   test ${UC_DOMAIN_TLD_D:-1} -eq 0 && {
     host_domain=$nameraw
   } || {
     lvls=$(echo $nameraw | tr -dc .)
+
     test ${#lvls} -eq 0 && {
+      # No domain info in host fqdn whatsoever...
       host_domain=$nameraw
     } || {
-      dlvls=$(( 1 + ${#lvls} - ${UC_DOMAIN_TLD_D:-1} ))
-      host_domain=$(echo $nameraw | cut -d. --output-delimiter . -f-$dlvls)
-      domainname=${host_domain:$(( 1 + ${#hostname} ))}
-      domain_tld=${nameraw:$(( 1 + ${#host_domain} ))}
-      domain=$domainname.$domain_tld
-      unset dlvls
+      test ${#lvls} -eq 1 && {
+        # Only one '.': a TLD, or local lan name perhaps or a bare domain?
+        # Use last '.' delimited part as domain, but no name, TLr
+        host_domain=$nameraw
+        # XXX: accept hostname -s or cut from FQDN.
+        #hostname=$(echo $nameraw | cut -d. --output-delimiter . -f1)
+        domain=$(echo $nameraw | cut -d. --output-delimiter . -f2)
+      } || {
+        # Remove last or UC_DOMAIN_TLD_D '.' delimited part and use as TLD
+        dlvls=$(( 1 + ${#lvls} - ${UC_DOMAIN_TLD_D:-1} ))
+        host_domain=$(echo $nameraw | cut -d. --output-delimiter . -f-$dlvls)
+        # XXX: accept hostname -s or cut from FQDN.
+        #hostname=$(echo $nameraw | cut -d. --output-delimiter . -f1)
+        domainname=${host_domain:$(( 1 + ${#hostname} ))}
+        domain_tld=${nameraw:$(( 1 + ${#host_domain} ))}
+        domain=$domainname.$domain_tld
+        unset dlvls
+      }
     }
     unset lvls
   }

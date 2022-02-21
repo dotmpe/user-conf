@@ -220,12 +220,22 @@ stattab_record () # ~ <Entry>
 
 stattab_record_parse ()
 {
+  # stattab_parse ID_SPEC TAGS META SHORT
+
   stttab_idspec="$(echo "$stttab_record"|cut -d':' -f1)"
   stattab_parse_STD_ids $stttab_idspec
 
   stttab_rest="$(echo "$stttab_record"|cut -d : --output-delimiter : -f2-)"
+  # XXX: Stop short description at first tag?
   stttab_short="$(echo "$stttab_rest"|$gsed 's/^\([^[+@<]*\).*$/\1/'|normalize_ws)"
 
+  stttab_refs="$(echo "$stttab_rest"|$ggrep -Po '(?<=<)[^ ]+(?=>)'|normalize_ws)"
+
+  stttab_ids="$(echo "$stttab_rest"|$ggrep -Po '(?<=#)[^ ]+(?= |$)'|normalize_ws)"
+
+  stttab_meta="$(echo "$stttab_rest"|$ggrep -Po '[^ ]+:[^ ]+'|normalize_ws)"
+
+  # FIXME: seems like an old regex
   stttab_tags_raw="$(echo "$stttab_rest"|$gsed 's/^[^\[+@<]*//'|normalize_ws)"
   stttab_tags="$(echo "$stttab_tags_raw"|$ggrep -o '[+@][^ ]*'|normalize_ws)"
 }

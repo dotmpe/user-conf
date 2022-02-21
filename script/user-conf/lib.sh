@@ -44,15 +44,22 @@ test $IS_DASH_SH -eq 1 && {
   set -o nounset
 }
 
+
+# Lots of script depend on these basic variables. Validate later.
+
 true "${USER:=$(whoami)}"
 true "${username:=$USER}"
 true "${hostname:=$(hostname -s)}"
 
 log_key=$username@$hostname:$scriptname[$$]:${1-}
-UC_LOG_LEVEL=${verbosity:=${v:-4}}
 export log_key UC_LOG_LEVEL
 
-# load and init lib parts
+# Pre-set log output level, will re-check and force level later
+UC_LOG_LEVEL=${verbosity:=${v:-4}}
+export verbosity UC_LOG_LEVEL
+
+
+# Load and init all lib parts
 . "$sh_lib"/argv-uc.lib.sh
 . "$sh_lib"/std-uc.lib.sh
 . "$sh_lib"/str-uc.lib.sh
@@ -82,63 +89,49 @@ stdlog_uc_lib_load
 stattab_lib_load
 
 case "${TERM-}" in
-  "" ) ;;
-  dumb ) ;;
-  * ) true "${COLORIZE:=1}" ;;
+  ( "" ) ;;
+  ( dumb ) ;;
+  ( * ) true "${COLORIZE:=1}" ;;
 esac
 
+# For log and color output
 std_uc_lib_init
 ansi_uc_lib_init
 
+# For storing config and stats
 test -s "$STTTAB" || stattab_init
 stattab_lib_init
 
 
-RT_HOME=${XDG_RUNTIME_HOME:=/run/user/$(id -u)}
-CACHE_HOME=${XDG_CACHE_HOME:=$HOME/.cache}
-#STATE_HOME=${XDG_STATE_HOME:=$HOME/.local/state}
+# Finally, run init for Uc lib
+uc_lib_init
 
+
+# And define startup sequence for main, to load settings.
+uc_main_start () # <Subcmd-Name> <Subcmd-Func> <Cmdline-Args>...
 {
-  mkdir -vp $RT_HOME/user-conf &&
-  mkdir -vp $CACHE_HOME/user-conf
-  #mkdir -vp $STATE_HOME/user-conf
-} || {
-  $LOG crit "" "Unable to get required directories, check XDG_{RUNTIME,CACHE}_HOME settings"
-  return 1
+  # Make sure Uc preferred log output level is still set (user may miss things if
+  # only warnings is on)
+  test ${verbosity:-3} -ge 5 || {
+    v=5
+    export verbosity=$v UC_LOG_LEVEL=$v
+  }
+
+  # First some more basic facts about box from uname and networking config
+  uc_req_uname_facts || return
+  uc_req_network_facts || return
+
+  # Then load static settings, configs.
+  uc_conf_load "$1" || return
+
+  # Last sanity checks
+  test "$USER" = "$username" || warn "username is not USER: $username != $USER"
+
+  test -n "${HOME-}" || {
+    test -n "${username:-}" && HOME=/home/$username || error "no user dir set" 100
+  }
+  test -e "$HOME" || error "no user dir" 100
 }
-
-
-# Gather some facts to use in the installation profile
-test -n "${HOME-}" || {
-  test -n "${username:-}" && HOME=/home/$username || error "no user dir set" 100
-}
-test -e "$HOME" || error "no user dir" 100
-
-true "${UC_NAMES_TPL:="\$hostname\\n\$domainname\\n\$hostname.\$domain\\n\$hardware_name-\$hardware_processor\\n\$hardware_processor\\n\
-\$hardware_name\\n\$OS_KERNEL-\$os_release\\n\$OS_KERNEL\\n\$os_release\\n"}"
-
-true "${UC_LOCAL_TPL:="\$hostname.\$domainname"}"
-
-true "${UC_STAT_TPL:="\$(git_ref)"}"
-
-# Get basic facts about box from uname and networking config
-
-uc_req_uname_facts
-uc_req_network_facts
-
-test -n "${human_out:-}" || { test -t 1 && human_out=1 || human_out=0; }
-
-test -n "${TMP-}" -a -w "${TMP-}" || {
-	test -w /tmp && TMP=/tmp || {
-		TMP=$HOME/.local/tmp
-		mkdir -p $TMP
-	}
-}
-
-true "${uc_cache_ttl:="3600"}"
-
-# XXX:
-#git -c color.status=always status
 
 
 ## Command handler functions
@@ -162,7 +155,7 @@ uc__add () # ~ <Directive> <Args...>
 
   # Look if any BASE direct matches source path, use that
   # mapping for the target path inside the repository
-  #exec_dirs base
+  #uc_exec_dirs base
   match_grep_pattern_test "$basedir"
   grep -iq "^BASE\ $p_\ " "$conf" && {
     ucbasedir_raw="$(grep "^\s*BASE\ $p_\ " "$conf" | cut -d ' ' -f 3 )"
@@ -210,6 +203,9 @@ uc__commit ()
 # Report on config and location
 uc__env ()
 {
+  # TODO: group vars.
+  #   also output at var verbosity level, or everything if !human_out
+
   local conf=
   test $human_out -eq 1 && {
     local verbosity=6
@@ -219,6 +215,24 @@ uc__env ()
       echo "uc_lib=$uc_lib"
       echo "sh_lib=$sh_lib"
   }
+
+  std_info "Template tag values:"
+  local i=0
+  for key in $(
+    {
+      echo -e $UC_NAMES_TPL
+# XXX: make distinct groups for other template sets
+      echo -e $UC_LOCAL_TPL
+      echo -e $UC_STAT_TPL
+    } | tr -c 'A-Za-z0-9_' '\n' | sort -u
+  )
+  do
+    i=$(( $i + 1 ))
+    test $human_out -eq 1 && {
+      std_info "$i:$key: ${!key-}"
+    } ||
+      echo "$key=${!key-}"
+  done
 
   uc_conf_get || return 0
 
@@ -230,16 +244,33 @@ uc__env ()
     std_info "UConf: $UCONF"
     std_info "Config: $conf"
     std_info "Config-Name: $config_name"
+    std_info "Id: $stttab_id"
+    std_info "Short: $stttab_short"
+    std_info "Tags: $stttab_tags"
+    std_info "Refs: $stttab_refs"
+    std_info "Ids: $stttab_ids"
+    std_info "Meta: $stttab_meta"
   } || {
     echo "UCONF=$UCONF"
     echo "conf=$conf"
     echo "config_name=$config_name"
+    echo "config_id=$config_id"
+    echo "config_short=$stttab_short"
+    echo "config_tags=$stttab_tags"
+    echo "config_refs=$stttab_refs"
+    echo "config_id=$stttab_id"
+    echo "config_meta=$stttab_meta"
   }
 }
 
 uc__env_keys ()
 {
   echo uc_lib sh_lib UCONF conf config_names
+}
+
+uc__env_update ()
+{
+  true
 }
 
 uc__copy ()
@@ -266,9 +297,17 @@ uc__initialize ()
   test -d "${UCONF-}" || error "No UCONF found" 1
 
   test -e "${conf-}" && {
-
     stattab_exists $tag && {
-      note "Already initialized: $tag"
+      note "Already initialized: $tag
+To remove current config and re-run 'init', use 'reset' subcommand.
+To update static u-c settings run 'env-update'."
+
+      test -n "${STD_INTERACTIVE:-}" || return
+      read -p "Update static u-c settings? (yes/[n]o)
+" -n 1 choice_update
+      trueish "$choice_update" || return
+
+      uc__env_update
       return
     }
   }
@@ -292,7 +331,7 @@ uc__initialize ()
     return
   } ||
     local UCONF_
-    for UCONF_ in $PWD ${UCONFDIR:-$HOME/.conf}
+    for UCONF_ in `uc___paths`
     do
       local tpl= bp_tag
       for bp_tag in `uc___names`
@@ -313,7 +352,7 @@ uc__install ()
 {
   local conf=
   uc_conf_req || return
-  exec_dirs install "$1" $conf || return $?
+  uc_exec_dirs install "$1" $conf || return $?
 }
 
 # XXX: just copied from of uc_conf_get, want to write loop over row-cols w/o subshell
@@ -326,7 +365,7 @@ uc__list ()
   test -e Ucfile && echo $PWD/Ucfile
 
   local conf UCONF_
-  for UCONF_ in $PWD ${UCONFDIR:-$HOME/.conf}
+  for UCONF_ in `uc___paths`
   do
     for tag in `uc___names`
     do
@@ -352,6 +391,32 @@ uc__names ()
 uc___names ()
 {
   eval "echo -e \"$UC_NAMES_TPL\""
+}
+
+uc__path ()
+{
+  first_only=true uc__paths "$@"
+}
+
+uc__paths ()
+{
+  local path one=false
+  for path in `uc___paths`
+  do
+    for ext in "" .sh
+    do
+      test -e "$path/$1$ext" || { one=true; continue; }
+      echo "$path/$1$ext"
+      ${first_only:-false} && return
+      continue
+    done
+  done
+  $one
+}
+
+uc___paths ()
+{
+  eval "echo -e \"$UC_PATHS_TPL\""
 }
 
 # Report on last result
@@ -382,7 +447,7 @@ uc__stat ()
 {
   local conf=
   uc_conf_req || return
-  exec_dirs stat "${1-}" $conf || return $?
+  uc_exec_dirs stat "${1-}" $conf || return $?
 }
 
 uc__status ()
@@ -440,7 +505,7 @@ uc__update ()
 {
   local conf=
   uc_conf_req || return
-  exec_dirs update "${1-}" $conf || return $?
+  uc_exec_dirs update "${1-}" $conf || return $?
 }
 
 
