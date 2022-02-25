@@ -21,6 +21,7 @@ lib_load()
   done
 }
 
+# XXX: lib_require() { false; }
 
 
 # Main

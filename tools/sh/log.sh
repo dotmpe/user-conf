@@ -78,6 +78,8 @@ uc_main_log () # ~ (env|[log] <log-args>)
 # Setup uc_log handler using syslog-uc.lib
 uc_log_init () # ~
 {
+  test -z "${log_key:-}" || UC_LOG_BASE="$log_key" # XXX: BWC
+  test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
   : "${UC_LOG_BASE:="$USER $(basename -- "$SHELL")[$$] uc-profile"}"
   { uc_profile_load_lib || return
     } &&
@@ -120,6 +122,7 @@ uc_profile_source_lib () # ~
   UC_PROFILE_SRC_LIB=0
 }
 
+# TODO: replace these with sh_env either from shell-uc.lib or shell.lib
 uc_func ()
 {
   argv_uc__argc :uc-func $# eq 1 || return

@@ -3,15 +3,18 @@
 
 test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
 
-true "${LOG:?Require log handler}"
+true "${LOG:?Requires LOG handler}"
+true "${U_S:?Requires User-Script installation}"
 
 . ${sh_lib}/../tools/u-c/env.sh
 INIT_LOG=$LOG
 
-. "$sh_lib"/shell-uc.lib.sh
-shell_uc_lib_load
+. "$U_S/src/sh/lib/shell.lib.sh"
+shell_lib_load
+shell_init_mode
+sh_init_mode
 
-test $IS_BASH_SH -eq 1 && {
+test $IS_BASH -eq 1 && {
   # This triggers
   #/etc/profile.d/uc-profile.sh: /usr/share/bashdb/bashdb-main.inc: No such file or directory
   #/etc/profile.d/uc-profile.sh: warning: cannot start debugger; debugging mode disabled
@@ -40,7 +43,7 @@ test $IS_BASH_SH -eq 1 && {
   $LOG warn "" "Non-Bash TO-TEST"
 }
 
-test $IS_DASH_SH -eq 1 && {
+test $IS_DASH -eq 1 && {
   set -o nounset
 }
 
@@ -95,7 +98,6 @@ case "${TERM-}" in
 esac
 
 # For log and color output
-std_uc_lib_init
 ansi_uc_lib_init
 
 # For storing config and stats
@@ -105,6 +107,7 @@ stattab_lib_init
 
 # Finally, run init for Uc lib
 uc_lib_init
+
 
 
 # And define startup sequence for main, to load settings.
@@ -254,11 +257,11 @@ uc__env ()
     echo "UCONF=$UCONF"
     echo "conf=$conf"
     echo "config_name=$config_name"
-    echo "config_id=$config_id"
+    echo "config_id=$stttab_id"
     echo "config_short=$stttab_short"
     echo "config_tags=$stttab_tags"
     echo "config_refs=$stttab_refs"
-    echo "config_id=$stttab_id"
+    echo "config_ids=$stttab_ids"
     echo "config_meta=$stttab_meta"
   }
 }
@@ -302,7 +305,7 @@ uc__initialize ()
 To remove current config and re-run 'init', use 'reset' subcommand.
 To update static u-c settings run 'env-update'."
 
-      test -n "${STD_INTERACTIVE:-}" || return
+      test "${STD_INTERACTIVE:-1}" = "1" || return
       read -p "Update static u-c settings? (yes/[n]o)
 " -n 1 choice_update
       trueish "$choice_update" || return

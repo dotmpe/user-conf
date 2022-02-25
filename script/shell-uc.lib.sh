@@ -1,59 +1,98 @@
 #!/bin/sh
 
+### A minimal shell sh-env-init
+
+
 shell_uc_lib_load ()
 {
-  # SHELL can be deceiving and although it should be set correctly, we check
-  # the type of specific commands
-
-  # XXX:
-  SHELL_NAME=$(basename -- "$SHELL")
-  sh_init_mode # && sh_env_init
+  sh_env_init
 }
 
-sh_init_mode ()
+
+sh_env_init ()
 {
-  IS_BASH_SH=0
-  IS_DASH_SH=0
-  IS_BB_SH=0
-  IS_HEIR_SH=0
-  #test "$SHELL_NAME" != "sh" || {
-    shell_detect_sh
-  #}
-}
-
-# Try to detect Shell variant based on specific commands.
-# See <doc/shell-builtins.tab>
-shell_detect_sh ()
-{
-  sh_is_type_bi 'bind' && IS_BASH_SH=1 || {
-
-    sh_is_type_sbi 'local' && {
-      sh_is_type_bi 'let' && IS_BB_SH=1 || IS_DASH_SH=1
-
-    } || {
-      sh_is_type_bin 'false' &&
-        # Assume heirloom shell
-        IS_HEIR_SH=1 || false # unknown Sh
+  sh_env () # List all variable names, exported or not # sh:no-stat
+  {
+    test $# -eq 0 && {
+      {
+        set | grep '^[_A-Za-z][A-Za-z0-9_]*=.*$' && env
+      } | awk '!a[$0]++'
+      return
     }
+
+    sh_env | grep ${grep_f:-"-E"} "^$1="
   }
-}
 
-# Test true if CMD is a builtin command
-sh_is_type_bi() # CMD
-{
-  type "$1" | grep -q '^'"$1"' is a shell builtin$'
-}
+  sh_isset() # Variable is set, even if empty # sh:no-stat
+  {
+    grep_f=-qE sh_env "$1"
+  }
 
-# Test true if CMD is a special builtin command
-sh_is_type_sbi() # CMD
-{
-  type "$1" | grep -q '^[^ ]* is a special shell builtin$'
-}
+  sh_exported() # List all exported env # sh:no-stat
+  {
+    test $# -eq 0 && {
+      env
+      return
+    }
 
-# Test true if CMD resolves to an executable at path
-sh_is_type_bin() # CMD
-{
-  type "$1" | grep -q '^[^ ]* is /[^ ]*$'
+    sh_exported | grep ${grep_f:-"-qE"} "^$1="
+  }
+
+  sh_exe() # Is name of executable (file) on PATH # sh:no-stat
+  {
+    test -x "$(which "$1")"
+    # test "$(type -t "$1")" = "file"
+  }
+
+  # XXX: bash type -t
+  # because there are no shortcuts for all these tests.
+
+  sh_fun() # Is name of shell funtion # sh:no-stat
+  {
+    test "$(type -t "$1")" = "function"
+  }
+
+  sh_a() # Is name of shell alias # sh:no-stat
+  {
+    test "$(type -t "$1")" = "alias"
+  }
+
+  sh_bi()
+  {
+    test "$(type -t "$1")" = "builtin"
+  }
+
+  sh_kw()
+  {
+    test "$(type -t "$1")" = "keyword"
+  }
+
+  sh_cmd()
+  {
+    sh_exe "$1" && return
+    sh_fun "$1" && return
+    sh_a "$1" && return
+    sh_bi "$1" && return
+    sh_kw "$1"
+  }
+
+  sh_source ()
+  {
+    . "$1"
+  }
+
+  # TODO: replace uc_source etc. Change sh_source to one tracking includes
+  # but for in certain shells only.
+  sh_source=sh_source
+
+  # TODO: id maker.. need str.lib
+  sh_include ()
+  {
+    local r
+    sh_source "$1"
+    r=$?
+    set sh_include_$(echo "$1" | tr -c 'A-Za-z0-9_' '_' )=$r
+  }
 }
 
 #

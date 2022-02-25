@@ -19,7 +19,7 @@ uc_lib_init ()
 uc_env_defaults ()
 {
   # Finally put Uc default settings
-  true "${human_out:=$STD_INTERACTIVE}"
+  true "${human_out:=$(std_term 1 && printf 1 || printf 0)}"
 
   true "${uc_cache_ttl:="3600"}"
 
