@@ -132,7 +132,11 @@ uc_conf_load () # ~ <Subcmd-Name>
 
 # FIXME: want to eval/source in sequence as defined in record
 
-  eval "$(echo "$stttab_meta" | tr ':' '=')"
+  test -z "$stttab_meta" || {
+    eval "$(echo "$stttab_meta" | tr ':' '=')" || {
+      error "Error getting uctab meta for record '$stttab_entry'" 1
+    }
+  }
 
   local ref ref_path
   for ref in $stttab_refs
