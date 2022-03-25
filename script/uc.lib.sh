@@ -13,13 +13,25 @@ uc_lib_init ()
   # Some more things hardcoded, ripe for clean-up
   uc_main_init || return
 
-  uc_env_defaults
+  # Prepare access to our specific UC configs table file
+  uc_prefix_var_tag_ stattab_ STTTAB &&
+
+  # Default still empty env
+  uc_env_defaults &&
+
+  # Get stattab instance
+  create uctab StatTab $STTTAB_UC
+
+  # Create table if not exists
+  $uctab.tab-exists || $uctab.tab-init
 }
 
 uc_env_defaults ()
 {
-  # Finally put Uc default settings
-  true "${human_out:=$(std_term 1 && printf 1 || printf 0)}"
+  test -n "${human_out:-}" || {
+    # Output must be on terminal
+    std_term 1 && human_out=1 || human_out=0
+  }
 
   true "${uc_cache_ttl:="3600"}"
 
@@ -31,6 +43,8 @@ uc_env_defaults ()
   true "${UC_STAT_TPL:="\$(git_ref)"}"
 
   true "${UC_PATHS_TPL:="\$PWD\\n\${CONFDIR:-\$UCONF}\\n\${CONFDIR:-\$UCONF}/etc/profile.d\\n"}"
+
+  true "${STTTAB_UC:="$HOME/.local/var/user-conf/configs.tab"}"
 }
 
 uc_main_init ()
@@ -99,20 +113,22 @@ uc_conf_get () # ~
 #
 uc_conf_load () # ~ <Subcmd-Name>
 {
+  # Find table record using tags list. Abort if none found...
   for tag in `uc___names`
   do
-    stattab_exists $tag && break
+    $uctab.exists $tag && break
   done
-  stattab_exists $tag || {
+  $uctab.exists $tag || {
     case $1 in
-      ( init | list | names | -names | -path | -paths | list-records )
+      ( init ) ;;
+      ( list | names | -names | -path | -paths | list-records )
             error "No static config found. Did you run init?" ;;
       ( * ) error "No static config found. Did you run init?" 1 ;;
     esac
   }
 
   std_info "Loading config for '$tag'..."
-  stattab_fetch $tag
+  $uctab.fetch ucstat $tag
 
 # FIXME: want to eval/source in sequence as defined in record
 
@@ -214,20 +230,20 @@ uc_commit_report ()
     cat "$uc_results" >"$uc_cache"
     rm "$uc_results"
   }
-  stattab_fetch "$tag" || return
+  $uctab.fetch ucstat "$tag" || return
 
   uc_report || return
   local ctime utime
   utime="$(filemtime "$uc_cache")" || return
 
-  stattab_update $status "" "" "$utime" "$directives" "$passed" "" "" "$failed" || return
+  $ucstat.update $status "" "" "$utime" "$directives" "$passed" "" "" "$failed" || return
 
   # Don't change file if entry is the same as fetched
-  test "$(stattab_entry)" = "$stttab_entry" && return
+  test "$(stattab_ UC entry)" = "$stttab_entry" && return
 
   ctime="$(date +'%s')" &&
-  stattab_update "" "" "$ctime" &&
-  stattab_commit
+  stattab_ UC update "" "" "$ctime" &&
+  stattab_ UC commit
 }
 
 # Dynamic Eval of directives from u-c file, pref-dir-func maps each directive
@@ -361,6 +377,47 @@ uc_idx_spec ()
     esac
     shift
   done | tr '\n' ' '
+}
+
+# Generate new function to call function with local-env set based on 'tag'.
+# Given env <Generic-Var>_<Tag>=<Global-Val> and function
+# <Func-Prefix>_<Func-Suffix> that takes <Generic-Var>=<Val> env.
+uc_prefix_func_lvar_tag_ () # ~ <Func-Prefix> <Generic-Var>
+{
+  eval "
+$1 () # ~ <Tag> <Func-Suffix> <Args...>
+{
+  local fun=\"\$2\" lval gkey=${2}_\$1
+  shift 2
+  lval=\"\${!gkey}\" || return
+  $2=\$lval $1\$fun \"\$@\"
+}
+"
+}
+
+# XXX: cleanup
+#uc_prefix_gvar_tag_ ()
+#{
+#  eval "
+#${1}_var_ () # ~ <Tag> <Var-Suffix> [<New-Value>]
+#{
+#  local var=\"\$2\" lval gkey=${2}_\$1
+#  shift 2
+#  test \$# -le 1 || return 177
+#  test \$# -eq 1 && {
+#    eval $gkey=\"\$1\"
+#  } || {
+#    lval=\"\${!gkey}\" || return
+#    echo \"\$lval\"
+#  }
+#}
+#"
+#}
+
+uc_prefix_var_tag_ ()
+{
+  uc_prefix_func_lvar_tag_ "$@"
+  #uc_prefix_gvar_tag_ "$@" &&
 }
 
 # Load last results

@@ -1,38 +1,26 @@
 #!/usr/bin/env bash
 
-stattab_lib_load ()
+stattab_uc_lib_load ()
 {
   test -n "${HOME-}" || HOME=/srv/home-local
   test -n "${STTTAB-}" || STTTAB=$HOME/.local/var/stttab.list
-}
 
-stattab_lib_init ()
-{
-  test -n "${STTTAB-}" || {
-    $LOG error ":stattab.lib:init" "Expected STTTAB" "$STTTAB"
-    return 1
-  }
-  test -e "$STTTAB" || {
-    test ${init:-0} -eq 0 && {
-        $LOG error ":stattab.lib:init" "Expected existing STTTAB" "$STTTAB"
-        return 1
-      }
-    mkdir -p "$(dirname "$STTTAB")" && touch "$STTTAB" || return
-  }
+  : "${ctx_class_types:="${ctx_class_types-}${ctx_class_types+" "}StatTabEntry StatTab"}"
 }
 
 # Assuming entry is updated replace or add to Stat-Tab
-stattab_commit () # ~
+stattab_commit () # ~ [<Stat-Tab>]
 {
-  stattab_exists && {
+  test -n "${1-}" || set -- $STTTAB
+  stattab_exists "" "" "$1" && {
 
 # XXX: observe different Id types in replace as well like in grep, probably..
     local p_=$stttab_id
     #$(match_grep "$stttab_id")
-    $gsed -i 's/^[0-9 +-]* '$p_':.*$/'"$(stattab_entry)"'/' "$STTTAB"
+    $gsed -i 's/^[0-9 +-]* '$p_':.*$/'"$(stattab_entry)"'/' "$1"
     return
   } || {
-    stattab_entry >>"$STTTAB"
+    stattab_entry >>"$1"
   }
 }
 
@@ -42,13 +30,13 @@ stattab_date ()
   fnmatch "@*" "$1" && echo "${1:2}" || date_pstat "$1"
 }
 
-# Prepare env for Stat-Id
-stattab_env_init () # [stattab] ~ [St]
+# Parse Entry or set all defaults
+stattab_init () # ~ [<Entry>]
 {
   stattab_entry_env_reset && {
-    test -z "$1" || {
-      stattab_entry_init "$1" && shift
-  } } && stattab_entry_defaults "$@"
+    test $# -eq 0 || {
+      stattab_entry_init "$@" && shift
+  } } && stattab_entry_defaults
 }
 
 stattab_entry () #
@@ -62,16 +50,19 @@ stattab_entry () #
 " $stttab_tags" | normalize_ws
 }
 
-stattab_entry_id () # STVID [STID]
+stattab_entry_id () # ~ <StatTab-SId> [<StatTab-Id>]
 {
   test $# -gt 1 || set -- "$1" "$(mkid "$1" && printf "$id")"
-  stttab_vid="$1"
+  stttab_sid="$1"
   stttab_id="$2"
 }
 
-stattab_entry_init () # STVID [STID]
+stattab_entry_init () # ~ [<Entry>]
 {
-  stattab_entry_id "$@" &&
+  stattab_entry_env_reset
+  stttab_entry="$*"
+  stattab_entry_parse &&
+
   echo "$stttab_id" | grep -q '^[A-Za-z_][A-Za-z0-9_-]*$' ||
       error "Illegal ST name '$stttab_id'" 1
 }
@@ -87,20 +78,24 @@ stattab_entry_env_reset ()
   stttab_skipped=
   stttab_erred=
   stttab_failed=
-  stttab_vid=
+  stttab_sid=
   stttab_short=
+  stttab_refs=
+  stttab_idrefs=
+  stttab_meta=
+  stttab_tags_raw=
   stttab_tags=
 
+  stttab_lineno=
   stttab_entry=
   stttab_stat=
   stttab_record=
   stttab_id=
   stttab_primctx=
   stttab_primctx_id=
-  stttab_tags_raw=
 }
 
-stattab_entry_defaults () # Tags
+stattab_entry_defaults () # ~
 {
   local now="$(date +'%s')"
   stattab_value "${stttab_btime:-}" || stttab_btime=$now
@@ -117,17 +112,16 @@ stattab_entry_parse () # [entry] ~
   debug "Parsing descriptor '$stttab_stat' and record '$stttab_record'"
   stattab_parse_STD_stat $stttab_stat
   stattab_record_parse
-  stattab_entry_defaults
 }
 
-stattab_exists () # [<Stat-Id>] [<Stat-Tab>] [<Entry-Type>]
+stattab_exists () # [<Stat-Id>] [<Entry-Type>] [<Stat-Tab>]
 {
   grep_f=${grep_f:-"-q"} \
-    stattab_grep "${1:-$stttab_id}" "${3:-"id"}" "${2:-$STTTAB}"
+    stattab_grep "${1:-$stttab_id}" "${2:-"id"}" "${3:-$STTTAB}"
 }
 
 # Retrieve and parse entry from table
-stattab_fetch () # ~ [<Sttab-Id>] [<Search-Type>] [<Stat-Tab>]
+stattab_fetch () # ~ [<Stat-Id>] [<Search-Type>] [<Stat-Tab>]
 {
   local fetch_id=${1:-"${stttab_id:-}"}
   test -n "${fetch_id:-}" || return 64
@@ -135,7 +129,7 @@ stattab_fetch () # ~ [<Sttab-Id>] [<Search-Type>] [<Stat-Tab>]
 }
 
 # Take tab output and perform some sort of grep
-stattab_grep () # ~ <Sttab-Id> [<Search-Type>] [<Stat-Tab>]
+stattab_grep () # ~ <Stat-Id> [<Search-Type>] [<Stat-Tab>]
 {
   { true "${generator:=stattab_tab}"
     $generator "" "${3-}" || ignore_sigpipe
@@ -157,21 +151,22 @@ stattab_ids ()
   $gsed -E 's/^[0-9 T+-]+ ([A-Za-z0-9:$%&@_\.+-]+):.*$/\1/'
 }
 
-stattab_init ()
+stattab_tab_init () # ~ [<Stat-Tab>]
 {
-  test -s "$STTTAB" && return
-  mkdir -vp "$(dirname "$STTTAB")" &&
+  test $# -le 1 || return 177
+  test -n "${1-}" || set -- "$STTTAB"
+  test -s "$1" && return
+  mkdir -vp "$(dirname "$1")" &&
   { cat <<EOM
 # [Status] [BTime] CTime UTime [Dirs Pass Skip Err Fail Tot] Name-Id: Short @Ctx +Proj
 # Id: _CONF                                                        ex:ft=todo:
 EOM
-} >"$STTTAB"
+} >"$1"
 }
 
 # List ST-Id's only from tab output
-stattab_list () # ? LIST
+stattab_list () # ~ [<Match-Line>] [<Stat-Tab>]
 {
-  test -n "${2-}" || set -- "${1-}" "$STTTAB"
   stattab_tab "$@" | stattab_ids
 }
 
@@ -182,10 +177,9 @@ stattab_parse () # ~ <Grep-Line>
   test -n "$*" || return 60
   stattab_entry_env_reset
   # Remove grep-line filename/linenumber from entry and parse
-  stttab_entry="$*"
-  stttab_lineno="$(echo "$stttab_entry" | cut -d : -f 1)"
+  stttab_lineno="$(echo "$*" | cut -d : -f 1)"
   debug "Parsing Grep-Line found at '$stttab_lineno'"
-  stttab_entry="$(echo "$stttab_entry" | cut -d : --output-delimiter : -f 2-)"
+  stttab_entry="$(echo "$*" | cut -d : --output-delimiter : -f 2-)"
   stattab_entry_parse
 }
 
@@ -212,10 +206,11 @@ stattab_record () # ~ <Entry>
 {
   test $# -gt 0 || return 64
   test -n "$*" || return 60
-  stattab_entry_env_reset
-  stttab_entry="$*"
-  stattab_entry_parse &&
-  stattab_entry >>"$STTTAB"
+  stattab_entry_init "$@" &&
+  stattab_entry_defaults &&
+  stattab_entry >>"$1"
+
+  stattab_commit >>"$1"
 }
 
 stattab_record_parse ()
@@ -231,7 +226,7 @@ stattab_record_parse ()
 
   stttab_refs="$(echo "$stttab_rest"|$ggrep -Po '(?<=<)[^ ]+(?=>)'|normalize_ws)"
 
-  stttab_ids="$(echo "$stttab_rest"|$ggrep -Po '(?<=#)[^ ]+(?= |$)'|normalize_ws)"
+  stttab_idrefs="$(echo "$stttab_rest"|$ggrep -Po '(?<=#)[^ ]+(?= |$)'|normalize_ws)"
 
   stttab_meta="$(echo "$stttab_rest"|$ggrep -Po '[^ ]+:[^ ]+'|normalize_ws)"
 
@@ -241,9 +236,9 @@ stattab_record_parse ()
 }
 
 # List entries; first argument is glob, converted to (grep) line-regex
-stattab_tab () # <Match-Line> [<Stat-Tab>]
+stattab_tab () # ~ [<Match-Line>] [<Stat-Tab>]
 {
-  test -n "$2" || set -- "$1" "$STTTAB"
+  test -n "${2-}" || set -- "${1-}" "$STTTAB"
   test "$1" != "*" || set -- "" "$2"
   test -n "$1" && {
     test -n "${grep_f-}" || local grep_f=-P
@@ -278,4 +273,130 @@ stattab_value () # ~ <Value>
   test -n "${1-}" -a "${1-}" != "-"
 }
 
-#
+
+class.StatTabEntry.load () # ~
+{
+  declare -g -A StatTabEntry__btime=()
+  declare -g -A StatTabEntry__ctime=()
+  declare -g -A StatTabEntry__utime=()
+  declare -g -A StatTabEntry__id=()
+  declare -g -A StatTabEntry__short=()
+  declare -g -A StatTabEntry__tags=()
+}
+
+class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
+#   .StatTabEntry <Entry...>
+#   .tab-ref
+#   .tab
+#   .get
+#   .set
+#   .update
+#   .commit
+{
+  test $# -gt 0 || return 177
+  test $# -gt 1 || set -- $1 .toString
+  local name=StatTabEntry super_type=Class self super id=$1 m=$2
+  shift 2
+  self="class.$name $id "
+  super="class.$super_type $id "
+
+  case "$m" in
+    .$name ) $super.$super_type "$1"
+        $self.get
+      ;;
+    .__$name ) $super.__$super_type
+        unset StatTabEntry__status[$id]
+        unset StatTabEntry__btime[$id]
+        unset StatTabEntry__ctime[$id]
+        unset StatTabEntry__utime[$id]
+        unset StatTabEntry__id[$id]
+        unset StatTabEntry__short[$id]
+        unset StatTabEntry__tags[$id]
+        unset StatTabEntry__refs[$id]
+      ;;
+
+    .tab-ref ) echo "class.StatTab ${Class__instances[$id]}" ;;
+    .tab ) echo $($($self.tab-ref).tab) ;;
+
+    .get )
+        StatTabEntry__status[$id]=$stttab_status
+        StatTabEntry__btime[$id]=$stttab_btime
+        StatTabEntry__ctime[$id]=$stttab_ctime
+        StatTabEntry__utime[$id]=$stttab_utime
+        StatTabEntry__id[$id]=$stttab_id
+        StatTabEntry__short[$id]=$stttab_short
+        StatTabEntry__tags[$id]=$stttab_tags
+        StatTabEntry__refs[$id]=$stttab_refs
+      ;;
+    .set )
+        stttab_status=${StatTabEntry__status[$id]}
+        stttab_btime=${StatTabEntry__btime[$id]}
+        stttab_ctime=${StatTabEntry__ctime[$id]}
+        stttab_utime=${StatTabEntry__utime[$id]}
+        stttab_id=${StatTabEntry__id[$id]}
+        stttab_short=${StatTabEntry__short[$id]}
+        stttab_tags=${StatTabEntry__tags[$id]}
+        stttab_refs=${StatTabEntry__refs[$id]}
+      ;;
+
+    .update )
+        $self.set
+        stattab_update "$@"
+        $self.get
+      ;;
+    .commit )
+        $self.set
+        stattab_commit $($self.tab-ref)
+      ;;
+
+    .info | .toString ) ctx_class_info ;;
+
+    * ) $super$m "$@" ;;
+  esac
+}
+
+class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
+#   .StatTab <Tab>
+#   .tab
+#   .tab-exists
+#   .tab-init
+#   .exists <Entry-Id> <Type>
+#   .init
+#   .fetch <Var-Name> <Entry-Id>
+#   .update
+#   .commit
+{
+  test $# -gt 0 || return 177
+  test $# -gt 1 || set -- $1 .toString
+  local name=StatTab super_type=Class self super id=$1 m=$2
+  shift 2
+  self="class.$name $id "
+  super="class.$super_type $id "
+
+  case "$m" in
+    .$name ) $super.$super_type "$@" ;;
+    .__$name ) $super.__$super_type ;;
+
+    .tab ) stattab_tab "${1:-}" "${Class__instances[$id]}" ;;
+    .tab-ref ) echo "${Class__instances[$id]}" ;;
+    .tab-exists ) test -s "${Class__instances[$id]}" ;;
+    .tab-init ) stattab_tab_init "${Class__instances[$id]}" ;;
+    .list ) stattab_list "${1:-}" "${Class__instances[$id]}" ;;
+
+    .exists ) stattab_exists "$1" "" "${Class__instances[$id]}" ;;
+    .init ) local var=$1; shift
+        stattab_init "$@" &&
+        create "$var" StatTabEntry "$id"
+      ;;
+    .fetch )
+        stattab_fetch "$2" "" "${Class__instances[$id]}" &&
+        create "$1" StatTabEntry "$id"
+      ;;
+
+    .info | .toString ) ctx_class_info ;;
+
+    * ) $super$m "$@" ;;
+  esac
+}
+
+# Derive: BIN:

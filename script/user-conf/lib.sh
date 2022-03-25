@@ -81,7 +81,9 @@ for d in copy symlink web line git
 do
   . "$sh_lib"/uc-d-$d.lib.sh
 done
-. "$sh_lib"/stattab.lib.sh
+. "$sh_lib"/stattab-uc.lib.sh
+. "$sh_lib"/context/ctx-class.lib.sh
+. "$sh_lib"/shell-uc.lib.sh
 
 sys_uc_lib_load
 std_uc_lib_load
@@ -89,7 +91,10 @@ os_uc_lib_load
 ansi_uc_lib_load
 stdlog_uc_lib_load
 #syslog_uc_lib_load
-stattab_lib_load
+stattab_uc_lib_load
+ctx_class_lib_load
+shell_uc_lib_load
+ctx_class_lib_init
 
 case "${TERM-}" in
   ( "" ) ;;
@@ -99,11 +104,6 @@ esac
 
 # For log and color output
 ansi_uc_lib_init
-
-# For storing config and stats
-test -s "$STTTAB" || stattab_init
-stattab_lib_init
-
 
 # Finally, run init for Uc lib
 uc_lib_init
@@ -251,7 +251,7 @@ uc__env ()
     std_info "Short: $stttab_short"
     std_info "Tags: $stttab_tags"
     std_info "Refs: $stttab_refs"
-    std_info "Ids: $stttab_ids"
+    std_info "Id-Refs: $stttab_idrefs"
     std_info "Meta: $stttab_meta"
   } || {
     echo "UCONF=$UCONF"
@@ -261,7 +261,7 @@ uc__env ()
     echo "config_short=$stttab_short"
     echo "config_tags=$stttab_tags"
     echo "config_refs=$stttab_refs"
-    echo "config_ids=$stttab_ids"
+    echo "config_idrefs=$stttab_idrefs"
     echo "config_meta=$stttab_meta"
   }
 }
@@ -300,7 +300,7 @@ uc__initialize ()
   test -d "${UCONF-}" || error "No UCONF found" 1
 
   test -e "${conf-}" && {
-    stattab_exists $tag && {
+    stattab_ UC exists $tag && {
       note "Already initialized: $tag
 To remove current config and re-run 'init', use 'reset' subcommand.
 To update static u-c settings run 'env-update'."
@@ -330,7 +330,8 @@ To update static u-c settings run 'env-update'."
   test -e "${conf-}" && {
     note "Using existing $tag configuration"
 
-    stattab_record $tag: $UC_STAT_TPL @Local
+    $uctab.init ucstat $tag: $UC_STAT_TPL @Local
+    $ucstat.commit
     return
   } ||
     local UCONF_
@@ -343,7 +344,8 @@ To update static u-c settings run 'env-update'."
         test -e "$tpl" || continue
 
         cp -v $tpl $conf
-        stattab_record $tag: $UC_STAT_TPL @$bp_tag
+        $uctab.init ucstat $tag: $UC_STAT_TPL @$bp_tag
+        $ucstat.commit
 
         note "Initialized config $tag from $bp_tag boilerplate"
         break 2
@@ -382,13 +384,12 @@ uc__list ()
 
 uc__list_records ()
 {
-  test -n "${2-}" || set -- "${1-}" "$STTTAB"
-  stattab_tab "$@"
+  $uctab.tab "$@"
 }
 
 uc__names ()
 {
-  stattab_list
+  $uctab.list "$@"
 }
 
 uc___names ()
