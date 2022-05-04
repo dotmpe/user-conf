@@ -86,10 +86,11 @@ enable_setting () # ~ File Line
   test -z "${3-}" || error "surplus arguments '$3'" 1
 
   find_setting "$1" "$2" && return
+  # shellcheck disable=SC2015
   find_setting "$1" "$2" 2 && {
     enable_line "$1" "$lnr" || return
   } || {
-    add_setting $1 "$2"
+    add_setting "$1" "$2"
   }
 }
 

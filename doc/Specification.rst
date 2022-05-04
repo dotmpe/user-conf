@@ -15,8 +15,8 @@ some which work in sequence and some are treated globally.
 
 The general rule syntax is::
 
-  [<decorator>]<DIRECTIVE> <param>.. \
-    <param>..
+  [<decorator>]<DIRECTIVE> <param>... \
+    <param>...
 
 The directives and other keywords are case insentive, and the given
 case is by convetion but not enforced through code.
@@ -42,12 +42,23 @@ SYMLINK
         appended. If the basename cannot be retrieved, an error is given.
       - Otherwise the argument specifies the path to a symlink.
 
-  - Upon update, only symlinks paths are replaced. Existing paths of other types
+  - Upon update, only symlink paths are replaced. Existing paths of other types
     result in an error. Paths are only updated as their target is different.
+
+  XXX: when a symlink target has unknown location we should really do only a manual update as well, like with COPY's.
+  except it would require tracking or parsing of each U-c install version to know all previous symlink targets, and that would be impractical.
+
+  TODO: could try to add checksum field like COPY nevertheless, and make it match on either existing symlink or file
+
+  but might want to add add third 'mode' field first to make update behavior explicit::
+
+    SYMLINK <ucfile> <destpath> force # replace files as well, ie. destroy existing content
+    SYMLINK <ucfile> <destpath> [replace] # replace symlinks (default mode)
+    SYMLINK <ucfile> <destpath> replace <checksums>... # replace files or symlinks if matches
 
 
 COPY
-  File path exists and matches currently checked out UCDIR file::
+  File path exists and matches currently checked out UC file::
 
     COPY <ucfile> <destpath>
 
@@ -67,6 +78,13 @@ COPY
   TODO: added +/- attriibutes. Iow. delete, but only known files.
   Same for SYMLINK perhaps.
 
+  TODO: add checksum fields. If target matches one checksum then update automatically as well.
+  ::
+
+    COPY <ucfile> <destpath> [update] # replace file only if its version recognized (with GIT)
+    COPY <ucfile> <destpath> force # don't check file version history, destroy existing content
+    COPY <ucfile> <destpath> update <checksums>... # in addition to GIT check given checksums
+
 
 GIT
   GIT checkout exists and has named remote with matching url::
@@ -85,7 +103,7 @@ GIT
     - Fourth argument is the branch to checkout and for remote tracking.
       Defaults to master.
     - Fourth is the mode of the target. This defaults to 'clone',
-      and can also be 'submodule' or kkk
+      and can also be 'submodule' or ...
 
   - Only the target basepath needs to be provided if `basename <url> .git`
     provides the correct checkout directory name.
@@ -109,13 +127,14 @@ GIT
 
   Notes
     - If multiple remotes are desired, it is best to put the origin first.
-      This way if it not exists, this remote is cloned from.
+      This way if it not exists, this remote is cloned from and used by push/pull.
     - The remote ref is compared with HEAD, to note local commits that
       need to be pushed. XXX: To keep no-push remotes some other function is
       needed.
 
 
-INSTALL::
+INSTALL
+  ::
 
     INSTALL [apt|pip|brew|...|*] <packages>
 
@@ -123,27 +142,34 @@ INSTALL::
   The commands requested are listed as parameters. If a command does not exit normally when used without arguments or options, an entry with BIN should be made.
 
 
-WEB::
+WEB
+  ::
 
     WEB <url> <destpath>
 
-  Fetch, update file from URL.
+  Fetch file from URL, update only if changed.
 
 
-DIR::
+DIR
+  ::
 
-    DIR <destpath> [copy|symlink] [nouc]
+    DIR <paths...>
 
-
-  TODO: each path below dir is treated as a copy, symlink or git repo.
-  Wich ever is appropiate. Plain directories and other types of paths are
-  ignored. Other non-GIT SCM checkouts same, until supported.
-
-  All files are hashed and checked wether present in UCONF repo,
-  of a currently checked out file, and wether that file is listed in the Ucfile.
+  Make sure directories exists.
 
 
-LINE::
+SYNC
+  ::
+
+    SYNC <srcpath> <destpath> [copy|symlink]
+
+  TODO: each path below dir is treated as a copy, symlink or git repo?
+
+  XXX: some wrapper for rsync -avz
+
+
+LINE
+  ::
 
     LINE <filepath> <lines>..
 

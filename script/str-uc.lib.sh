@@ -151,7 +151,7 @@ while (<>) {
 }'
 }
 
-# XXX:
+# XXX: try to count characters as would be displayed by PS1
 str_sh_clean ()
 {
 	ansi_clean "$1" | sed -e 's/\(\\\(\[\|\]\)\)//g' | tr -d '[:cntrl:]'
