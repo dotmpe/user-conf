@@ -120,7 +120,7 @@ uc_conf_load () # ~ <Subcmd-Name>
   done
   $uctab.exists $tag || {
     case $1 in
-      ( init ) ;;
+      ( init ) return ;;
       ( list | names | -names | -path | -paths | list-records )
             error "No static config found. Did you run init?" ;;
       ( * ) error "No static config found. Did you run init?" 1 ;;
@@ -128,7 +128,9 @@ uc_conf_load () # ~ <Subcmd-Name>
   }
 
   std_info "Loading config for '$tag'..."
-  $uctab.fetch ucstat $tag
+  $uctab.fetch ucstat $tag || {
+    error "No entry" 1
+  }
 
 # FIXME: want to eval/source in sequence as defined in record
 
