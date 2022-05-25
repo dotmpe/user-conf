@@ -5,9 +5,10 @@
 # TODO: move all functions to parts or lib
 
 ## Shell env defaults
-test -d "/usr/lib/user-conf" && true "${U_C:="/usr/lib/user-conf"}"
-test -d "/usr/local/lib/user-conf" && true "${U_C:="/usr/local/lib/user-conf"}"
 test -d "$HOME/.local/lib/user-conf" && true "${U_C:="$HOME/.local/lib/user-conf"}"
+test -d "/usr/local/lib/user-conf" && true "${U_C:="/usr/local/lib/user-conf"}"
+test -d "/usr/lib/user-conf" && true "${U_C:="/usr/lib/user-conf"}"
+test -d "$HOME/.basher/cellar/packages/user-tools/user-conf/" && true "${U_C:="$HOME/.basher/cellar/packages/user-tools/user-conf"}"
 test -d "/src/local/user-conf" && true "${U_C:="/src/local/user-conf"}"
 
 test -d "$U_C" || {
@@ -17,11 +18,6 @@ test -d "$U_C" || {
 
 true "${UC_LIB_PATH:="$U_C/script"}"
 
-test -d "$UC_LIB_PATH" || {
-  echo "Unable to find Uc lib path <$UC_LIB_PATH>" >&2
-  exit 1
-}
-
 # The path to this executable
 true "${UC_SELF:="$U_C/tools/sh/log.sh"}"
 
@@ -30,11 +26,10 @@ true "${UC_SELF:="$U_C/tools/sh/log.sh"}"
 
 uc_log_env () # ~
 {
-  echo $(<<EOM
-LOG=${LOG:-"$UC_PROFILE_SELF"}"
+  cat <<EOM
+LOG="${LOG:-"$UC_PROFILE_SELF"}"
 uc_log="$LOG"
 EOM
-  )
   exit
 }
 
@@ -87,85 +82,6 @@ uc_log_init () # ~
     } &&
   : "${uc_log:=uc_log}" &&
   argv_uc__argc :log-init $# || return
-}
-
-# Helper to source libs only once
-uc_profile_load_lib ()
-{
-  test -n "${UC_PROFILE_SRC_LIB-}" || {
-    uc_profile_source_lib || return
-  }
-}
-
-# Source all libs
-uc_profile_source_lib () # ~
-{
-  UC_PROFILE_SRC_LIB=1
-
-  # This is not so nice but there's too many functions involved.
-  # XXX: Keep this file stable. Move essentials here, later probably?
-  # Should maybe mark some and keep (working) caches
-  #  Or mark these libs as 'global'
-  . $UC_LIB_PATH/str-uc.lib.sh &&
-  . $UC_LIB_PATH/argv-uc.lib.sh &&
-  . $UC_LIB_PATH/stdlog-uc.lib.sh &&
-  stdlog_uc_lib_load &&
-  . $UC_LIB_PATH/ansi-uc.lib.sh &&
-  ansi_uc_lib_load &&
-  . $UC_LIB_PATH/syslog-uc.lib.sh &&
-  syslog_uc_lib_load &&
-
-  ansi_uc_lib_init &&
-  #stdlog_uc_lib_init &&
-  #syslog_uc_lib_init &&
-
-  UC_PROFILE_SRC_LIB=0
-}
-
-# TODO: replace these with sh_env either from shell-uc.lib or shell.lib
-uc_func ()
-{
-  argv_uc__argc :uc-func $# eq 1 || return
-  test "$(type -t "$1")" = "function"
-}
-
-uc_cmd ()
-{
-  argv_uc__argc :uc-cmd $# eq 1 || return
-  test -x "$(which "$1")"
-}
-
-uc_var ()
-{
-  argv_uc__argc :uc-var $# eq 1 || return
-  local val upd
-
-  # Force update or try existing value first
-  fnmatch "* $1 *" " $UC_VAR_PDNG " && {
-    uc_update "$1"
-    upd=1
-  }
-
-  val="${!1-}"
-  test -z "$val" -a -z "${upd-}" && {
-    uc_var_update "$1"
-    val="${!1-}"
-  }
-  test -n "$val" || return
-
-  echo "$val"
-}
-
-uc_signal_exit ()
-{
-  local code=${1:-${?:-0}}
-  test $code -eq 0 && return 1
-  test $code -gt 128 -a $code -lt 162 || return
-  exit_signal=$(( $code - 128 ))
-
-  signal_names='HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2'
-  set -- $signal_names
-  signal_name=${!exit_signal}
 }
 
 # Actual entry point for executable script

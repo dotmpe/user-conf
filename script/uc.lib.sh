@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Misc. utils for u-c
+## Main lib for u-c CLI ('uc')
 
 
 uc_lib_load ()

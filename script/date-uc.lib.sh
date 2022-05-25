@@ -45,20 +45,19 @@ older_than ()
 # X sec/min/hr/days/weeks/months/years ago
 fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 {
-  # Calculate delta based on now
-  test -n "${2-}" || set -- "${1-}" "$(( $(date +%s) - $1 ))" "${3-}"
-
   # Set default suffix
-  test -n "${3-}" -o -z "${datefmt_suffix-}" || set -- "${1-}" "$2" "$datefmt_suffix"
+  test $# -eq 3 || set -- "$1" "${2-}" " ${datefmt_suffix:-ago}"
 
-  test -n "${3-}" || set -- "${1-}" "$2" " ago"
+  # Calculate delta based on now
+  test -n "${2-}" || set -- "$1" "$(( $(date +%s) - $1 ))" "${3-}"
 
   if test $2 -gt $_1YEAR
   then
 
     if test $2 -lt $(( $_1YEAR + $_1YEAR ))
     then
-      printf -- "one year$3"
+      test ${datefmt_human_readable:-1} -eq 1 &&
+        printf -- "one year$3" || printf -- "1y$3"
     else
       printf -- "$(( $2 / $_1YEAR )) years$3"
     fi
@@ -69,7 +68,8 @@ fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 
       if test $2 -lt $(( $_1MONTH + $_1MONTH ))
       then
-        printf -- "a month$3"
+        test ${datefmt_human_readable:-1} -eq 1 &&
+          printf -- "a month$3" || printf -- "1mo$3"
       else
         printf -- "$(( $2 / $_1MONTH )) months$3"
       fi
@@ -80,9 +80,13 @@ fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 
         if test $2 -lt $(( $_1WEEK + $_1WEEK ))
         then
-          printf -- "a week$3"
+          test ${datefmt_human_readable:-1} -eq 1 &&
+            printf -- "a week$3" ||
+            printf -- "1w$3"
         else
-          printf -- "$(( $2 / $_1WEEK )) weeks$3"
+          test ${datefmt_human_readable:-1} -eq 1 &&
+            printf -- "$(( $2 / $_1WEEK )) weeks$3" ||
+            printf -- "$(( $2 / $_1WEEK ))w$3"
         fi
       else
 
@@ -91,9 +95,13 @@ fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 
           if test $2 -lt $(( $_1DAY + $_1DAY ))
           then
-            printf -- "a day$3"
+            test ${datefmt_human_readable:-1} -eq 1 &&
+              printf -- "a day$3" ||
+              printf -- "1d$3"
           else
-            printf -- "$(( $2 / $_1DAY )) days$3"
+            test ${datefmt_human_readable:-1} -eq 1 &&
+              printf -- "$(( $2 / $_1DAY )) days$3" ||
+              printf -- "$(( $2 / $_1DAY ))d$3"
           fi
         else
 
@@ -102,9 +110,13 @@ fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 
             if test $2 -lt $(( $_1HOUR + $_1HOUR ))
             then
-              printf -- "an hour$3"
+              test ${datefmt_human_readable:-1} -eq 1 &&
+                printf -- "an hour$3" ||
+                printf -- "1h$3"
             else
-              printf -- "$(( $2 / $_1HOUR )) hours$3"
+              test ${datefmt_human_readable:-1} -eq 1 &&
+                printf -- "$(( $2 / $_1HOUR )) hours$3" ||
+                printf -- "$(( $2 / $_1HOUR ))h$3"
             fi
           else
 
@@ -113,13 +125,19 @@ fmtdate_relative() # [ Previous-Timestamp | ""] [Delta] [suffix=" ago"]
 
               if test $2 -lt $(( $_1MIN + $_1MIN ))
               then
-                printf -- "a minute$3"
+                test ${datefmt_human_readable:-1} -eq 1 &&
+                  printf -- "a minute$3" ||
+                  printf -- "1min$3"
               else
-                printf -- "$(( $2 / $_1MIN )) minutes$3"
+                test ${datefmt_human_readable:-1} -eq 1 &&
+                  printf -- "$(( $2 / $_1MIN )) minutes$3" ||
+                  printf -- "$(( $2 / $_1MIN ))min$3"
               fi
             else
 
-              printf -- "$2 seconds$3"
+              test ${datefmt_human_readable:-1} -eq 1 &&
+                printf -- "$2 seconds$3" ||
+                printf -- "$2s$3"
 
             fi
           fi

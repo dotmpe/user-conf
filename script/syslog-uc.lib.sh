@@ -45,7 +45,7 @@ syslog_uc_lib_load ()
 
   # XXX: this could be off at 'dumb' and non-interactive by default
   # not sure when/if to toggle this yet.
-  test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:"severity colorize"}"
+  test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:="severity colorize"}"
 }
 
 syslog_uc_lib_init () # ~
@@ -59,7 +59,7 @@ syslog_uc_lib_init () # ~
 # XXX: Colorize default, this sets it on. But need something in term-uc.lib
 syslog_uc_init () # COLORIZE,UC_LOG_ANSI ~ [handle=syslog_uc_init]
 {
-  : "${UC_LOG_ANSI="${COLORIZE:-1}"}"
+  : "${UC_LOG_ANSI:="${COLORIZE:-1}"}"
   stdlog_init ${1:-"syslog_uc_log"} uc_syslog_1 ${UC_PROFILE_LOG_FILTERS-}
 }
 
@@ -183,8 +183,8 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   test $# -eq 0 && {
     set -- $UC_LOG_BASE || return
   } || { fnmatch ":*" "$1" && {
-    local t1="$1"; shift
-    set -- $UC_LOG_BASE "${t1:1}" "$@" || return; unset t1
+    local t1="$(echo "$1" | cut -c2-)"; shift
+    set -- $UC_LOG_BASE "$t1" "$@" || return; unset t1
   }; }
 
   # Chat on stdout as well if session is interactive (stderr is tty),
@@ -206,7 +206,7 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   test -s /etc/log || opts="$opts --socket-errors=off"
 
   local tags="$(printf '%s:' "$@")"
-  logger $opts -t "${tags:0:-1}" -p "$fac.$lvl" "$msg"
+  logger $opts -t "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))" -p "$fac.$lvl" "$msg"
 }
 
 #
