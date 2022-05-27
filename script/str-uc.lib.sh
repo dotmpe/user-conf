@@ -27,9 +27,9 @@ mkid () # ~ Str Extra-Chars Substitute-Char
   test -n "$s" || s=-
   test -n "${upper-}" && {
     test $upper -eq 1 && {
-      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr 'a-z' 'A-Z')
+      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:lower:]' '[:upper:]')
     } || {
-      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr 'A-Z' 'a-z')
+      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:upper:]' '[:lower:]')
     }
   } || {
     id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" )
