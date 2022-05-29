@@ -101,18 +101,18 @@ shell_uc_def ()
         -o $1 -eq 2 \
         -o $1 -eq 126 \
         -o $1 -eq 127 \
-        -o \( $1 -ge 128 -a $1 -le 137 \) \
-        -o $1 -eq 255
+        -o \( $1 -ge 128 -a $1 -le 157 \)
+        #-o $1 -eq 255
     }
 
     sh_state_name ()
     {
-      test $1 -eq 1 && echo Generic
-      test $1 -eq 2 && echo Syntax
-      test $1 -eq 126 && echo Not executable
-      test $1 -eq 127 && echo Not found
-      test \( $1 -ge 128 -a $1 -le 137 \) && {
-        kill -l $(( $1 - 128 ))
+      test $1 -eq 1 && echo Failed
+      test $1 -eq 2 && echo Syntax Error
+      test $1 -eq 126 && echo Not Executable
+      test $1 -eq 127 && echo Not Found
+      test \( $1 -ge 128 -a $1 -le 157 \) && {
+        echo SIG:$(kill -l $(( $1 - 128 )))
       }
       # Never bash produce this with illegal exit codes
       #test $1 -eq 255 && echo Exit out of range

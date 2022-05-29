@@ -18,7 +18,8 @@ argv_uc__argc_n ()
 {
   argv_uc__argc "$@" || return
   local arg
-  for arg in $@; do
+  for arg in "$@"
+  do
     test -n "$arg" && continue
     ${uc_log:-$LOG} error "${1:-":(args-n)"}" "Got empty argument"
     return 63
