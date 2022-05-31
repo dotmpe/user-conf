@@ -95,27 +95,44 @@ shell_uc_def ()
       test "$(type -t "$1")" = "keyword"
     }
 
+    # Return false unless the given number is an understood exit-status code.
     sh_status ()
     {
       test $1 -eq 1 \
         -o $1 -eq 2 \
         -o $1 -eq 126 \
         -o $1 -eq 127 \
-        -o \( $1 -ge 128 -a $1 -le 157 \)
-        #-o $1 -eq 255
+        -o \( $1 -ge 128 -a $1 -le 192 \) \
+        -o $1 -eq 255
     }
 
+    # Print a short description for a given exit-status code.
     sh_state_name ()
     {
+      # Generic not-okay status
       test $1 -eq 1 && echo Failed
+      # Incomplete statements, missing or illegal arguments
       test $1 -eq 2 && echo Syntax Error
+      # Problem with executing command-name (or no permissions)
       test $1 -eq 126 && echo Not Executable
+      # No such command name
       test $1 -eq 127 && echo Not Found
-      test \( $1 -ge 128 -a $1 -le 157 \) && {
+
+      # An entire block starting at 128 is used for when programs return because
+      # of an (unhandled or servicable) signal.
+      # On my Debian Linux 5.4 kernel, kill -l accepts 0-64 values. Making this
+      # block end at 192. Although I doubt many of those will ever be seen as
+      # an actual exit status code, some often are, like INT, KILL and PIPE.
+      test \( $1 -ge 128 -a $1 -le 192 \) && {
         echo SIG:$(kill -l $(( $1 - 128 )))
       }
-      # Never bash produce this with illegal exit codes
-      #test $1 -eq 255 && echo Exit out of range
+
+      # It was claimed online that somewhere a 0 > status > 256 would be set to
+      # 255, but I have not seen Bash do this. And in fact using out-of-range
+      # integers in shell scripts yields very strange results. And non-integers
+      # will just make exit return 2.
+      # Still, leaving this in here.
+      test $1 -eq 255 && echo Exit out of range
     }
 
     sh_type () { type "$@"; }
