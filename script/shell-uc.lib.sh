@@ -107,6 +107,8 @@ shell_uc_def ()
     }
 
     # Print a short description for a given exit-status code.
+    # Obviously this is not a standard. E.g. many programs will use 2 with
+    # other meanings than 'illegal argument/syntax error'.
     sh_state_name ()
     {
       # Generic not-okay status
