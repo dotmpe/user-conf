@@ -1,56 +1,109 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 
-# Main
+true "${LOG:?Requires LOG handler}"
+#test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
+true "${U_S:?Requires User-Script installation}"
+true "${UC_LIB_PATH:?Expected UC shell lib}"
 
-$LOG info ":tools/u-c:init" "Starting entry..." "0:$0 -:$-"
+INIT_LOG=$LOG
 
-true "${scriptpathname:="${0}"}"
-true "${UCONF:="$HOME/.conf"}"
-true "${scriptpath:=$HOME/.conf/script}"
+. "$U_S/src/sh/lib/shell.lib.sh"
+shell_lib_load
+shell_init_mode
+sh_init_mode
 
-export PATH=$PATH:$U_S/src/sh/lib:$U_C/script:$scriptpath
+test $IS_BASH -eq 1 && {
+  # This triggers
+  #/etc/profile.d/uc-profile.sh: /usr/share/bashdb/bashdb-main.inc: No such file or directory
+  #/etc/profile.d/uc-profile.sh: warning: cannot start debugger; debugging mode disabled
+  # at t460s but only sometimes.
+  set -o errexit  # set -e
+  set -o nounset  # set -u
+  set -o pipefail #
 
-true "${default_sh_lib:="str-uc sys-uc std-uc os-uc shell-uc statusdir-uc"}"
-true "${uc_sh_lib_rest:="vc-uc sd-uc sh-ansi-tpl-uc volume-uc context-uc todotxt-uc"}"
+  shopt -q extdebug || shopt -s extdebug >&2
+
+  # setting errtrace allows our ERR trap handler to be propagated to functions,
+  #  expansions and subshells
+  set -o errtrace # same as -E
+
+  # Leave a path of line-numbers in array BASH_LINENO
+  # thate tells where functions where called
+  set -o functrace # same as -T
+
+  # trap ERR to provide an error handler whenever a command exits nonzero
+  #  this is a more verbose version of set -o errexit
+  . "$UC_LIB_PATH"/bash-uc.lib.sh
+  trap 'bash_uc_errexit' ERR
+
+} || {
+
+  $LOG warn "" "Non-Bash TO-TEST"
+}
+
+test $IS_DASH -eq 1 && {
+  set -o nounset
+}
 
 
-test -n "${scriptname-}" || scriptname="$(basename -- "$scriptpathname" .sh)"
-test -n "${verbosity-}" || verbosity=5
+# Lots of script depend on these basic variables. Validate later.
 
-test -z "${__load-}" && {
-  test -z "${__load_lib-}" && {
-    test -n "${1-}" && uc_init_act="$1" || uc_init_act=load
-  } || uc_init_act="load-ext"
-} || uc_init_act=$__load
-$LOG notice ":u-c:init" "Util boot mode" "$uc_init_act"
+true "${USER:=$(whoami)}"
+true "${username:=$USER}"
+true "${hostname:=$(hostname -s)}"
 
-case "$uc_init_act" in
+#shellcheck disable=1087
+log_key="$username@$hostname:$scriptname[$$]:${1-}"
+export log_key UC_LOG_LEVEL
 
-  load-ext ) ;; # External include, do nothing
+# Pre-set log output level, will re-check and force level later
+UC_LOG_LEVEL=${verbosity:=${v:-4}}
+export verbosity UC_LOG_LEVEL
 
-  load )
-      test -n "${scriptpath-}" || scriptpath="$(dirname "$scriptpathname")/script"
-      # XXX: . $UCONF/script/user-conf/lib.sh
-      true "${sh_lib:="$UCONF/script"}"
-      . $sh_lib/uc-lib.lib.sh || {
-        $LOG error ":u-c:init" "Error loading uc lib" "$sh_lib" 1
-      }
+# Load and init all lib parts
+. "$UC_LIB_PATH"/argv-uc.lib.sh
+. "$UC_LIB_PATH"/std-uc.lib.sh
+. "$UC_LIB_PATH"/str-uc.lib.sh
+. "$UC_LIB_PATH"/src-uc.lib.sh
+. "$UC_LIB_PATH"/ansi-uc.lib.sh
+. "$UC_LIB_PATH"/match-uc.lib.sh
+. "$UC_LIB_PATH"/os-uc.lib.sh
+. "$UC_LIB_PATH"/date-uc.lib.sh
+. "$UC_LIB_PATH"/vc-uc.lib.sh
+. "$UC_LIB_PATH"/sys-uc.lib.sh
+. "$UC_LIB_PATH"/stdlog-uc.lib.sh
+#. "$UC_LIB_PATH"/syslog-uc.lib.sh
+. "$UC_LIB_PATH"/conf-uc.lib.sh
+. "$UC_LIB_PATH"/uc.lib.sh
+for d in copy symlink web line git
+do
+  . "$UC_LIB_PATH"/uc-d-$d.lib.sh
+done
+. "$UC_LIB_PATH"/stattab-uc.lib.sh
+. "$UC_LIB_PATH"/context/ctx-class.lib.sh
+. "$UC_LIB_PATH"/shell-uc.lib.sh
 
-      uc_lib_load $default_sh_lib || {
-        $LOG error ":u-c:init" "Error loading script libs" "$default_sh_lib" 1
-        exit 1
-      }
-    ;;
+sys_uc_lib_load
+std_uc_lib_load
+os_uc_lib_load
+ansi_uc_lib_load
+stdlog_uc_lib_load
+#syslog_uc_lib_load
+stattab_uc_lib_load
+ctx_class_lib_load
+shell_uc_lib_load
 
-  '' ) ;;
+std_uc_lib_init
+ctx_class_lib_init
 
-  * )
-      $LOG warn ":u-c:init" "Ignored extra $scriptname argument(s)" "$0 $*"
-    ;;
-
+case "${TERM-}" in
+  ( "" ) ;;
+  ( dumb ) ;;
+  ( * ) true "${COLORIZE:=1}" ;;
 esac
 
+# For log and color output
+ansi_uc_lib_init
 
-# Sync: U-S:tools/sh/init-wrapper.sh
-# Id: Conf.mpe/0.0.0-dev tools/sh/init-uc.sh
+#

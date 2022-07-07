@@ -31,9 +31,8 @@ d_COPY() # SCM-Src-File Host-Target-File
         }
         # Check existing COPY version
         test $STD_INTERACTIVE -eq 1 && {
-          # XXX: lmfao. shut up
-          #${sudow}test -w /dev/tty || {
-            sudo chmod go+rw /dev/tty || return; # }
+          os_readable o /dev/tty || {
+            sudo -p 'sudo to fix tty: ' chmod go+rw /dev/tty || return; }
           # XXX: FIXME without TTY vimdiff won't work here
           ${sudow}vimdiff "$1" "$2" </dev/tty >/dev/tty && {
             ${sudor}diff -q "$1" "$2" && stat=0 || return 1

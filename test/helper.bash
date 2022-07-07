@@ -188,6 +188,8 @@ init()
     init_bin
   }
   init_lib
+  uc_lib=$lib/user-conf
+  UC_LIB_PATH=$lib
 }
 
 

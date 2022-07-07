@@ -169,7 +169,7 @@ uc_conf_req ()
 _prep_dir_func () # Action
 {
   test -n "$directive" || error "empty directive" 1
-  directive="$(echo "$directive"|tr 'a-z' 'A-Z')"
+  directive="$(echo "$directive"|tr '-' '_'|tr 'a-z' 'A-Z')"
   arguments="$arguments_raw"
   func_name=
   gen_eval=
@@ -207,13 +207,13 @@ _prep_dir_func () # Action
       ;;
 
     # provision/config directives support stat or update
-    COPY | SYMLINK | GIT | WEB | LINE | DIR )
+    COPY | SYMLINK | GIT | WEB | LINE | DIR | SH_UPDATE )
       case $1 in install) return 1 ;; esac
       func_name="d_${directive}_$1"
       arguments="$(eval echo "$arguments_raw")"
       ;;
 
-    ENV | AGE | SH | SH_RAW | BASH ) # Update env; always updates
+    ENV | AGE | SH | BASH ) # Update env; always updates
       gen_eval="d_${directive}_exec"
       ;;
 
@@ -295,6 +295,7 @@ uc_exec_dirs () # Action Directive-Index read-args..
     # Evaluate before function
     test -n "$gen_eval" && {
       gen=$($gen_eval "$arguments")
+      echo "$gen" >&2
       local r
       eval $gen && {
         debug "evaluated $directive $arguments_raw"
@@ -325,7 +326,6 @@ uc_exec_dirs () # Action Directive-Index read-args..
   local ret=0
 
   uc_commit_report
-  uc__status
 }
 
 # Get or set default GIT age
@@ -481,6 +481,8 @@ uc_sudo_path_target ()
     sudor="sudo -i "
   }
 
+  test "$RUN" = "update" || return 0
+
   { test ! -w "$2" -o ! -w "$(dirname "$2")";} && {
     test ${warn_on_sudo:-1} -eq 0 || {
       warn "Setting sudo to write '$2' (for '$1')"
@@ -576,6 +578,18 @@ uc_req_domain () # ~ [FQDN]
     }
     unset lvls
   }
+}
+
+os_readable ()
+{
+  local stat
+  stat=$(stat -c '%a' "$2")
+  stat=$( case "$1" in
+      u ) echo "${stat:0:1}" ;;
+      g ) echo "${stat:1:2}" ;;
+      o ) echo "${stat:2}" ;;
+    esac )
+  test $stat -ge 4
 }
 
 #

@@ -1,125 +1,17 @@
 #!/usr/bin/env bash
 # Created: 2015-09-21
 
-test -n "${sh_lib:-}" || sh_lib="$(dirname $uc_lib)"
+true "${UC_LIB_PATH:?Expected UC shell lib}"
 
-true "${LOG:?Requires LOG handler}"
-true "${U_S:?Requires User-Script installation}"
-
-. ${sh_lib}/../tools/u-c/env.sh
-INIT_LOG=$LOG
-
-. "$U_S/src/sh/lib/shell.lib.sh"
-shell_lib_load
-shell_init_mode
-sh_init_mode
-
-test $IS_BASH -eq 1 && {
-  # This triggers
-  #/etc/profile.d/uc-profile.sh: /usr/share/bashdb/bashdb-main.inc: No such file or directory
-  #/etc/profile.d/uc-profile.sh: warning: cannot start debugger; debugging mode disabled
-  # at t460s but only sometimes.
-  set -o errexit  # set -e
-  set -o nounset  # set -u
-  set -o pipefail #
-
-  shopt -q extdebug || shopt -s extdebug >&2
-
-  # setting errtrace allows our ERR trap handler to be propagated to functions,
-  #  expansions and subshells
-  set -o errtrace # same as -E
-
-  # Leave a path of line-numbers in array BASH_LINENO
-  # thate tells where functions where called
-  set -o functrace # same as -T
-
-  # trap ERR to provide an error handler whenever a command exits nonzero
-  #  this is a more verbose version of set -o errexit
-  . "$sh_lib"/bash-uc.lib.sh
-  trap 'bash_uc_errexit' ERR
-
-} || {
-
-  $LOG warn "" "Non-Bash TO-TEST"
-}
-
-test $IS_DASH -eq 1 && {
-  set -o nounset
-}
-
-
-# Lots of script depend on these basic variables. Validate later.
-
-true "${USER:=$(whoami)}"
-true "${username:=$USER}"
-true "${hostname:=$(hostname -s)}"
-
-log_key=$username@$hostname:$scriptname[$$]:${1-}
-export log_key UC_LOG_LEVEL
-
-# Pre-set log output level, will re-check and force level later
-UC_LOG_LEVEL=${verbosity:=${v:-4}}
-export verbosity UC_LOG_LEVEL
-
-
-# Load and init all lib parts
-. "$sh_lib"/argv-uc.lib.sh
-. "$sh_lib"/std-uc.lib.sh
-. "$sh_lib"/str-uc.lib.sh
-. "$sh_lib"/src-uc.lib.sh
-. "$sh_lib"/ansi-uc.lib.sh
-. "$sh_lib"/match-uc.lib.sh
-. "$sh_lib"/os-uc.lib.sh
-. "$sh_lib"/date-uc.lib.sh
-. "$sh_lib"/vc-uc.lib.sh
-. "$sh_lib"/sys-uc.lib.sh
-. "$sh_lib"/stdlog-uc.lib.sh
-#. "$sh_lib"/syslog-uc.lib.sh
-. "$sh_lib"/conf-uc.lib.sh
-. "$sh_lib"/uc.lib.sh
-for d in copy symlink web line git
-do
-  . "$sh_lib"/uc-d-$d.lib.sh
-done
-. "$sh_lib"/stattab-uc.lib.sh
-. "$sh_lib"/context/ctx-class.lib.sh
-. "$sh_lib"/shell-uc.lib.sh
-
-sys_uc_lib_load
-std_uc_lib_load
-os_uc_lib_load
-ansi_uc_lib_load
-stdlog_uc_lib_load
-#syslog_uc_lib_load
-stattab_uc_lib_load
-ctx_class_lib_load
-shell_uc_lib_load
-ctx_class_lib_init
-
-case "${TERM-}" in
-  ( "" ) ;;
-  ( dumb ) ;;
-  ( * ) true "${COLORIZE:=1}" ;;
-esac
-
-# For log and color output
-ansi_uc_lib_init
+. ${UC_LIB_PATH}/../tools/u-c/init.sh
 
 # Finally, run init for Uc lib
 uc_lib_init
 
 
-
 # And define startup sequence for main, to load settings.
 uc_main_start () # <Subcmd-Name> <Subcmd-Func> <Cmdline-Args>...
 {
-  # Make sure Uc preferred log output level is still set (user may miss things if
-  # only warnings is on)
-  test ${verbosity:-3} -ge 5 || {
-    v=5
-    export verbosity=$v UC_LOG_LEVEL=$v
-  }
-
   # First some more basic facts about box from uname and networking config
   uc_req_uname_facts || return
   uc_req_network_facts || return
@@ -213,10 +105,10 @@ uc__env ()
   test $human_out -eq 1 && {
     local verbosity=6
       std_info "U-c scripts: $uc_lib"
-      std_info "Sh script libs: $sh_lib"
+      std_info "Sh script libs: $UC_LIB_PATH"
   } || {
       echo "uc_lib=$uc_lib"
-      echo "sh_lib=$sh_lib"
+      echo "UC_LIB_PATH=$UC_LIB_PATH"
   }
 
   std_info "Template tag values:"
@@ -268,7 +160,7 @@ uc__env ()
 
 uc__env_keys ()
 {
-  echo uc_lib sh_lib UCONF conf config_names
+  echo uc_lib UC_LIB_PATH UCONF conf config_names
 }
 
 uc__env_update ()
@@ -358,6 +250,7 @@ uc__install ()
   local conf=
   uc_conf_req || return
   uc_exec_dirs install "$1" $conf || return $?
+  uc__status
 }
 
 # XXX: just copied from of uc_conf_get, want to write loop over row-cols w/o subshell
@@ -452,6 +345,7 @@ uc__stat ()
   local conf=
   uc_conf_req || return
   uc_exec_dirs stat "${1-}" $conf || return $?
+  uc__status
 }
 
 uc__status ()
@@ -459,6 +353,7 @@ uc__status ()
   local conf ret=0
   uc_conf_req && uc_report || return
 
+  note "Reading cached status"
   test $verbosity -ge 5 && {
     cat "$uc_cache"
   } || {
@@ -510,6 +405,7 @@ uc__update ()
   local conf=
   uc_conf_req || return
   uc_exec_dirs update "${1-}" $conf || return $?
+  uc__status
 }
 
 
@@ -519,7 +415,7 @@ uc__update ()
 d_DIR_stat ()
 {
   local dir
-  for dir in $@
+  for dir in "$@"
   do test -d "$dir" || return
   done
 }
@@ -527,7 +423,7 @@ d_DIR_stat ()
 d_DIR_update ()
 {
   local dir
-  for dir in $@
+  for dir in "$@"
   do test -d "$dir" || mkdir -p "$dir"
   done
 }
@@ -535,7 +431,7 @@ d_DIR_update ()
 d_FILE_stat ()
 {
   local file
-  for file in $@
+  for file in "$@"
   do test -f "$file" || return
   done
 }
@@ -543,7 +439,7 @@ d_FILE_stat ()
 d_FILE_update ()
 {
   local file
-  for file in $@
+  for file in "$@"
   do test -f "$file" || touch "$file"
   done
 }
@@ -562,6 +458,11 @@ d_SH_exec ()
   printf -- "$@\n"
 }
 
+d_SH_UPDATE_update ()
+{
+  eval "$arguments_raw"
+}
+
 d_BASH_exec ()
 {
   echo bash -c "'$@'"
@@ -569,18 +470,19 @@ d_BASH_exec ()
 
 d_AGE_exec ()
 {
-  set -- $@
   test $# -lt 3 || error "AGE surplus params: '$3'" 1
   test $# -eq 1 && set -- "CACHE" "$1"
   set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
   case "$1" in
+
     GIT )
-      printf "export GIT_AGE=$2"
-      std_info "Max. GIT remote ref age to $2 seconds"
-    ;;
+        printf "export GIT_AGE=$2"
+        std_info "Max. GIT remote ref age to $2 seconds"
+      ;;
+
     * )
-      printf "export %s_AGE=%s" "$@"
-    ;;
+        printf "export %s_AGE=%s" "$@"
+      ;;
   esac
 }
 
@@ -626,7 +528,7 @@ d_INSTALL_list_BIN()
 # install using package manager
 d_INSTALL_APT()
 {
-  sudo apt-get install -qq -y "$@"
+  sudo -p "sudo to install '$*': " apt-get install -qq -y "$@"
 }
 
 d_INSTALL_BREW()

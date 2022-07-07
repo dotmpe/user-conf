@@ -55,6 +55,8 @@ class.Class () # Instance-Id Message-Name Arguments...
     # 'Destructor'
     .__$name ) unset Class__instances[$id] ;;
 
+    .id ) echo "$id" ;;
+
     .toString | \
     .default | \
     .info ) ctx_class_info ;;
