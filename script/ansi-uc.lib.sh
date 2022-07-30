@@ -14,7 +14,7 @@ ansi_uc_lib_load ()
 
 ansi_uc_env_def ()
 {
-  declare -g \
+  # XXX: not in dash declare -g \
     _f0= BLACK=   _b0= BG_BLACK= \
     _f1= RED=     _b1= BG_RED= \
     _f2= GREEN=   _b2= BG_GREEN= \
@@ -29,6 +29,7 @@ ansi_uc_env_def ()
 ansi_uc_lib_init ()
 {
   test ${COLORIZE:-1} -eq 1 || {
+    # Declare empty if required (if not found yet)
     declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def
     return
   }
@@ -56,6 +57,7 @@ ansi_uc_lib_init ()
 
   case "$TERM" in
   ( screen-256color | \
+    rxvt-*-256color | \
     xterm-256color | \
     xterm )
 
@@ -73,6 +75,9 @@ ansi_uc_lib_init ()
     ;;
 
   ( * )
+      $LOG warn ":uc:ansi" "Unknown TERM" "${TERM:-null}"
+
+      # Just initialize the empty variables, ie. no style or color values
       ansi_uc_env_def
       return;
     ;;
@@ -81,6 +86,7 @@ ansi_uc_lib_init ()
   case "$TERM" in
 
   ( xterm-256color | \
+    rxvt-*-256color | \
     screen-* )
         : ${_f1:=${RED:=$(tput ${tset}f 1)}}
         : ${_f3:=${YELLOW:=$(tput ${tset}f 3)}}

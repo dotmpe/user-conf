@@ -1,6 +1,7 @@
 #!/bin/sh
 
 
+
 # Age in seconds
 export _1MIN=60
 export _5MIN=300
@@ -224,9 +225,9 @@ fmtdate_relative_f ()
   }
 }
 
-fmtdate_abbrev ()
+time_fmt_abbrev ()
 {
-   sed '
+   sed ' s/,//g
           s/ nanoseconds\?/ns/
           s/ microseconds\?/us/
           s/ miliseconds\?/ms/

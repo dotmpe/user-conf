@@ -38,6 +38,8 @@ uc_main_log () # ~ (env|[log] <log-args>)
   # Best effort to offer a logger interface to shell profile scripts.
   test -z "${UC_LOG_FAIL:-}" && {
 
+    # FIXME: unset for Dash
+    : "${SHELL:=}"
     uc_log_init
 
   } || {

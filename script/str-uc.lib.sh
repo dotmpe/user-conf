@@ -4,7 +4,7 @@
 
 # Use this to easily matching strings based on glob pettern, without
 # adding a Bash dependency
-fnmatch () # PATTERN STRING
+fnmatch () # ~ PATTERN STRING
 {
   case "$2" in ( $1 ) return 0 ;; ( * ) return 1 ;; esac
 }
