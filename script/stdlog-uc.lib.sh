@@ -41,7 +41,7 @@ stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
       ( colorize )
         filters="${filters:-}${filters:+" | "}syslog_logger_colorize_filter"
         ;;
-      ( * ) $LOG error :stdlog-init "No such filter" "$1" ; return 1 ;;
+      ( * ) ${LOG:?} error :stdlog-init "No such filter" "$1" ; return 1 ;;
     esac
     shift
   done
@@ -77,7 +77,9 @@ $name () # ~ [Line-Type] [Header] Msg [Ctx] [Exit]
   return \${5:-0}
 }
 EOM
-      )"
+      )" 
+
+  # FIXME: && ${INIT_LOG:?} info ":uc:stdlog" "Initialized" "$name filters: $filters"
 }
 
 log_src_id_var()
@@ -118,6 +120,13 @@ stderr()
     warn*|err*|notice ) log "$1: $2" 1>&2 ;;
     * ) log "$2" 1>&2 ;;
   esac
+}
+
+stderr_log ()
+{
+  [[ $2 =~ ^: ]] &&
+    set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
+  log_key=$2 stderr "$1" "$3 <$4>"
 }
 
 # std-v <level>

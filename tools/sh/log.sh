@@ -87,20 +87,24 @@ uc_log_init () # ~
   test "${UC_PROFILE_LOADED-}" = "0" && {
     # XXX: a bit of deferred uc-profile setup here
     uc_profile_load_lib || return
+
   } || {
-    # Normal Uc-Profile includes a lot of user-settings for the entire users
-    # profile. Obviously for uc-log-init we will forego everything but the
-    # part wrt to logging.
+
+    . $UC_LIB_PATH/stdlog-uc.lib.sh &&
+    INIT_LOG=stderr_log &&
+
     #. "${U_C:?}/tools/sh/log-init.sh"
     . "${U_C}/script/uc-profile.lib.sh" &&
     uc_profile_boot_parts &&
-    . $UC_LIB_PATH/str-uc.lib.sh &&
-    . $UC_LIB_PATH/argv-uc.lib.sh &&
-    . $UC_LIB_PATH/stdlog-uc.lib.sh &&
-    stdlog_uc_lib_load &&
-    . $UC_LIB_PATH/syslog-uc.lib.sh &&
-    syslog_uc_lib_load &&
-    true
+    test ${quicklog:-0} -eq 1 && {
+      . $UC_LIB_PATH/str-uc.lib.sh &&
+      . $UC_LIB_PATH/argv-uc.lib.sh &&
+      stdlog_uc_lib_load &&
+      . $UC_LIB_PATH/syslog-uc.lib.sh &&
+      syslog_uc_lib_load
+    } || {
+      uc_profile_load_lib || return
+    }
   }
 
   # Setup logger (but not LOG)

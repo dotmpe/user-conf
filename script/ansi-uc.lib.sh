@@ -24,6 +24,8 @@ ansi_uc_env_def ()
     _f6= MAGENTA= _b6= BG_MAGENTA= \
     _f7= WHITE=   _b7= BG_WHITE= \
     BOLD= REVERSE= NORMAL=
+
+  ${INIT_LOG:?} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
 }
 
 ansi_uc_lib_init ()
@@ -35,17 +37,21 @@ ansi_uc_lib_init ()
   }
 
   local tset
-  case "$TERM" in xterm | screen ) ;; ( * ) false ;; esac && tset=set ||
-  case "$TERM" in xterm-256color | screen-256color ) ;; ( * ) false ;; esac &&
-  case ${ncolors:-0} in
-    (   8 ) tset=set ;;
-    ( 256 ) tset=seta ;;
-    (   * ) false ;;
-  esac || {
-    # If no color support found, simply set vars and return zero-status.
-    # Maybe want to fail trying to init ANSI.lib later...
-    #bash_env_exists _f0 || ansi_uc_env_def; return;
-    declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
+  case "$TERM" in 
+    ( screen | xterm ) ;; ( * ) false ;; esac && tset=set || {
+    case "$TERM" in
+      ( rxvt-*-256color | screen-256color | xterm-256color ) ;; ( * ) false ;; esac &&
+      case ${ncolors:-0} in
+        (   8 ) tset=set ;;
+        ( 256 ) tset=seta ;;
+        (   * ) false ;;
+      esac || {
+        # If no color support found, simply set vars and return zero-status.
+        # Maybe want to fail trying to init ANSI.lib later...
+        #bash_env_exists _f0 || ansi_uc_env_def; return;
+        declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
+        ${INIT_LOG:?} warn ":uc:ansi" "Unknown terminal" "TERM:$TERM ncolors:$ncolors"
+      }
   }
 
   : ${REVERSE:=$(tput rev)}
@@ -75,7 +81,7 @@ ansi_uc_lib_init ()
     ;;
 
   ( * )
-      $LOG warn ":uc:ansi" "Unknown TERM" "${TERM:-null}"
+      ${INIT_LOG:?} warn ":uc:ansi" "Unknown TERM" "${TERM:-null}"
 
       # Just initialize the empty variables, ie. no style or color values
       ansi_uc_env_def
@@ -114,7 +120,8 @@ ansi_uc_lib_init ()
           : ${_b6:=${BG_YELLOW:=$(tput ${tset}b 6)}}
         }
       ;;
-  esac
+  esac &&
+    ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
 }
 
 ansi_uc_esc ()
