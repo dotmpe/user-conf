@@ -37,7 +37,7 @@ ansi_uc_lib_init ()
   }
 
   local tset
-  case "$TERM" in 
+  case "$TERM" in
     ( screen | xterm ) ;; ( * ) false ;; esac && tset=set || {
     case "$TERM" in
       ( rxvt-*-256color | screen-256color | xterm-256color ) ;; ( * ) false ;; esac &&
@@ -120,8 +120,8 @@ ansi_uc_lib_init ()
           : ${_b6:=${BG_YELLOW:=$(tput ${tset}b 6)}}
         }
       ;;
-  esac &&
-    ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
+  esac
+  # && ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
 }
 
 ansi_uc_esc ()

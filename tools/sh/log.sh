@@ -83,29 +83,17 @@ uc_log_init () # ~
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
 
+  . $UC_LIB_PATH/stdlog-uc.lib.sh &&
+  INIT_LOG=stderr_log &&
+
   # Make Uc-profile source all its parts
-  test "${UC_PROFILE_LOADED-}" = "0" && {
-    # XXX: a bit of deferred uc-profile setup here
-    uc_profile_load_lib || return
-
-  } || {
-
-    . $UC_LIB_PATH/stdlog-uc.lib.sh &&
-    INIT_LOG=stderr_log &&
-
+  test "${UC_PROFILE_LOADED-}" = "0" || {
     #. "${U_C:?}/tools/sh/log-init.sh"
     . "${U_C}/script/uc-profile.lib.sh" &&
-    uc_profile_boot_parts &&
-    test ${quicklog:-0} -eq 1 && {
-      . $UC_LIB_PATH/str-uc.lib.sh &&
-      . $UC_LIB_PATH/argv-uc.lib.sh &&
-      stdlog_uc_lib_load &&
-      . $UC_LIB_PATH/syslog-uc.lib.sh &&
-      syslog_uc_lib_load
-    } || {
-      uc_profile_load_lib || return
-    }
+    uc_profile_boot_parts
   }
+  # XXX: a bit of deferred uc-profile setup here
+  uc_profile_load_lib || return
 
   # Setup logger (but not LOG)
   { uc_func uc_log || syslog_uc_init uc_log
