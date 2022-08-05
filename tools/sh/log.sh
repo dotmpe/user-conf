@@ -75,15 +75,40 @@ uc_main_log () # ~ (env|[log] <log-args>)
 # Setup uc_log handler using syslog-uc.lib
 uc_log_init () # ~
 {
+  # Get log key base. This is the first part a tag/facility prefixed to each
+  # output.
   test -z "${log_key:-}" || UC_LOG_BASE="$log_key" # XXX: BWC
-  test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
   : "${UC_LOG_BASE:="$USER $(basename -- "$SHELL")[$$] uc-profile"}"
-  { uc_profile_load_lib || return
-    } &&
+
+  # Verbosity is overriden from generic user-env setting
+  test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
+
+  # Make Uc-profile source all its parts
+  test "${UC_PROFILE_LOADED-}" = "0" && {
+    # XXX: a bit of deferred uc-profile setup here
+    uc_profile_load_lib || return
+  } || {
+    # Normal Uc-Profile includes a lot of user-settings for the entire users
+    # profile. Obviously for uc-log-init we will forego everything but the
+    # part wrt to logging.
+    #. "${U_C:?}/tools/sh/log-init.sh"
+    . "${U_C}/script/uc-profile.lib.sh" &&
+    uc_profile_boot_parts &&
+    . $UC_LIB_PATH/str-uc.lib.sh &&
+    . $UC_LIB_PATH/argv-uc.lib.sh &&
+    . $UC_LIB_PATH/stdlog-uc.lib.sh &&
+    stdlog_uc_lib_load &&
+    . $UC_LIB_PATH/syslog-uc.lib.sh &&
+    syslog_uc_lib_load &&
+    true
+  }
+
+  # Setup logger (but not LOG)
   { uc_func uc_log || syslog_uc_init uc_log
     } &&
-  : "${uc_log:=uc_log}" &&
-  argv_uc__argc :log-init $# || return
+
+  true "${uc_log:=uc_log}"
+  argv_uc__argc :log-init $#
 }
 
 # Actual entry point for executable script
