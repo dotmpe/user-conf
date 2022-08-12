@@ -21,8 +21,9 @@ shell_uc_lib_init ()
 
   # Different command invocations may give rise to peculiarities as well.
   # If not interactive, the process MAY be replaced by the command;
-  # but only in case of simple commands. For pipelines or subshell
-  # expressions the shell will remain the parent process. Observed with Bash.
+  # but only in case of simple commands. For example pipelines or subshell
+  # expressions will make the shell remain the parent process.
+  # Observed with Bash.
 
   # Get the command path of the current PID
   PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1)
@@ -45,7 +46,7 @@ shell_uc_lib_init ()
   ! ${shell_uc_debug:-false} || {
     {
       echo shell_uc_lib_init
-      declare -p SHELL SHELL_NAME PID_CMD ENV_CMD
+      declare -p SHELL SHELL_NAME PID_CMD ENV_CMD CMD_ARG
       echo "$(tty) $\$: $$ 0: '$0' *: '$*'"
       echo
     } >&2
