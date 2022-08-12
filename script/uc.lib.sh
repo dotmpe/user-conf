@@ -267,7 +267,7 @@ uc_exec_dirs () # Action Directive-Index read-args..
 
   uc_reset_report $2
   shift 2
-  read_nix_style_files $@ | while read directive arguments_raw
+  read_nix_style_files "$@" | while read directive arguments_raw
   #OLDIFS="$IFS"
   #IFS=$'\n'; for directive_line in $( read_nix_style_files $@ | lines )
   do

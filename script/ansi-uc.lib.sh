@@ -3,8 +3,9 @@
 
 ansi_uc_lib_load ()
 {
+  # Ask terminal about possible colors if we can
   test "${TERM:-dumb}" = "dumb" &&
-    true "${ncolors:=0}" || true ${ncolors:=$(tput colors)}
+    true "${ncolors:=0}" || true ${ncolors:=$(tput colors)} || return
 
   # Load term-part to set this to more sensible default
   true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
@@ -25,7 +26,7 @@ ansi_uc_env_def ()
     _f7= WHITE=   _b7= BG_WHITE= \
     BOLD= REVERSE= NORMAL=
 
-  ${INIT_LOG:?} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
+  ${INIT_LOG:?} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors" 7
 }
 
 ansi_uc_lib_init ()

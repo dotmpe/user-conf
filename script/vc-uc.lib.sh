@@ -321,7 +321,7 @@ vc_status ()
     short="${short%$sub}"
     echo "$short\[$GREEN\] $(vc_flags_git "$realcwd" "[git:%s%s%s%s%s%s%s%s $rev]")\[$NORMAL\]$sub"
 
-  else if [ -n "$bzr" ]; then
+  elif [ -n "$bzr" ]; then
     #if [ "$bzr" = "." ];then bzr="./"; fi
     realbzr="$(cd "$bzr"; pwd -P)"
     realbzr="${realbzr%/.bzr}"
@@ -345,7 +345,7 @@ vc_status ()
   #  echo "$short$PSEP [svn:r$r$s]$sub"
   else
     echo "$short"
-  fi;fi;
+  fi
   cd "$1"
 }
 

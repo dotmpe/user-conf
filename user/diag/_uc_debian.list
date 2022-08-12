@@ -1,0 +1,8 @@
+#scheme U_C:_uc__format
+
+# Things left by apt/dpkg if a sysadmin does not resolve local changes with
+# updated dist files.
+
+- - - 4 0 0 0 - - locate '*.dpkg-dist'
+
+#include U_C:_uc_systemd

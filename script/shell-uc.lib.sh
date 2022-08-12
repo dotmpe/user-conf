@@ -5,9 +5,63 @@
 
 shell_uc_lib_load ()
 {
-  SHELL_NAME="$(basename -- "${SHELL?}")"  || return
+  true
+}
 
-  shell_uc_init
+shell_uc_lib_init ()
+{
+  # Fix SHELL setting.
+
+  # The problem is Bash, it seems /bin/sh mode in particular.
+  # I want to restore an empty value using either PID_CMD or ENV_CMD.
+
+  # Both should be the same and as $0 as well for an (interactive) login shell.
+  # But in a script execution context there is no ENV_CMD, PID_CMD will be
+  # whatever the shebang started, and zeroth will be the script name.
+
+  # Different command invocations may give rise to peculiarities as well.
+  # If not interactive, the process MAY be replaced by the command;
+  # but only in case of simple commands. For pipelines or subshell
+  # expressions the shell will remain the parent process. Observed with Bash.
+
+  # Get the command path of the current PID
+  PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1)
+
+  test -n "${SHELL:-}" || {
+    test -n "${ENV_CMD:-}" && {
+      test "$ENV_CMD" = "$PID_CMD" -a "$ENV_CMD" = "$0" && {
+          test "${ENV_CMD:0:1}" = "-" &&
+            SHELL_NAME=${ENV_CMD:1} ||
+            SHELL_NAME=$(basename -- "$ENV_CMD")
+        } || true
+    } || {
+      SHELL_NAME=$PID_CMD
+    }
+  }
+
+  true "${SHELL:="$(command -v "$SHELL_NAME")"}"
+  true "${SHELL_NAME:="$(basename -- "$SHELL")"}"
+
+  ! ${shell_uc_debug:-false} || {
+    {
+      echo shell_uc_lib_init
+      declare -p SHELL SHELL_NAME PID_CMD ENV_CMD
+      echo "$(tty) $\$: $$ 0: '$0' *: '$*'"
+      echo
+    } >&2
+  }
+
+  # XXX: Bash exports SHELL, dont like that. But its not easy to unset. I
+  # a similar line at the top of /etc/profile
+  test "$SHELL_NAME" = "bash" && {
+    declare +x SHELL=$SHELL
+    # Still, when unexported, /bin/sh mode bash still manages to get this setting.
+    # Unless we clear it like SHELL= /bin/sh only then it is empty as expected.
+  }
+
+  #shell_uc_init
+  test -z "${BASH_VERSION:-}" && IS_BASH=0 || IS_BASH=1
+  shell_uc_def
 }
 
 shell_uc_init ()
@@ -26,7 +80,11 @@ shell_uc_init ()
 
   test $B_SHELL = 1 && {
 
-    shell_uc_detect_sh
+    shell_uc_detect_sh || {
+      #${INIT_LOG:?} warn "" "Detect failed" ""
+      echo "Detect failed" >&2
+      #return
+    }
 
     IS_BASH=$IS_BASH_SH
     IS_DASH=$IS_DASH_SH

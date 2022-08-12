@@ -28,7 +28,7 @@ uc_profile_source_lib () # ~
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
   . $UC_LIB_PATH/shell-uc.lib.sh &&
-  shell_uc_lib_load &&
+  shell_uc_lib_init &&
   . $UC_LIB_PATH/str-uc.lib.sh &&
   . $UC_LIB_PATH/argv-uc.lib.sh &&
   . $UC_LIB_PATH/stdlog-uc.lib.sh &&
@@ -275,7 +275,7 @@ uc_profile_boot () # TAB [types...]
     test -n "$type" -a $# -gt 0 && {
       # Skip entry unless '$*' matches any type for entry
       local tp m=0
-      for tp in $@; do fnmatch "* $tp *" " $type " && m=1 || continue; done
+      for tp in "$@"; do fnmatch "* $tp *" " $type " && m=1 || continue; done
 
       test $m -eq 1 || {
         test -z "${USER_CONF_DEBUG-}" ||

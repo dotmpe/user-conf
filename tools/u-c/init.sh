@@ -92,8 +92,8 @@ stdlog_uc_lib_load
 #syslog_uc_lib_load
 stattab_uc_lib_load
 ctx_class_lib_load
-shell_uc_lib_load
 
+shell_uc_lib_init
 std_uc_lib_init
 ctx_class_lib_init
 

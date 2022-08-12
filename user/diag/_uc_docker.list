@@ -1,0 +1,3 @@
+#scheme U_C:_uc__format
+- - - 4 0 0 0 - - docker ps -f "status=exited"
+#

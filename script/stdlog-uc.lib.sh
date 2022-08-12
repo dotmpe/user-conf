@@ -16,8 +16,13 @@
 
 stdlog_uc_lib_load ()
 {
-  true "${STDLOG_UC_LEVEL:=6}"
-  true "${STDLOG_UC_EXITS:=3}"
+  # Like verbosity but for handlers in this lib
+  true "${STDLOG_UC_LEVEL:=6}" # Info
+  # XXX: Determines return status of log statement
+  true "${STDLOG_UC_EXITS:=3}" # Warning
+  # Default level for messages if not provided
+  true "${STDLOG_DEFAULT_LEVEL:=5}" # Notice
+  # Colorize terminal output
   #true "${STDLOG_UC_ANSI:=1}"
 }
 
@@ -77,7 +82,7 @@ $name () # ~ [Line-Type] [Header] Msg [Ctx] [Exit]
   return \${5:-0}
 }
 EOM
-      )" 
+      )"
 
   # FIXME: && ${INIT_LOG:?} info ":uc:stdlog" "Initialized" "$name filters: $filters"
 }
@@ -122,10 +127,18 @@ stderr()
   esac
 }
 
-stderr_log ()
+stdlog_v ()
 {
-  [[ $2 =~ ^: ]] &&
-    set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
+  : "${v:=${verbosity:-${STDLOG_UC_LEVEL:?}}}"
+}
+
+# XXX: simple handler for early during script sourcing, with INIT_LOG.
+# TODO: should INIT_LOG callers should use status int to indicate level, not header.
+# or just use the mappings from syslog-uc lib
+stderr_log () # ~ <...:ll>
+{
+  stdlog_v && test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
+  [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
   log_key=$2 stderr "$1" "$3 <$4>"
 }
 
@@ -275,11 +288,14 @@ s/<([^>]*)>/<'${n}${g}'\1'$bb'>'${n}'/g
   done
 }
 
-# XXX: Enable level-threshold filter on syslog tail output
+# Rewrite <PRI> prefix of syslog output lines to something almost identical.
+#
+# XXX: Enables level-threshold filter on syslog tail output
 syslog_logger_stderr_filter ()
 {
   sed 's/^<\([0-9]*\)>/\1 /g' | while read PRI rest
   do
+    # XXX: cleanup
     { test -n "$PRI" && fnmatch "[0-9]*" "$PRI"
     } || {
       echo "$PRI $rest"
@@ -290,6 +306,7 @@ syslog_logger_stderr_filter ()
     flvl=$( echo "$PRI / 8" | bc )
     slvl=$( echo "$PRI % 8" | bc )
 
+    # XXX: ?
     test $slvl -le $STDLOG_UC_LEVEL || continue
 
     echo "<$PRI>$rest"

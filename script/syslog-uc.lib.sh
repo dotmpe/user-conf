@@ -117,7 +117,7 @@ syslog_facility_name()
       9 ) echo cron ;;
       10 ) echo authpriv ;;
       11 ) echo ftp ;;
-			# TODO: fill out completely, if ever needed...
+      # TODO: fill out completely, if ever needed...
 
       * ) return 1 ;;
   esac

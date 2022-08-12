@@ -1,0 +1,4 @@
+#scheme U_C:_uc__format
+
+- - - 1! 0 0 0 - - systemctl --failed | grep failed
+- - - 2  0 2 0 - - systemctl --failed
