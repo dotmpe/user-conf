@@ -9,9 +9,9 @@ lib_load()
   local f_lib_load=
   test -n "$__load_lib" || local __load_lib=1
   test -n "$1" || set -- str-uc sys-uc os-uc std-uc src-uc match-uc
-  while test -n "$1"
+  while test $# -gt 0 # -n "$1"
   do
-    . $1.lib.sh load-ext
+    . "$1".lib.sh load-ext
     f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_load
     # again, func_exists is in sys.lib.sh. But inline here:
     type ${f_lib_load} 2> /dev/null 1> /dev/null && {

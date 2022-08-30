@@ -1,3 +1,5 @@
+#shellcheck disable=SC2120 # Ignore, argv_uc__argc is doing some checks
+
 # Helper to source libs only once
 uc_profile_load_lib ()
 {
@@ -12,12 +14,14 @@ uc_profile_boot_parts ()
   for bd in ${UC_BOOT_PATH:-${UCONF:?} ${U_C:?}}
   do
     test -s "$bd/tools/sh/profile.sh" || continue
+    #shellcheck source=tools/sh/profile.sh
     . "$bd/tools/sh/profile.sh"
     break
   done
   unset bd
 }
 
+#shellcheck disable=1091 # Cannot add source directives here
 # Source all libs
 uc_profile_source_lib () # ~
 {
@@ -27,15 +31,15 @@ uc_profile_source_lib () # ~
   # XXX: Keep this file stable. Move essentials here, later probably?
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
-  . $UC_LIB_PATH/shell-uc.lib.sh &&
+  . "$UC_LIB_PATH"/shell-uc.lib.sh &&
   shell_uc_lib_init &&
-  . $UC_LIB_PATH/str-uc.lib.sh &&
-  . $UC_LIB_PATH/argv-uc.lib.sh &&
-  . $UC_LIB_PATH/stdlog-uc.lib.sh &&
+  . "$UC_LIB_PATH"/str-uc.lib.sh &&
+  . "$UC_LIB_PATH"/argv-uc.lib.sh &&
+  . "$UC_LIB_PATH"/stdlog-uc.lib.sh &&
   stdlog_uc_lib_load &&
-  . $UC_LIB_PATH/ansi-uc.lib.sh &&
+  . "$UC_LIB_PATH"/ansi-uc.lib.sh &&
   ansi_uc_lib_load &&
-  . $UC_LIB_PATH/syslog-uc.lib.sh &&
+  . "$UC_LIB_PATH"/syslog-uc.lib.sh &&
   syslog_uc_lib_load &&
 
   ansi_uc_lib_init &&
@@ -437,7 +441,7 @@ uc_signal_exit ()
   local code=${1:-${?:-0}}
   test $code -eq 0 && return 1
   test $code -gt 128 -a $code -lt 162 || return
-  exit_signal=$(( $code - 128 ))
+  exit_signal=$(( code - 128 ))
 
   signal_names='HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2'
   set -- $signal_names

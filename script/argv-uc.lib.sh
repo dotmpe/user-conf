@@ -77,7 +77,7 @@ argv_more () # ~ <Argv...> # Read until '--', and set $more_arg{c,v}
       }
     done
   }
-  more_argc=$(( $more_argc - $# ))
+  more_argc=$(( more_argc - $# ))
 }
 
 #

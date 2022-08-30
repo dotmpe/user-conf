@@ -10,7 +10,7 @@ vc_gitdir()
   test -d "$1/.git" && {
     echo "$1/.git"
   } || {
-    test "$1" = "." || cd $1
+    test "$1" = "." || cd $1 || return
     git rev-parse --git-dir 2>/dev/null
   }
 # XXX: cleanup
@@ -274,8 +274,10 @@ vc_flags_git()
     x="$x annex"
   fi
 
+  #shellcheck disable=SC2059 # Variable is set to pattern
   printf "$fmt" "$c" "${b##refs/heads/}" "$w" "$i" "$s" "$u" "$r" "$x"
 
+  #shellcheck disable=2164 # XXX: cd is at end of execution block (typ)
   cd "$1"
 }
 
@@ -285,15 +287,15 @@ vc_status ()
   test $# -eq 1 || set -- "$PWD"
   test -n "$1" -a -d "$1" || err "No such directory '$1'" 3
 
-  local w short realcwd repo sub
+  local w short realcwd sub git bzr
 
-  realcwd="$(cd "$1"; pwd -P)"
+  realcwd="$(cd "$1" && pwd -P)"
   #short="$(realpath "$1")"
   short="${1/#$HOME/\~}"
   test -n "$short" || err "homepath" 1
 
-  local git="$(vc_gitdir "$realcwd")"
-  local bzr="$(vc_bzrdir "$realcwd")"
+  git="$(vc_gitdir "$realcwd")"
+  bzr="$(vc_bzrdir "$realcwd")"
 
   if [ -n "$git" ]; then
 
@@ -302,16 +304,16 @@ vc_status ()
       return
     }
 
-    checkoutdir="$(cd "$realcwd"; git rev-parse --show-toplevel)"
+    checkoutdir="$(cd "$realcwd" && git rev-parse --show-toplevel)"
 
     [ -n "$checkoutdir" ] && {
 
-      rev="$(cd "$realcwd"; git show "$checkoutdir" | grep '^commit' \
+      rev="$(cd "$realcwd" && git show "$checkoutdir" | grep '^commit' \
         | sed 's/^commit //' | sed 's/^\([a-f0-9]\{9\}\).*$/\1.../')"
       sub="${realcwd##$checkoutdir}"
     } || {
 
-      realgitdir="$(cd "$git"; pwd -P)"
+      realgitdir="$(cd "$git"&& pwd -P)"
       rev="$(vc_revision_git)"
       #rev="$(cd $realcwd; git show . | grep '^commit'|sed 's/^commit //' | sed 's/^\([a-f0-9]\{9\}\).*$/\1.../')"
       realgit="$(basename "$realgitdir")"
@@ -323,7 +325,7 @@ vc_status ()
 
   elif [ -n "$bzr" ]; then
     #if [ "$bzr" = "." ];then bzr="./"; fi
-    realbzr="$(cd "$bzr"; pwd -P)"
+    realbzr="$(cd "$bzr" && pwd -P)"
     realbzr="${realbzr%/.bzr}"
     sub="${realcwd##$realbzr}"
     short="${short%$sub/}"
@@ -346,6 +348,8 @@ vc_status ()
   else
     echo "$short"
   fi
+
+  #shellcheck disable=2164 # XXX: cd is at end of execution block (typ)
   cd "$1"
 }
 

@@ -15,6 +15,7 @@ ansi_uc_lib_load ()
 
 ansi_uc_env_def ()
 {
+  #shellcheck disable=SC1007
   # XXX: not in dash declare -g \
     _f0= BLACK=   _b0= BG_BLACK= \
     _f1= RED=     _b1= BG_RED= \
@@ -26,7 +27,7 @@ ansi_uc_env_def ()
     _f7= WHITE=   _b7= BG_WHITE= \
     BOLD= REVERSE= NORMAL=
 
-  ${INIT_LOG:?} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors" 7
+  ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors" 7
 }
 
 ansi_uc_lib_init ()
@@ -55,9 +56,9 @@ ansi_uc_lib_init ()
       }
   }
 
-  : ${REVERSE:=$(tput rev)}
-  : ${BOLD:=$(tput bold)}
-  : ${NORMAL:=$(tput sgr0)}
+  : "${REVERSE:=$(tput rev)}"
+  : "${BOLD:=$(tput bold)}"
+  : "${NORMAL:=$(tput sgr0)}"
 
   # XXX: might as well rewrite to raw codes and do away with xterm case
   #local esc=$(ansi_uc_esc)
@@ -68,16 +69,16 @@ ansi_uc_lib_init ()
     xterm-256color | \
     xterm )
 
-      : ${_f0:=${BLACK:=$(tput ${tset}f 0)}}
-      : ${_f2:=${GREEN:=$(tput ${tset}f 2)}}
-      : ${_f5:=${CYAN:=$(tput ${tset}f 5)}}
-      : ${_f7:=${WHITE:=$(tput ${tset}f 7)}}
+      : "${_f0:=${BLACK:=$(tput ${tset}f 0)}}"
+      : "${_f2:=${GREEN:=$(tput ${tset}f 2)}}"
+      : "${_f5:=${CYAN:=$(tput ${tset}f 5)}}"
+      : "${_f7:=${WHITE:=$(tput ${tset}f 7)}}"
 
       test ${ncolors:-0} -eq 8 || {
-        : ${_b0:=${BG_BLACK:=$(tput ${tset}b 0)}}
-        : ${_b2:=${BG_GREEN:=$(tput ${tset}b 2)}}
-        : ${_b5:=${BG_CYAN:=$(tput ${tset}b 5)}}
-        : ${_b7:=${BG_WHITE:=$(tput ${tset}b 7)}}
+        : "${_b0:=${BG_BLACK:=$(tput ${tset}b 0)}}"
+        : "${_b2:=${BG_GREEN:=$(tput ${tset}b 2)}}"
+        : "${_b5:=${BG_CYAN:=$(tput ${tset}b 5)}}"
+        : "${_b7:=${BG_WHITE:=$(tput ${tset}b 7)}}"
       }
     ;;
 
@@ -95,53 +96,55 @@ ansi_uc_lib_init ()
   ( xterm-256color | \
     rxvt-*-256color | \
     screen-* )
-        : ${_f1:=${RED:=$(tput ${tset}f 1)}}
-        : ${_f3:=${YELLOW:=$(tput ${tset}f 3)}}
-        : ${_f4:=${BLUE:=$(tput ${tset}f 4)}}
-        : ${_f6:=${MAGENTA:=$(tput ${tset}f 6)}}
+        : "${_f1:=${RED:=$(tput ${tset}f 1)}}"
+        : "${_f3:=${YELLOW:=$(tput ${tset}f 3)}}"
+        : "${_f4:=${BLUE:=$(tput ${tset}f 4)}}"
+        : "${_f6:=${MAGENTA:=$(tput ${tset}f 6)}}"
 
         test ${ncolors:-0} -eq 8 || {
-          : ${_b1:=${BG_RED:=$(tput ${tset}b 1)}}
-          : ${_b3:=${BG_YELLOW:=$(tput ${tset}b 3)}}
-          : ${_b4:=${BG_BLUE:=$(tput ${tset}b 4)}}
-          : ${_b6:=${BG_MAGENTA:=$(tput ${tset}b 6)}}
+          : "${_b1:=${BG_RED:=$(tput ${tset}b 1)}}"
+          : "${_b3:=${BG_YELLOW:=$(tput ${tset}b 3)}}"
+          : "${_b4:=${BG_BLUE:=$(tput ${tset}b 4)}}"
+          : "${_b6:=${BG_MAGENTA:=$(tput ${tset}b 6)}}"
         }
       ;;
 
   ( xterm )
-        : ${_f1:=${BLUE:=$(tput ${tset}f 1)}}
-        : ${_f3:=${MAGENTA:=$(tput ${tset}f 3)}}
-        : ${_f4:=${RED:=$(tput ${tset}f 4)}}
-        : ${_f6:=${YELLOW:=$(tput ${tset}f 6)}}
+        : "${_f1:=${BLUE:=$(tput ${tset}f 1)}}"
+        : "${_f3:=${MAGENTA:=$(tput ${tset}f 3)}}"
+        : "${_f4:=${RED:=$(tput ${tset}f 4)}}"
+        : "${_f6:=${YELLOW:=$(tput ${tset}f 6)}}"
 
         test ${ncolors:-0} -eq 8 || {
-          : ${_b1:=${BG_BLUE:=$(tput ${tset}b 1)}}
-          : ${_b3:=${BG_MAGENTA:=$(tput ${tset}b 3)}}
-          : ${_b4:=${BG_RED:=$(tput ${tset}b 4)}}
-          : ${_b6:=${BG_YELLOW:=$(tput ${tset}b 6)}}
+          : "${_b1:=${BG_BLUE:=$(tput ${tset}b 1)}}"
+          : "${_b3:=${BG_MAGENTA:=$(tput ${tset}b 3)}}"
+          : "${_b4:=${BG_RED:=$(tput ${tset}b 4)}}"
+          : "${_b6:=${BG_YELLOW:=$(tput ${tset}b 6)}}"
         }
       ;;
   esac
   # && ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
 }
 
+#shellcheck disable=SC2034 # I wont export local session vars
 ansi_uc_esc ()
 {
-  case "$uname" in
+  case "${uname:?}" in
 
     Darwin ) # BSD echo
-        esc=`echo -e '\033'`
+      esc=$(echo -e '\033')
       ;;
 
     Linux | CYGWIN_NT-* )
 
         case "$(sed --version)" in *"This is not GNU sed"* )
               # For matchbox sed
-              esc=`echo -e '\033'`
+              esc=$(echo -e '\033')
             ;;
           ( * )
+              #shellcheck disable=SC2116
               # For GNU echo/sed: \o033
-              esc=`echo '\o33'`
+              esc=$(echo '\o33')
             ;;
         esac
       ;;
