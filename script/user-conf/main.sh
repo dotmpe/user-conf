@@ -43,7 +43,11 @@ case "$0" in "" ) ;; "-*" ) ;; * )
 
   set -e
   RET=
-  test -z "${DEBUG-}" || set -x
+  test -z "${DEBUG-}" || {
+    set -x
+    # Reset terminal/ANSI escapes before every trace line
+    export PS4="${NORMAL:=$(tput sgr0)}"
+  }
 
   # Go to user-conf script-dir, load everything
   true "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"

@@ -13,11 +13,11 @@ uc_lib_init
 uc_main_start () # <Subcmd-Name> <Subcmd-Func> <Cmdline-Args>...
 {
   # First some more basic facts about box from uname and networking config
-  uc_req_uname_facts || return
-  uc_req_network_facts || return
+  uc_req_uname_facts || return 2
+  uc_req_network_facts || return 3
 
   # Then load static settings, configs.
-  uc_conf_load "$1" || return
+  uc_conf_load "$1" || return 4
 
   # Last sanity checks
   test "$USER" = "$username" || warn "username is not USER: $username != $USER"
@@ -222,7 +222,7 @@ To update static u-c settings run 'env-update'."
   test -e "${conf-}" && {
     note "Using existing $tag configuration"
 
-    $uctab.init ucstat $tag: $UC_STAT_TPL @Local
+    $uctab.init ucstat $tag: $UC_STAT_TPL @Local &&
     $ucstat.commit
     return
   } ||
@@ -236,7 +236,7 @@ To update static u-c settings run 'env-update'."
         test -e "$tpl" || continue
 
         cp -v $tpl $conf
-        $uctab.init ucstat $tag: $UC_STAT_TPL @$bp_tag
+        $uctab.init ucstat $tag: $UC_STAT_TPL @$bp_tag &&
         $ucstat.commit
 
         note "Initialized config $tag from $bp_tag boilerplate"

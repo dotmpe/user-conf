@@ -20,7 +20,7 @@ uc_lib_init ()
   uc_env_defaults &&
 
   # Get stattab instance
-  create uctab StatTab $STTTAB_UC
+  create uctab StatTab $STTTAB_UC || return
 
   # Create table if not exists
   $uctab.tab-exists || $uctab.tab-init
@@ -40,6 +40,7 @@ uc_env_defaults ()
 
   true "${UC_LOCAL_TPL:="\$hostname.\$domainname"}"
 
+  # FIXME:
   true "${UC_STAT_TPL:="\$(git_ref)"}"
 
   true "${UC_PATHS_TPL:="\$PWD\\n\${CONFDIR:-\$UCONF}\\n\${CONFDIR:-\$UCONF}/etc/profile.d\\n"}"
@@ -121,8 +122,9 @@ uc_conf_load () # ~ <Subcmd-Name>
   $uctab.exists $tag || {
     case $1 in
       ( init ) return ;;
-      ( list | names | -names | -path | -paths | list-records )
-            error "No static config found. Did you run init?" ;;
+      ( help | list | names | -names | -path | -paths | list-records )
+            error "No static config found. Did you run init?"
+            return ;;
       ( * ) error "No static config found. Did you run init?" 1 ;;
     esac
   }

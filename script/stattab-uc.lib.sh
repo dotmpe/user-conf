@@ -46,7 +46,7 @@ stattab_entry () #
 " $(date_id "@$stttab_ctime")"\
 " $(test -n "$stttab_utime" && date_id "@$stttab_utime" || echo "-")"\
 " ${stttab_directives:--} ${stttab_passed:--} ${stttab_skipped:--}"\
-" ${stttab_errors:--} ${stttab_failed:--} $stttab_vid: $stttab_short"\
+" ${stttab_errors:--} ${stttab_failed:--} $stttab_id: $stttab_short"\
 " $stttab_tags" | normalize_ws
 }
 
@@ -260,8 +260,8 @@ stattab_update () # ~ <Entry>
        stttab_erred="${8:-"${new_tab_erred:-"$stttab_erred"}"}"
       stttab_failed="${9:-"${new_tab_failed:-"$stttab_failed"}"}"
 
-  # XXX: the vid can be updated as well, may want to check wether new VId==Id
-        stttab_vid="${10:-"${new_tab_vid:-"$stttab_vid"}"}"
+  # XXX: the id can be updated as well, may want to check wether new VId==Id
+         stttab_id="${10:-"${new_tab_id:-"$stttab_id"}"}"
   # XXX: these may have whitespace and need to be quoted, or change this to wark
   # like parser.
       stttab_short="${11:-"${new_tab_short:-"$stttab_short"}"}"
@@ -315,7 +315,7 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
         unset StatTabEntry__refs[$id]
       ;;
 
-    .tab-ref ) echo "class.StatTab ${Class__instances[$id]}" ;;
+    .tab-ref ) echo "class.StatTab ${Class__instances[$id]} " ;;
     .tab ) echo $($($self.tab-ref).tab) ;;
 
     .get )
@@ -340,13 +340,13 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
       ;;
 
     .update )
-        $self.set
-        stattab_update "$@"
+        $self.set &&
+        stattab_update "$@" &&
         $self.get
       ;;
     .commit )
-        $self.set
-        stattab_commit $($self.tab-ref)
+        $self.set &&
+        stattab_commit $($($self.tab-ref).tab-ref)
       ;;
 
     .info | .toString ) ctx_class_info ;;
