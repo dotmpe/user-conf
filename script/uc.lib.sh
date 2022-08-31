@@ -121,7 +121,7 @@ uc_conf_load () # ~ <Subcmd-Name>
   $uctab.exists $tag || {
     case $1 in
       ( init ) return ;;
-      ( list | names | -names | -path | -paths | list-records )
+      ( help | list | names | -names | -path | -paths | list-records )
             error "No static config found. Did you run init?" ;;
       ( * ) error "No static config found. Did you run init?" 1 ;;
     esac
