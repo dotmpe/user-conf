@@ -166,15 +166,16 @@ shell_uc_def ()
     }
 
     # Print a short description for a given exit-status code.
-    # Obviously this is not a standard. E.g. many programs will use 2 with
+    # Obviously this is not a standard but mostly shell (Bash) specific.
+    # E.g. many programs will use 2 with
     # other meanings than 'illegal argument/syntax error'.
     sh_state_name ()
     {
       # Generic not-okay status
       test $1 -eq 1 && echo Failed
-      # Incomplete statements, missing or illegal arguments
+      # Incomplete statements, missing or illegal arguments (shell)
       test $1 -eq 2 && echo Syntax Error
-      # Problem with executing command-name (or no permissions)
+      # Problem executing command-name (or no permissions)
       test $1 -eq 126 && echo Not Executable
       # No such command name
       test $1 -eq 127 && echo Not Found
@@ -190,10 +191,10 @@ shell_uc_def ()
 
       # It was claimed online that somewhere a 0 > status > 256 would be set to
       # 255, but I have not seen Bash do this. And in fact using out-of-range
-      # integers in shell scripts yields very strange results. And non-integers
-      # will just make exit return 2.
+      # integers in shell scripts yields very strange results. Non-integers
+      # will just make shell exit return 2.
       # Still, leaving this in here.
-      test $1 -eq 255 && echo Exit out of range
+      test $1 -eq 255 && echo Out of Range
     }
 
     sh_type () { type "$@"; }
