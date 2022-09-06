@@ -27,7 +27,7 @@ ansi_uc_env_def ()
     _f7= WHITE=   _b7= BG_WHITE= \
     BOLD= REVERSE= NORMAL=
 
-  ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors" 7
+  ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
 }
 
 ansi_uc_lib_init ()
