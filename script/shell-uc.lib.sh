@@ -139,7 +139,7 @@ shell_uc_def ()
       test "$(type -t "$1")" = "function"
     }
 
-    sh_a() # Is name of shell alias # sh:no-stat
+    sh_als() # Is name of shell alias # sh:no-stat
     {
       test "$(type -t "$1")" = "alias"
     }
@@ -216,9 +216,9 @@ shell_uc_def ()
       sh_is_type_fun  "$1"
     }
 
-    sh_a() # Is name of shell alias # sh:no-stat
+    sh_als() # Is name of shell alias # sh:no-stat
     {
-      sh_is_type_a "$1"
+      sh_is_type_als "$1"
     }
 
     sh_bi()
@@ -243,7 +243,7 @@ shell_uc_def ()
   {
     sh_exe "$1" && return
     sh_fun "$1" && return
-    sh_a "$1" && return
+    sh_als "$1" && return
     sh_bi "$1" && return
     sh_kw "$1"
   }
@@ -296,7 +296,7 @@ sh_is_type_sbi () # ~ <Name>
 }
 
 # Test true if <Name> is an shell command alias
-sh_is_type_a () # ~ <Name>
+sh_is_type_als () # ~ <Name>
 {
   ${sh_type:-type} "$1" | grep -q '^[^ ]* is \(aliased to\|an alias for\) .*$'
 }

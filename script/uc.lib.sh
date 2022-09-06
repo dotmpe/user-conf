@@ -594,4 +594,13 @@ os_readable ()
   test $stat -ge 4
 }
 
+uc_state_name ()
+{
+  # 1,2 126,127,128-192 see sh-state-name +U-c
+  # 3: Illegal script
+  # 4: Generic Argument
+  # 5: ...
+  false
+}
+
 #

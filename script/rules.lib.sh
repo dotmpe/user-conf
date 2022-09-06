@@ -314,13 +314,13 @@ rules_resolve_ref () # ~ <Ref> [<From>] # XXX: parses only VAR:name refs \
     || echo "$file"
 }
 
-rules_list () # (:u) ~ [<Ns>] [<:Rules-Select...>] # Simple wrapper to run rules-select
+rules_list () # (:u) ~ [<Ns>] [<:Rules-select...>] # Simple wrapper to run rules-select
 {
   local ns=${1:-$RULE_NS} ql=${2:-1} lk=${lk:-:rules}:list; shift 2
   RULE_NS=$ns rules_select "$ql" "$@"
 }
 
-rules_run () # (:u) ~ [<Ns>] [<:Rules-Select>] # Pipe rule-select to rule-run handler \
+rules_run () # (:u) ~ [<Ns>] [<Ql>] [<:Rs-select...>] # Pipe rule-select to rule-run handler \
 # Builds on the rules-select's 'lines' formatted output, but the actual reading
 # is up to the handler. See rule-run.
 {
