@@ -40,7 +40,7 @@ shell_uc_lib_init ()
     }
   }
 
-  true "${SHELL:="$(command -v "$SHELL_NAME")"}"
+  true "${SHELL:="$(command -v -- "$SHELL_NAME")"}"
   true "${SHELL_NAME:="$(basename -- "$SHELL")"}"
 
   ! ${shell_uc_debug:-false} || {
