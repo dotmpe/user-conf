@@ -4,8 +4,9 @@
 ansi_uc_lib_load ()
 {
   # Ask terminal about possible colors if we can
-  test "${TERM:-dumb}" = "dumb" &&
-    true "${ncolors:=0}" || true ${ncolors:=$(tput colors)} || return
+  test "${TERM:-dumb}" = "dumb" && true "${ncolors:=0}" || {
+    true ${ncolors:=$(tput colors </dev/tty)} || return
+  }
 
   # Load term-part to set this to more sensible default
   true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
@@ -39,21 +40,17 @@ ansi_uc_lib_init ()
   }
 
   local tset
-  case "$TERM" in
-    ( screen | xterm ) ;; ( * ) false ;; esac && tset=set || {
-    case "$TERM" in
-      ( rxvt-*-256color | screen-256color | xterm-256color ) ;; ( * ) false ;; esac &&
-      case ${ncolors:-0} in
-        (   8 ) tset=set ;;
-        ( 256 ) tset=seta ;;
-        (   * ) false ;;
-      esac || {
-        # If no color support found, simply set vars and return zero-status.
-        # Maybe want to fail trying to init ANSI.lib later...
-        #bash_env_exists _f0 || ansi_uc_env_def; return;
-        declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
-        ${INIT_LOG:?} warn ":uc:ansi" "Unknown terminal" "TERM:$TERM ncolors:$ncolors"
-      }
+  case "$TERM" in xterm | screen ) ;; ( * ) false ;; esac && tset=set ||
+  case "$TERM" in xterm-256color | screen-256color | tmux-256color ) ;; ( * ) false ;; esac &&
+  case ${ncolors:-0} in
+    (   8 ) tset=set ;;
+    ( 256 ) tset=seta ;;
+    (   * ) bash_env_exists _f0 || ansi_uc_env_def; return ;;
+  esac || {
+    # If no color support found, simply set vars and return zero-status.
+    # Maybe want to fail trying to init ANSI.lib later...
+    #bash_env_exists _f0 || ansi_uc_env_def; return;
+    declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
   }
 
   : "${REVERSE:=$(tput rev)}"
@@ -64,8 +61,9 @@ ansi_uc_lib_init ()
   #local esc=$(ansi_uc_esc)
 
   case "$TERM" in
-  ( screen-256color | \
-    rxvt-*-256color | \
+  ( rxvt-*-256color | \
+    screen-256color | \
+    tmux-256color | \
     xterm-256color | \
     xterm )
 
@@ -93,9 +91,10 @@ ansi_uc_lib_init ()
 
   case "$TERM" in
 
-  ( xterm-256color | \
-    rxvt-*-256color | \
-    screen-* )
+  ( rxvt-*-256color | \
+    screen-* | \
+    tmux-256color | \
+    xterm-256color )
         : "${_f1:=${RED:=$(tput ${tset}f 1)}}"
         : "${_f3:=${YELLOW:=$(tput ${tset}f 3)}}"
         : "${_f4:=${BLUE:=$(tput ${tset}f 4)}}"

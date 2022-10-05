@@ -3,10 +3,11 @@
 ## Main lib for u-c CLI ('uc')
 
 
-uc_lib_load ()
-{
-  true
-}
+# XXX: should be overwritten by uc-lib.lib.sh
+#uc_lib_load ()
+#{
+#  true
+#}
 
 uc_lib_init ()
 {
