@@ -60,6 +60,10 @@ shell_uc_lib_init ()
     # Unless we clear it like SHELL= /bin/sh only then it is empty as expected.
   }
 
+  test -x "$SHELL" || {
+    $LOG warn "" "Expected executable for current shell" "$SHELL"
+  }
+
   #shell_uc_init
   test -z "${BASH_VERSION:-}" && IS_BASH=0 || IS_BASH=1
   shell_uc_def
@@ -144,6 +148,11 @@ shell_uc_def ()
       test "$(type -t "$1")" = "alias"
     }
 
+    sh_als_cmd()
+    {
+      type "$1" | cut -d'`' -f2 | tr -d "'"
+    }
+
     sh_bi()
     {
       test "$(type -t "$1")" = "builtin"
@@ -219,6 +228,11 @@ shell_uc_def ()
     sh_als() # Is name of shell alias # sh:no-stat
     {
       sh_is_type_als "$1"
+    }
+
+    sh_als_cmd()
+    {
+      false
     }
 
     sh_bi()
