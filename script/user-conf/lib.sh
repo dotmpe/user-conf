@@ -344,7 +344,7 @@ uc__stat ()
 {
   local conf=
   uc_conf_req || return
-  uc_exec_dirs stat "${1-}" $conf || return $?
+  RUN=stat uc_exec_dirs stat "${1-}" $conf || return $?
   uc__status
 }
 
@@ -449,13 +449,13 @@ d_FILE_update ()
 
 d_ENV_exec ()
 {
-  set -- $@
-  printf -- "export $@\n"
+  set -- "$@"
+  printf -- "export $*\n"
 }
 
 d_SH_exec ()
 {
-  printf -- "$@\n"
+  printf -- "$*\n"
 }
 
 d_SH_UPDATE_update ()
@@ -465,18 +465,18 @@ d_SH_UPDATE_update ()
 
 d_BASH_exec ()
 {
-  echo bash -c "'$@'"
+  echo bash -c "'$*'"
 }
 
 d_AGE_exec ()
 {
   test $# -lt 3 || error "AGE surplus params: '$3'" 1
-  test $# -eq 1 && set -- "CACHE" "$1"
-  set -- "$(echo $1 | tr 'a-z' 'A-Z')" "$2"
-  case "$1" in
+  test $# -eq 1 && set -- "CACHE" "${1:?}"
+  set -- "$(echo ${1:?} | tr '[:lower:]' '[:upper:]')" "${2:?}"
+  case "${1:?}" in
 
     GIT )
-        printf "export GIT_AGE=$2"
+        printf "export GIT_AGE=%s" "$2"
         std_info "Max. GIT remote ref age to $2 seconds"
       ;;
 
@@ -494,7 +494,7 @@ d_INSTALL_list_APT()
 {
   out=$TMP/bin-apt-installed.list
   dpkg-query -l >$out
-  for pack in $@
+  for pack in "$@"
   do
     grep -q '^ii\s*'$pack'\>' $out || echo $pack
   done
@@ -502,14 +502,14 @@ d_INSTALL_list_APT()
 
 d_INSTALL_list_BREW()
 {
-  echo $@
+  echo "$@"
 }
 
 d_INSTALL_list_PIP()
 {
   out=$TMP/bin-pip-installed.list
   pip list >$out
-  for pack in $@
+  for pack in "$@"
   do
     grep -qi '^'$pack'\>\ ' $out || echo $pack
   done
@@ -517,12 +517,12 @@ d_INSTALL_list_PIP()
 
 d_INSTALL_list_OPKG()
 {
-  echo $@
+  echo "$@"
 }
 
 d_INSTALL_list_BIN()
 {
-  echo $@
+  echo "$@"
 }
 
 # install using package manager
@@ -538,7 +538,7 @@ d_INSTALL_BREW()
 
 d_INSTALL_PIP()
 {
-  pip install $@
+  pip install "$@"
 }
 
 d_INSTALL_OPKG()
@@ -549,7 +549,7 @@ d_INSTALL_OPKG()
 
 d_INSTALL_BIN()
 {
-  echo $@
+  echo "$@"
 }
 
 

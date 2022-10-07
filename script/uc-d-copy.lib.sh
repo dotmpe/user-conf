@@ -30,7 +30,8 @@ d_COPY() # SCM-Src-File Host-Target-File
            return
         }
         # Check existing COPY version
-        test $STD_INTERACTIVE -eq 1 && {
+        test "${RUN:?}" != stat -a \
+            ${STD_INTERACTIVE:?} -eq 1 && {
           os_readable o /dev/tty || {
             sudo -p 'sudo to fix tty: ' chmod go+rw /dev/tty || return; }
           # XXX: FIXME without TTY vimdiff won't work here
@@ -58,7 +59,7 @@ d_COPY() # SCM-Src-File Host-Target-File
         ;;
     esac
 
-    case "$RUN" in
+    case "${RUN:?}" in
       stat )
           note "Out of date with '$1' at '$2'"
           return 1
@@ -80,7 +81,7 @@ d_COPY() # SCM-Src-File Host-Target-File
       }
       sudod="sudo "
     }
-    case "$RUN" in
+    case "${RUN:?}" in
       stat )
         log "Missing copy of '$1' at '$2'"
         return 1
@@ -98,12 +99,12 @@ d_COPY() # SCM-Src-File Host-Target-File
 
 d_COPY_update ()
 {
-  RUN=update d_COPY "$@" || return $?
+  d_COPY "$@" || return $?
 }
 
 d_COPY_stat ()
 {
-  RUN=stat d_COPY "$@" || return $?
+  d_COPY "$@" || return $?
 }
 
 # Id: U-C:

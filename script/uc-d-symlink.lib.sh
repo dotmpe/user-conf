@@ -27,7 +27,7 @@ d_SYMLINK()
   # remove broken link first
   test ! -h "$2" -o -e "$2" || {
     log "Broken symlink '$2' for '$1'"
-    case "$RUN" in
+    case "${RUN:?}" in
       stat )
         return 2
         ;;
@@ -39,12 +39,13 @@ d_SYMLINK()
   # create or update link
   test -e "$2" && {
     test -h "$2" && {
-      test "$(readlink "$2")" = "$1" && {
+      local target="$(readlink "$2")"
+      test "$target" = "$1" && {
         return 0
       } || {
-        case "$RUN" in
+        case "${RUN:?}" in
           stat )
-            log "Symlink changed '$2' -> {$1,$(readlink "$2")}"
+            log "Symlink should be updated '$2' -> {$target,$1}"
             return 2 ;;
           update )
             rm "$2"
@@ -59,7 +60,7 @@ d_SYMLINK()
     }
   } || {
     log "New symlink '$2' -> '$1'"
-    case "$RUN" in
+    case "${RUN:?}" in
       stat )
         return 2
         ;;
@@ -72,12 +73,12 @@ d_SYMLINK()
 
 d_SYMLINK_update ()
 {
-  RUN=update d_SYMLINK "$@" || return $?
+  d_SYMLINK "$@" || return $?
 }
 
 d_SYMLINK_stat ()
 {
-  RUN=stat d_SYMLINK "$@" || return $?
+  d_SYMLINK "$@" || return $?
 }
 
 # Id: U-S

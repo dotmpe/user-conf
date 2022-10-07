@@ -261,7 +261,7 @@ uc_commit_report ()
 uc_exec_dirs () # Action Directive-Index read-args..
 {
   test $# -ge 3 || return 98
-  local action=$1 func_name= arguments= diridx=0 idx=${2-} idxs
+  local action=$1 func_name arguments diridx=0 idx=${2-} idxs
   test -z "$idx" || {
     note "Requested selective execution of directives '$idx'"
     idxs="$(uc_idx_spec "$idx")"
@@ -270,6 +270,7 @@ uc_exec_dirs () # Action Directive-Index read-args..
 
   uc_reset_report $2
   shift 2
+  #shellcheck disable=2162
   read_nix_style_files "$@" | while read directive arguments_raw
   #OLDIFS="$IFS"
   #IFS=$'\n'; for directive_line in $( read_nix_style_files $@ | lines )
@@ -277,7 +278,7 @@ uc_exec_dirs () # Action Directive-Index read-args..
     #IFS="$OLDIFS"
     #directive="${directive_line/ *}"
     #arguments_raw="${directive_line:$(( ${#directive} + 1 ))}"
-    diridx=$(( $diridx + 1 ))
+    diridx=$(( diridx + 1 ))
 
     #printf -- "'$directive' '$arguments_raw'\n"
     # look for function or skip
@@ -297,8 +298,8 @@ uc_exec_dirs () # Action Directive-Index read-args..
 
     # Evaluate before function
     test -n "$gen_eval" && {
-      gen=$($gen_eval "$arguments")
-      echo "$gen" >&2
+      gen=$($gen_eval $arguments)
+      uc_trace "$gen"
       local r
       eval $gen && {
         debug "evaluated $directive $arguments_raw"
@@ -313,12 +314,12 @@ uc_exec_dirs () # Action Directive-Index read-args..
 
     # Execute directive
     local r
-    $func_name $arguments && {
+    ${func_name:?} ${arguments:?} && {
       debug "executed $directive $arguments_raw"
       echo "ok exec:$diridx $directive $arguments_raw" >>"$uc_results"
       continue
     } || { r=$?
-      test "${RUN:-}" = "stat" &&
+      test "${RUN:?}" = "stat" &&
         std_info "Status warning ($r): $directive '$arguments'" ||
         debug "Failed ($r): $directive '$arguments'"
       echo "fail:$r exec:$diridx $directive $arguments_raw" >>"$uc_results"
@@ -355,7 +356,7 @@ req_git_remote ()
   test $# -lt 4 || error "req-git-remote surplus arguments" 1
 
   GITDIR="$(vc_gitdir "$2")"
-  url="$(cd "$2"; git config remote.${3}.url)"
+  url="$(cd "$2" && git config remote.${3}.url)"
   test -n "$url" && {
     test "$url" = "$1" -o "$url" = "$1/.git" || {
       error "Checkout exists at path $2 for $3 <$url> not <$1>"
@@ -484,7 +485,7 @@ uc_sudo_path_target ()
     sudor="sudo -i "
   }
 
-  test "$RUN" = "update" || return 0
+  test "${RUN:?}" = "update" || return 0
 
   { test ! -w "$2" -o ! -w "$(dirname "$2")";} && {
     test ${warn_on_sudo:-1} -eq 0 || {
@@ -604,4 +605,8 @@ uc_state_name ()
   false
 }
 
+uc_trace ()
+{
+  ${quiet:-false} || echo "${1:?}" >&2
+}
 #
