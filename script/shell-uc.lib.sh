@@ -148,9 +148,14 @@ shell_uc_def ()
       test "$(type -t "$1")" = "alias"
     }
 
-    sh_als_cmd()
+    sh_als_cmd ()
     {
-      type "$1" | cut -d'`' -f2 | tr -d "'"
+      type "${1:?}" | {
+        read -r cmdline
+        cmdline=${cmdline/*\`}
+        len=$(( ${#cmdline} - 1 ))
+        echo "${cmdline:0:$len}"
+      }
     }
 
     sh_bi()
@@ -253,7 +258,13 @@ shell_uc_def ()
 
   sh_type=sh_type
 
-  sh_cmd()
+  sh_unals_if ()
+  {
+    sh_als "${1:?}" || return 0
+    unalias "$1"
+  }
+
+  sh_cmd ()
   {
     sh_exe "$1" && return
     sh_fun "$1" && return
@@ -280,20 +291,27 @@ shell_uc_def ()
 
   sh_source ()
   {
-    . "$1"
+    . "${1:?}"
   }
 
   # TODO: replace uc_source etc. Change sh_source to one tracking includes
   # but for in certain shells only.
   sh_source=sh_source
 
-  # TODO: id maker.. need str.lib
+  sh_lookup ()
+  {
+    false
+  }
+
   sh_include ()
   {
     local r
-    sh_source "$1"
+    sh_lookup "${1:?}"
+
+    sh_source "${1:?}"
     r=$?
-    set sh_include_$(echo "$1" | tr -c 'A-Za-z0-9_' '_' )=$r
+    declare -g -- sh_include_$(echo "$1" | tr -c 'A-Za-z0-9_' '_' )=$r
+    return $r
   }
 }
 

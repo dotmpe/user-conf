@@ -13,9 +13,9 @@ rules_lib_load ()
   true "${RULE_DIRS:=$UCONF $U_C $U_S}"
   true "${LCACHE_DIR:=.meta/cache}"
 
-  true "${_E_failure:=195}" # unable to process
-  true "${_E_continue:=196}" # Current iteration failed, but can try next
-  true "${_E_break:=197}" # Ie. loop/read done, for infinite loops
+  true "${_E_failure:=195}" # Unable to process (required step)
+  true "${_E_continue:=196}" # Current iteration failed, but can try next (alternative steps)
+  true "${_E_break:=197}" # Ie. loop/read done, ie. for infinite loops
 }
 
 rules_lib_init()
