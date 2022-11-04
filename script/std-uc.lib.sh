@@ -78,7 +78,7 @@ std_uc_env_def ()
   done
 
   # nr. should not already be used in context.
-  : "${_E_GAE:=177}" # Generic Argument Error.
+  : "${_E_GAE:=193}" # Generic Argument Error.
 }
 
 # Test if all [given] stdio are at terminal.
