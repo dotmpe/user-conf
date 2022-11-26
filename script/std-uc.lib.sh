@@ -79,6 +79,15 @@ std_uc_env_def ()
 
   # nr. should not already be used in context.
   : "${_E_GAE:=193}" # Generic Argument Error.
+  # : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
+  # See rules
+  # E:failure 195: failure, exception; abort
+  # E:continue 196: continue; skip
+  # E:stop 197: break; stop
+  # E:retry 198: pending; retry later
+  # E:limit 199: limit;
+  # E:more : more;
+
 }
 
 # Test if all [given] stdio are at terminal.
