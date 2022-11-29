@@ -82,7 +82,7 @@ std_uc_env_def ()
   # : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules
   # E:failure 195: failure, exception; abort
-  # E:continue 196: continue; skip
+  # E:continue 196: continue with next alt.; skip; keep-going
   # E:stop 197: break; stop
   # E:retry 198: pending; retry later
   # E:limit 199: limit;
