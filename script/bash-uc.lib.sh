@@ -56,15 +56,23 @@ bash_uc_errexit ()
     printf "${n}\n"
 
     {
-      true
-      #shopt -q extdebug
-      #case "$-" in ( *E* ) ;; ( * ) false ;; esac
-      #case "$-" in ( *T* ) ;; ( * ) false ;; esac
+      # Shell option required for BASH_ARGV
+      shopt -q extdebug
+    } && {
+      {
+        case "$-" in ( *E* ) ;; ( * ) false ;; esac &&
+        case "$-" in ( *T* ) ;; ( * ) false ;; esac
+      } || {
+        $LOG warn ":bash-uc.lib:errexit" "Cannot display full trace without E/T?" "-=$-"
+      }
     } || {
-      $LOG warn ":bash-uc.lib:errexit" "Cannot display full trace without ..." "-=$-"
-      return 1
+      # Bash manual notes setting extdebug after starting script or not at all
+      # results in inconsistant values. Would probably want some framework/env
+      # setting to guarantee consistent ops.
+      $LOG error ":bash-uc.lib:errexit" "Cannot display trace without extdebug mode" "-=$-"
+      #return 1
     }
-
+#
     declare frame=0
     declare argv_offset=0
 
