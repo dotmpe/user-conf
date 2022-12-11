@@ -205,7 +205,7 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   # Silence error if logger has been turned off delibarately
   test -s /etc/log || opts="$opts --socket-errors=off"
 
-  local tags="$(printf '%s:' "$@")"
+  local tags="$(printf '%s:' "${@:-$UC_LOG_BASE}")"
   logger $opts -t "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))" -p "$fac.$lvl" "$msg"
 }
 

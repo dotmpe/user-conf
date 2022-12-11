@@ -116,16 +116,24 @@ uc_profile_start () # ~
     done )
   unset flags
 
-  $uc_log "notice" ":start" "Session ready" "$UC_PROFILE_TP -:$-"
+  typeset ctx
+  ctx="$0($-)[$$]"
+  ctx="${HOSTTYPE:?}${HOSTTYPE:+:}$ctx"
+  ctx="${HOST:?}${HOST:+:}$ctx"
+
+  ctx="${UC_PROFILE_TP:-}${UC_PROFILE_TP:+:}$ctx"
+  ctx="${XDG_SESSION_TYPE:-}${XDG_SESSION_TYPE:+:}$ctx"
+  ctx="${SSH_TTY:+ssh:}$ctx"
+
+  ctx="${ENV:-}${ENV:+::}$ctx"
+
+  $uc_log "notice" ":start" "Session ready" "$ctx"
 }
 
 # Add parts to shell session
 uc_profile_load () # ~ NAME [TAG]
 {
   argv_uc__argc :load $# gt || return
-
-  test -n "${log_key:-}" || local log_key_=$log_key
-  export log_key="uc-profile-load[$$]"
 
   local exists=1 name="$1" envvar ret
   fnmatch "\**" "$1" && {
@@ -178,7 +186,6 @@ uc_profile_load () # ~ NAME [TAG]
     }
   }
 
-  test -z "${log_key_:-}" || export log_key=$log_key_
   eval $envvar=$ret
   return $ret
 }
@@ -248,7 +255,8 @@ uc_import () # ~ [Source-Path]
 }
 
 # Besides init/start/end this is the mayor step of UC-profile, performed
-# several times during shell init.
+# one or several times during shell init. For this reason this should never
+# return an error.
 uc_profile_boot () # TAB [types...]
 {
   test -n "${1-}" || -- set $UC_TAB $*
@@ -260,7 +268,7 @@ uc_profile_boot () # TAB [types...]
   test $# -gt 0 -a -e "${1-}" || return 64
   local tab="$1"; shift 1
 
-  test $# -gt 0 && UC_PROFILE_TP="$*" || set -- $UC_PROFILE_TP
+  test $# -gt 0 && UC_PROFILE_TP="$*" || set -- ${UC_PROFILE_TP:?}
 
   local c="${UC_RT_DIR}/user-$(id -u)-profile.tab"
   test ! -e "$c" -o "$c" -ot "$tab" && {
@@ -310,7 +318,6 @@ uc_profile_boot () # TAB [types...]
     #}
   done <"$c"
   $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "${names-}"
-  return
 }
 
 uc_user_init ()
