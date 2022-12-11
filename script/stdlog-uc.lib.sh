@@ -146,7 +146,7 @@ stderr_log () # ~ <...:ll>
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
 std_v ()
 {
-  test -z "${verbosity:-}" -o ${verbosity:?} -ge ${1:?}
+  test -z "${verbosity:-}" || test ${verbosity:?} -ge ${1:?}
 }
 
 # same as std-V but also override verbosity from 'v' if set
