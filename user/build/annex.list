@@ -59,6 +59,7 @@
 
 :annex-validate if .meta/cache/git-annex-unused.list .meta/cache/git-annex-untracked.list -- function
 :catalog if &media-list -- function
+:install if &media-list -- function
 
 
 # FIXME:
