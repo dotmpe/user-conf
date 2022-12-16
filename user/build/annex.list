@@ -1,0 +1,71 @@
+
+### Local build-rules
+
+
+## Target info
+# @main: all :help :info @check
+# @all: @check
+
+
+## Main targets
+
+# @at.init: @check
+# @at.config: @build-env
+# @at.check: *annex-state :annex-validate
+
+
+## Other alias groups
+
+# @at.dev:
+# @at.conf: *config
+# @c: *config
+# @at.meta: &attributes &context-local
+
+
+*caches expand ${PROJECT_CACHE:?}/{attributes,params,redo-env}.sh
+@build-env eval $LOG warn :build-env Finished ENV=${ENV:-}:${XDG_SESSION_TYPE:-}:${UC_PROFILE_TP:-}:@${HOST:-}+${HOSTTYPE:-}:v=${v:-}
+
+@configured ifdone @configure
+
+
+
+## Symbols for single targets and mapped sets
+
+*annex-state expand .meta/cache/git-annex-{unused,untracked}.list
+
+# The Redo for index.git.scm stamps .git/index, so dependencies only re-run
+# after new commits or branche changes. 
+&git-index expand ${PROJECT_CACHE:?}/index.git.scm
+
+# This depends on .git/index and checksums the current stage as well so
+# dependencies are run after staging changes.
+&git-stage expand ${PROJECT_CACHE:?}/stage.md5.git.scm
+
+# List all content that is not current autocatalogued XXX: maybe lookup custom rule
+&media-list expand ${PROJECT_CACHE:?}/source-media.list
+
+# Generated from Git so only needs to re-run if tracked worktree changes.
+&source-list expand ${PROJECT_CACHE:?}/source.list
+
+
+## Other aliases for parts and simple rules
+
+&media-list:* if &source-list -- function
+&source-list:* if &git-index -- exec git ls-files
+#&git-annex:...unused.list function
+
+
+## Function handlers
+
+:annex-validate if .meta/cache/git-annex-unused.list .meta/cache/git-annex-untracked.list -- function
+:catalog if &media-list -- function
+
+
+# FIXME:
+./.meta/cache/git-annex-unused.list function build___meta_cache_unused
+./.meta/cache/git-annex-untracked.list function build___meta_cache_untracked
+./.meta/cache/source.list if &git-index -- exec git ls-files
+./.meta/cache/source-media.list if &git-index -- function build___medialist
+
+
+# Id: Annex.P/ .components.txt ex:ft=less.txt:
