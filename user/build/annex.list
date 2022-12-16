@@ -62,9 +62,9 @@
 :install if &media-list -- function
 
 
+./.meta/cache/git-annex-unused.list if &git-uindex -- function build___meta_cache_unused
+./.meta/cache/git-annex-untracked.list if &git-uindex -- function build___meta_cache_untracked
 # FIXME:
-./.meta/cache/git-annex-unused.list function build___meta_cache_unused
-./.meta/cache/git-annex-untracked.list function build___meta_cache_untracked
 ./.meta/cache/source.list if &git-index -- exec git ls-files
 ./.meta/cache/source-media.list if &git-index -- function build___medialist
 
