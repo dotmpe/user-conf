@@ -60,6 +60,8 @@
 :annex-validate if .meta/cache/git-annex-unused.list .meta/cache/git-annex-untracked.list -- function
 :catalog if &media-list -- function
 :install if &media-list -- function
+:playlists function
+:playlist: function
 
 
 ./.meta/cache/git-annex-unused.list if &git-stage -- function build___meta_cache_unused
