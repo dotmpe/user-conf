@@ -33,10 +33,13 @@ disable=SC2209 # Use var=$(command) to assign output (or quote to assign string)
 disable=SC2231 # Quote expansions in this for loop glob to prevent wordsplitting, e.g. "$dir"/*.txt .
 disable=SC2288 # This is interpreted as a command name ending with '#'. Double check syntax.
 
-disable=SC3003 # In POSIX sh, $'..' is undefined.
+disable=SC3001 # In POSIX sh, process substitution is undefined.
+#disable=SC3003 # In POSIX sh, $'..' is undefined.
+disable=SC3004 # In POSIX sh, $".." is undefined.
 disable=SC3009 # In POSIX sh, brace expansion is undefined.
 disable=SC3010 # In POSIX sh, [[ ]] is undefined.
 disable=SC3011 # In POSIX sh, here-strings are undefined.
+disable=SC3024 # In POSIX sh, += is undefined.
 disable=SC3028 # In POSIX sh, SHLVL is undefined.
 disable=SC3030 # In POSIX sh, arrays are undefined.
 disable=SC3033 # In POSIX sh, naming functions outside [a-zA-Z_][a-zA-Z0-9_]* is undefined.
@@ -48,6 +51,7 @@ disable=SC3043 # In POSIX sh, 'local' is undefined.
 disable=SC3044 # In POSIX sh, 'declare' is undefined.
 disable=SC3045 # In POSIX sh, type -t is undefined.
 disable=SC3046 # In POSIX sh, 'source' in place of '.' is undefined.
+disable=SC3047 # In POSIX sh, trapping ERR is undefined.
 disable=SC3051 # In POSIX sh, 'source' in place of '.' is undefined.
 disable=SC3053 # In POSIX sh, indirect expansion is undefined
 disable=SC3054 # In POSIX sh, array references are undefined.
@@ -63,6 +67,7 @@ external-sources=true
 source-path=/srv/conf-local
 source-path=/srv/home-local/bin
 source-path=/srv/home-local/bin/.l/c
+source-path=/srv/home-local/bin/.l/c/Tools/bash/parts
 source-path=/srv/project-local/user-conf-dev
 
 #

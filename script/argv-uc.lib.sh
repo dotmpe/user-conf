@@ -42,6 +42,11 @@ argv_is_seq () # ~ <Argv...> # True if immediate item is '--' continuation.
   test "${1-}" = "--"
 }
 
+argv_trail_seq ()
+{
+  test $# -gt 0 && argv_is_seq "$@"
+}
+
 # Read arguments until --, accumulate more_argv and track more_argc.
 # For convenience, this processes a leading '--' arg as well. So in that case
 # instead of reading an empty or end-of sequence it reads the next.
