@@ -3,8 +3,10 @@
 uc_lib_init()
 {
   uc_func lib_load || {
-    alias lib_load=uc_lib_load
-    alias lib_exists=uc_lib_exists
+    lib_load=uc_lib_load
+    lib_exists=uc_lib_exists
+    lib_loaded=uc_lib_loaded
+    lib_require=uc_lib_loaded
   }
 }
 
@@ -19,14 +21,14 @@ uc_lib_load()
   while test $# -gt 0
   do
     v_lib=$(printf -- "$1" | sed 's/[^A-Za-z0-9_]\{1,\}/_/g')
-    test "1" = "$(eval echo \${${v_lib}_lib_loaded-})" && { shift; continue; }
+    test "0" = "$(eval echo \${${v_lib}_lib_loaded-})" && { shift; continue; }
 
     # XXX: not the same var.. UC_TOOLS_DEBUG?
     test -z "${USER_CONFIG_DEBUG-}" ||
       $LOG info ":uc:lib-load:$1" "Loading" "$v_lib"
 
     . $1.lib.sh || return
-    ENV_SRC="$ENV_SRC$HOME/.conf/script/$1.lib.sh "
+    ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$HOME/.conf/script/$1.lib.sh "
 
     # Evaluate lib-load function
     f_lib_load=${v_lib}_lib_load
@@ -43,6 +45,18 @@ uc_lib_load()
 uc_lib_exists () # ~ <Name>
 {
   command -v $1.lib.sh
+}
+
+uc_lib_loaded ()
+{
+  while test $# -gt 0
+  do
+    v_lib=$(printf -- "$1" | sed 's/[^A-Za-z0-9_]\{1,\}/_/g')
+    test "0" = "$(eval echo \${${v_lib}_lib_loaded-})" || {
+      $LOG error :uc:lib-load "Not loaded" "$1" $? || return
+    }
+    shift
+  done
 }
 
 
