@@ -203,8 +203,8 @@ shell_uc_def ()
         echo SIG:$(kill -l $(( $1 - 128 )))
       }
 
-      # It was claimed online that somewhere a 0 > status > 256 would be set to
-      # 255, but I have not seen Bash do this. And in fact using out-of-range
+      # It was claimed online somewhere that an 0 > status > 256 would change
+      # to 255, but I have not seen Bash do this. XXX: And in fact using out-of-range
       # integers in shell scripts yields very strange results. Non-integers
       # will just make shell exit return 2.
       # Still, leaving this in here.
