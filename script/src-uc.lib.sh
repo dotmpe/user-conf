@@ -7,7 +7,7 @@
 file_insert_at_spc=" ( FILE:LINE | ( FILE LINE ) ) INSERT "
 file_insert_at()
 {
-  test -x "$(which ed)" || error "'ed' required" 1
+  test -x "$(command -v ed)" || error "'ed' required" 1
 
   test -n "$*" || error "arguments required" 1
 

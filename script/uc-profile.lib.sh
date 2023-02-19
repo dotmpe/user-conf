@@ -419,7 +419,7 @@ uc_func ()
 uc_cmd ()
 {
   argv_uc__argc :uc-cmd $# eq 1 || return
-  test -x "$(which "$1")"
+  test -x "$(command -v "$1")"
 }
 
 uc_var ()
