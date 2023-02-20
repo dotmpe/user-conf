@@ -134,21 +134,22 @@ uc_profile_start () # ~
 uc_profile_load () # ~ NAME [TAG]
 {
   argv_uc__argc :load $# gt || return
+  $uc_log debug :load "" "$#:$*"
 
-  local exists=1 name="$1" envvar ret
+  local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
   fnmatch "\**" "$1" && {
-    exists=0; name="$(echo "$1" | cut -c2-)"
+    uc_profile_part_exists=0; uc_profile_partname="$(echo "$1" | cut -c2-)"
   }
   shift
-  envvar=UC_PROFILE_D_$(echo "$name" | tr '[:lower:]' '[:upper:]')
+  uc_profile_part_envvar=UC_PROFILE_D_$(echo "$uc_profile_partname" | tr '[:lower:]-' '[:upper:]_')
 
-  # Skip if already loaded
-  test -z "$(eval "echo \"\${$envvar-}\"")" || return 0
-  #test -z "${!envvar-}" || return 0
+  # XXX: Skip if already loaded
+  test -z "$(eval "echo \"\${$uc_profile_part_envvar-}\"")" || return 0
+  #test -z "${!uc_profile_part_envvar-}" || return 0
 
   # During loading UC_PROFILE_D_<name>=1, and at the end it is set to the source return status.
   # However the script itself....
-  eval $envvar=-1
+  eval $uc_profile_part_envvar=-1
 
   # During source of the env file, `uc_profile_load{,_path,_tag}` can be referred to.
 
@@ -156,38 +157,39 @@ uc_profile_load () # ~ NAME [TAG]
 
   local uc_profile_load_path=$( for profile_d in $(echo $UC_PROFILE_D | tr ':' ' ');
       do
-          test -e "$profile_d/$name.sh" || continue
-          printf '%s' "$profile_d/$name.sh"
+          test -e "$profile_d/$uc_profile_partname.sh" || continue
+          printf '%s' "$profile_d/$uc_profile_partname.sh"
           break
       done )
 
   # Bail if no such <name> profile exists
   test -e "$uc_profile_load_path" || {
     # error unless '*<name>' was specified
-    test $exists -eq 0 && return 255
-    $uc_log "error" ":load" "Error: no uc-source" "$name"
+    test $uc_profile_part_exists -eq 0 && return 255
+    $uc_log "error" ":load" "Error: no uc-source" "$uc_profile_partname"
     return 6
   }
 
-  $uc_log debug ":load" "Loading part" "$*:$name"
+  $uc_log debug ":load" "Loading part" "$*:$uc_profile_partname"
   uc_source "$uc_profile_load_path"
-  ret=$?
+  uc_profile_part_ret=$?
+  $uc_log debug ":load" "Loaded part" "$*:$uc_profile_partname:E$uc_profile_part_ret"
 
-  local _stat="$(eval "echo \"\${$envvar-}\"")"
+  local _stat="$(eval "echo \"\${$uc_profile_part_envvar-}\"")"
 
   # File exists, so we have a status either way
-  test "${_stat}" != "-1" || unset $envvar
+  test "${_stat}" != "-1" || unset $uc_profile_part_envvar
 
   # If non-zero and not pending, set UC_PROFILE_D_<name> to status.
   # Otherwise return pending directly and unset UC_PROFILE_D_<name>
-  test $ret -eq 0 || {
-    test $ret -eq $E_UC_PENDING && {
+  test $uc_profile_part_ret -eq 0 || {
+    test $uc_profile_part_ret -eq $E_UC_PENDING && {
       return $E_UC_PENDING
     }
   }
 
-  eval $envvar=$ret
-  return $ret
+  eval $uc_profile_part_envvar=$uc_profile_part_ret
+  return $uc_profile_part_ret
 }
 
 # End shell session
