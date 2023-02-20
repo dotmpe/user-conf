@@ -138,12 +138,12 @@ shell_uc_def ()
       grep_f=-qE sh_env "$1"
     }
 
-    sh_fun() # Is name of shell funtion # sh:no-stat
+    sh_fun () # Is name of shell funtion # sh:no-stat
     {
       test "$(type -t "$1")" = "function"
     }
 
-    sh_als() # Is name of shell alias # sh:no-stat
+    sh_als () # Is name of shell alias # sh:no-stat
     {
       test "$(type -t "$1")" = "alias"
     }
@@ -225,12 +225,12 @@ shell_uc_def ()
       sh_env | grep -qi '^'$1=
     }
 
-    sh_fun() # Is name of shell funtion # sh:no-stat
+    sh_fun () # Is name of shell funtion # sh:no-stat
     {
       sh_is_type_fun  "$1"
     }
 
-    sh_als() # Is name of shell alias # sh:no-stat
+    sh_als () # Is name of shell alias # sh:no-stat
     {
       sh_is_type_als "$1"
     }
@@ -266,11 +266,7 @@ shell_uc_def ()
 
   sh_cmd ()
   {
-    sh_exe "$1" && return
-    sh_fun "$1" && return
-    sh_als "$1" && return
-    sh_bi "$1" && return
-    sh_kw "$1"
+    command -v "${1:?}" >/dev/null
   }
 
   sh_exported() # List all exported env # sh:no-stat
@@ -283,10 +279,15 @@ shell_uc_def ()
     sh_exported | grep ${grep_f:-"-qE"} "^$1="
   }
 
-  sh_exe() # Is name of executable (file) on PATH # sh:no-stat
+  sh_exe () # Is user callable
   {
-    test -x "$(which "$1")"
-    # test "$(type -t "$1")" = "file"
+    local type="$( type -t "$1" )";
+    test "$type" = "function" && return;
+    test "$type" = "file" -a -x "$(command -v "$1")" && return;
+    {
+      test "$type" = "alias" && shopt -q expand_aliases &&
+        eval "sh_cmd $(sh_quote=true sh_als_cmd "$1")"
+    } && return
   }
 
   sh_source ()
