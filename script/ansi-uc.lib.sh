@@ -11,12 +11,20 @@ ansi_uc_lib_load ()
   # Load term-part to set this to more sensible default
   true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
 
-  test $COLORIZE -eq 1 || ansi_uc_env_def
+  test "${COLORIZE:-0}" -eq 1 || ansi_uc_env_def
 }
 
 ansi_uc_env_def ()
 {
-  #shellcheck disable=SC1007
+  test "${ansi_uc_env_def:-0}" -eq "1" && return
+  ansi_uc_env_def=1
+
+  # XXX: test a few... but problem is log.sh sources this and comments on every
+  # case.
+  local changed=false
+  test -z "${BLACK:-}" -a -z "${NORMAL:-}" -a -z "${BOLD:-}" || changed=true
+
+  #shellcheck disable=1007
   # XXX: not in dash declare -g \
     _f0= BLACK=   _b0= BG_BLACK= \
     _f1= RED=     _b1= BG_RED= \
@@ -28,6 +36,7 @@ ansi_uc_env_def ()
     _f7= WHITE=   _b7= BG_WHITE= \
     BOLD= REVERSE= NORMAL=
 
+  ! ${changed:-} ||
   ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
 }
 
