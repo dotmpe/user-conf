@@ -26,20 +26,32 @@ trueish () # Str
   esac
 }
 
-add_env_path() # Prepend-Value Append-Value
+uc_func append_path ||
+append_path ()
+{
+  add_env_path "" "${1:?}"
+}
+
+uc_func prepend_path ||
+prepend_path ()
+{
+  add_env_path "${1:?}"
+}
+
+add_env_path() # <Prepend-Value> <Append-Value>
 {
   test $# -ge 1 -a -n "$1" -o -n "${2:-}" || return 64
   test -e "$1" -o -e "${2-}" || {
-    echo "No such file or directory '$*'" >&2
+    echo "add_env_path: No such file or directory '$*'" >&2
     return 1
   }
-  test -n "$1" && {
+  test -n "${1:-}" && {
     case "$PATH" in
       $1:* | *:$1 | *:$1:* ) ;;
       * ) eval PATH=$1:$PATH ;;
     esac
   } || {
-    test -n "$2" && {
+    test -n "${2:?}" && {
       case "$PATH" in
         $2:* | *:$2 | *:$2:* ) ;;
         * ) eval PATH=$PATH:$2 ;;
@@ -51,6 +63,12 @@ add_env_path() # Prepend-Value Append-Value
   #  launchctl setenv "$1" "$(eval echo "\$$1")" ||
   #    echo "Darwin setenv '$1' failed ($?)" >&2
   #}
+}
+
+#uc_func append_path_lookup ||
+append_path_lookup ()
+{
+  add_env_path_lookup "${1:?}" "" "${2:?}"
 }
 
 # Add an entry to colon-separated paths, ie. PATH, CLASSPATH alike lookup paths

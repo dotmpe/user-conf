@@ -16,8 +16,6 @@ test -d "$U_C" || {
   exit 1
 }
 
-true "${UC_LIB_PATH:="$U_C/script"}"
-
 # The path to this executable
 true "${UC_SELF:="$U_C/tools/sh/log.sh"}"
 
@@ -83,7 +81,7 @@ uc_log_init () # ~
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
 
-  . $UC_LIB_PATH/stdlog-uc.lib.sh &&
+  . "${UC_LIB_PATH:-"$U_C/script"}/stdlog-uc.lib.sh" &&
   INIT_LOG=stderr_log &&
 
   # Make Uc-profile source all its parts

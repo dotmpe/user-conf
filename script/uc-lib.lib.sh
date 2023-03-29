@@ -1,8 +1,8 @@
 #!/bin/sh
 
-uc_lib_init()
+uc_lib_init ()
 {
-  uc_func lib_load || {
+  uc_func "${lib_load:-lib_load}" || {
     lib_load=uc_lib_load
     lib_exists=uc_lib_exists
     lib_loaded=uc_lib_loaded
@@ -11,7 +11,7 @@ uc_lib_init()
 }
 
 # Load sh-lib on PATH
-uc_lib_load()
+uc_lib_load ()
 {
   local f_lib_load= v_lib f_lib_load
   true "${lib_loaded:=}"
@@ -24,7 +24,7 @@ uc_lib_load()
     test "0" = "$(eval echo \${${v_lib}_lib_loaded-})" && { shift; continue; }
 
     # XXX: not the same var.. UC_TOOLS_DEBUG?
-    test -z "${USER_CONFIG_DEBUG-}" ||
+    test -z "${USER_CONF_DEBUG-}" ||
       $LOG info ":uc:lib-load:$1" "Loading" "$v_lib"
 
     . $1.lib.sh || return

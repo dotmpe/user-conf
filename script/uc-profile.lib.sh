@@ -8,7 +8,7 @@ uc_profile_load_lib ()
   }
 }
 
-# XXX: load first tools/sh/profile
+# Include first existing tools/sh/profile.sh
 uc_profile_boot_parts ()
 {
   for bd in ${UC_BOOT_PATH:-${UCONF:?} ${U_C:?}}
@@ -27,11 +27,13 @@ uc_profile_source_lib () # ~
 {
   UC_PROFILE_SRC_LIB=1
 
+  : "${UC_LIB_PATH:=$U_C/script}"
+
   # This is not so nice but there's too many functions involved.
   # XXX: Keep this file stable. Move essentials here, later probably?
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
-  . "$UC_LIB_PATH"/shell-uc.lib.sh &&
+  . "${UC_LIB_PATH:?}"/shell-uc.lib.sh &&
   shell_uc_lib_init &&
   . "$UC_LIB_PATH"/str-uc.lib.sh &&
   . "$UC_LIB_PATH"/argv-uc.lib.sh &&
@@ -412,10 +414,12 @@ uc_mkid () # ~
 }
 
 # TODO: replace these with sh_env either from shell-uc.lib or shell.lib
-uc_func ()
+uc_func () # ~ <Function-name>
 {
-  argv_uc__argc :uc-func $# eq 1 || return
-  test "$(type -t "$1")" = "function"
+  # DEV: argv_uc__argc :uc-func $# eq 1 || return
+  #test "$(type -t "$1")" = "function"
+  # Fasted for Bash
+  declare -F "${1:?}" >/dev/null 2>&1
 }
 
 uc_cmd ()

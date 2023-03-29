@@ -4,13 +4,17 @@
 
 # Main
 
-$LOG info ":tools/u-c:init" "Starting entry..." "0:$0 -:$-"
+${LOG:?} info ":tools/u-c:init" "Starting entry..." "0:$0 -:$-"
+
 
 true "${scriptpathname:="${0}"}"
 true "${UCONF:="$HOME/.conf"}"
 true "${scriptpath:=$HOME/.conf/script}"
 
-export PATH=$PATH:$U_S/src/sh/lib:$U_C/script:$scriptpath
+append_path "$U_S/src/sh/lib"
+append_path "$U_C/script"
+append_path "$scriptpath"
+export PATH
 
 true "${default_sh_lib:="str-uc sys-uc std-uc os-uc shell-uc statusdir-uc"}"
 true "${uc_sh_lib_rest:="vc-uc sd-uc sh-ansi-tpl-uc volume-uc context-uc todotxt-uc"}"
@@ -33,14 +37,25 @@ case "$uc_init_act" in
   load )
       test -n "${scriptpath-}" || scriptpath="$(dirname "$scriptpathname")/script"
       # XXX: . $UCONF/script/user-conf/lib.sh
+      #unset UC_LIB_PATH
+      #$LOG notice : "Loading" "UC_LIB_PATH=${UC_LIB_PATH:-}"
       true "${UC_LIB_PATH:="$UCONF/script"}"
-      . $UC_LIB_PATH/uc-lib.lib.sh || {
-        $LOG error ":u-c:init" "Error loading uc lib" "$UC_LIB_PATH" 1
+
+      ${sh_assert_func:-uc_func} ${lib_load:=uc_lib_load} || {
+
+        test -e $UC_LIB_PATH/uc-lib.lib.sh && {
+          . $UC_LIB_PATH/uc-lib.lib.sh || {
+            $LOG error ":u-c:init" "Error loading uc lib" "$UC_LIB_PATH" 1
+          }
+          #uc_lib_init
+        } || {
+          $LOG error ":u-c:init" "Error loading uc lib" "$UC_LIB_PATH" 1
+        }
       }
 
-      uc_lib_load $default_sh_lib || {
-        $LOG error ":u-c:init" "Error loading script libs" "$default_sh_lib" 1
-        exit 1
+      ${lib_load:?} $default_sh_lib || {
+        $LOG error ":u-c:init" "Error loading script libs" "E$?:$default_sh_lib" "$?"
+	return $?
       }
     ;;
 

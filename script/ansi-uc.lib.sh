@@ -14,32 +14,6 @@ ansi_uc_lib_load ()
   test "${COLORIZE:-0}" -eq 1 || ansi_uc_env_def
 }
 
-ansi_uc_env_def ()
-{
-  test "${ansi_uc_env_def:-0}" -eq "1" && return
-  ansi_uc_env_def=1
-
-  # XXX: test a few... but problem is log.sh sources this and comments on every
-  # case.
-  local changed=false
-  test -z "${BLACK:-}" -a -z "${NORMAL:-}" -a -z "${BOLD:-}" || changed=true
-
-  #shellcheck disable=1007
-  # XXX: not in dash declare -g \
-    _f0= BLACK=   _b0= BG_BLACK= \
-    _f1= RED=     _b1= BG_RED= \
-    _f2= GREEN=   _b2= BG_GREEN= \
-    _f3= YELLOW=  _b3= BG_YELLOW= \
-    _f4= BLUE=    _b4= BG_BLUE= \
-    _f5= CYAN=    _b5= BG_CYAN= \
-    _f6= MAGENTA= _b6= BG_MAGENTA= \
-    _f7= WHITE=   _b7= BG_WHITE= \
-    BOLD= REVERSE= NORMAL=
-
-  ! ${changed:-} ||
-  ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
-}
-
 ansi_uc_lib_init ()
 {
   test ${COLORIZE:-1} -eq 1 || {
@@ -50,12 +24,13 @@ ansi_uc_lib_init ()
 
   local tset
   case "$TERM" in xterm | screen ) ;; ( * ) false ;; esac && tset=set ||
-  case "$TERM" in xterm-256color | screen-256color | tmux-256color ) ;; ( * ) false ;; esac &&
+  # 'seta' works for {xterm,screen,tmux,rxvt-unicode}-256color
   case ${ncolors:-0} in
     (   8 ) tset=set ;;
     ( 256 ) tset=seta ;;
     (   * ) bash_env_exists _f0 || ansi_uc_env_def; return ;;
   esac || {
+    $uc_log warn ":ansi-uc:lib-init" "No color support" "E$?"
     # If no color support found, simply set vars and return zero-status.
     # Maybe want to fail trying to init ANSI.lib later...
     #bash_env_exists _f0 || ansi_uc_env_def; return;
@@ -134,6 +109,32 @@ ansi_uc_lib_init ()
   # && ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
 }
 
+ansi_uc_env_def ()
+{
+  test "${ansi_uc_env_def:-0}" -eq "1" && return
+  ansi_uc_env_def=1
+
+  # XXX: test a few... but problem is log.sh sources this and comments on every
+  # case.
+  local changed=false
+  test -z "${BLACK:-}" -a -z "${NORMAL:-}" -a -z "${BOLD:-}" || changed=true
+
+  #shellcheck disable=1007
+  # XXX: not in dash declare -g \
+    _f0= BLACK=   _b0= BG_BLACK= \
+    _f1= RED=     _b1= BG_RED= \
+    _f2= GREEN=   _b2= BG_GREEN= \
+    _f3= YELLOW=  _b3= BG_YELLOW= \
+    _f4= BLUE=    _b4= BG_BLUE= \
+    _f5= CYAN=    _b5= BG_CYAN= \
+    _f6= MAGENTA= _b6= BG_MAGENTA= \
+    _f7= WHITE=   _b7= BG_WHITE= \
+    BOLD= REVERSE= NORMAL=
+
+  ! ${changed:-} ||
+  ${INIT_LOG:-${LOG:?}} debug ":uc:ansi" "Defaulted markup to none" "TERM:$TERM ncolors:$ncolors"
+}
+
 #shellcheck disable=SC2034 # I wont export local session vars
 ansi_uc_esc ()
 {
@@ -176,6 +177,20 @@ ansi_uc_less ()
   export LESS_TERMCAP_se=$'\E[0m'
   # Red?
   export LESS_TERMCAP_mb=$'\E[01;31m'
+}
+
+ansi_uc_lib_reset ()
+{
+  unset \
+    _f0 BLACK   _b0 BG_BLACK \
+    _f1 RED     _b1 BG_RED \
+    _f2 GREEN   _b2 BG_GREEN \
+    _f3 YELLOW  _b3 BG_YELLOW \
+    _f4 BLUE    _b4 BG_BLUE \
+    _f5 CYAN    _b5 BG_CYAN \
+    _f6 MAGENTA _b6 BG_MAGENTA \
+    _f7 WHITE   _b7 BG_WHITE \
+    BOLD REVERSE NORMAL
 }
 
 # Id: Uc:

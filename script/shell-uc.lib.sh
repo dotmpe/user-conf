@@ -25,7 +25,7 @@ shell_uc_lib_init ()
   # expressions will make the shell remain the parent process.
   # Observed with Bash.
 
-  # Get the command path of the current PID
+  # Get the path to executable of the current PID
   PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1)
 
   test -n "${SHELL:-}" || {
@@ -80,7 +80,7 @@ shell_uc_init ()
 
   IS_BASH_SH=0
   IS_DASH_SH=0
-  IS_BB_SH=0
+  IS_BB_SH=0 # 'Busybox'
   IS_HEIR_SH=0
 
   test $B_SHELL = 1 && {
@@ -106,7 +106,6 @@ shell_uc_detect_sh ()
   sh_is_type_bi 'bind' && IS_BASH_SH=1 || {
 
     sh_is_type_sbi 'local' && {
-      # XXX: what was 'BB' again?
       sh_is_type_bi 'let' && IS_BB_SH=1 || IS_DASH_SH=1
 
     } || {
