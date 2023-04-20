@@ -461,4 +461,17 @@ uc_signal_exit ()
   signal_name=${!exit_signal}
 }
 
+
+# Generic tools
+
+append_path () # ~ <DIR> # PATH helper (does not export!)
+{
+  case ":$PATH:" in
+      *:"${1:?}":*)
+          ;;
+      *)
+          PATH="${PATH:+$PATH:}${1:?}"
+  esac
+}
+
 # Id: User-Conf:uc-profile.lib
