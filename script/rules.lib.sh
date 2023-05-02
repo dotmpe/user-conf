@@ -195,7 +195,7 @@ rules_file_preproc ()
   $LOG debug "$lk" "Updating cache" "${1:?} ${2:?} ${3:?}"
   mkdir -p "$(dirname "$4")" && {
 
-    list_preproc_refs include "$1/$2/$3$ext" rules_resolve_ref |
+    list_include_refs include "$1/$2/$3$ext" rules_resolve_ref |
         while ${read:-read -r} ref file
         do
           local ns_vid lname fname

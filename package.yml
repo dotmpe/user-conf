@@ -9,6 +9,9 @@
   distribution: public
   license: GPL
 
+  contexts:
+    default: '@Dev @Script @Personal +\$package_id <\$package_dir> @Project'
+
   repositories:
     github: git@github.com:dotmpe/user-conf.git
     dotmpe.origin: git-repos/user-conf.git

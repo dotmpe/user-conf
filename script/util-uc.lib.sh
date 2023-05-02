@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 
 # Load sh-lib
 lib_load()
@@ -12,8 +10,7 @@ lib_load()
   while test $# -gt 0 # -n "$1"
   do
     . "$1".lib.sh load-ext
-    f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_load
-    # again, func_exists is in sys.lib.sh. But inline here:
+    f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_lib_load
     type ${f_lib_load} 2> /dev/null 1> /dev/null && {
       ${f_lib_load}
     }
