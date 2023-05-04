@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # XXX: not sure if lib-init will ever be part of u-c
 
@@ -41,7 +41,7 @@ case "$uc_init_act" in
       #$LOG notice : "Loading" "UC_LIB_PATH=${UC_LIB_PATH:-}"
       true "${UC_LIB_PATH:="$UCONF/script"}"
 
-      ${sh_assert_func:-uc_func} ${lib_load:=uc_lib_load} || {
+      ${sh_assert_func:-uc_fun} ${lib_load:=uc_lib_load} || {
 
         test -e $UC_LIB_PATH/uc-lib.lib.sh && {
           . $UC_LIB_PATH/uc-lib.lib.sh || {

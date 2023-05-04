@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Created: 2020-09-16
 
-ctx_class_lib_load ()
+ctx_class_lib__load ()
 {
   : "${ctx_class_types:="${ctx_class_types-}${ctx_class_types+" "}Class"}"
 }
 
-ctx_class_lib_init ()
+ctx_class_lib__init ()
 {
   create() { class.init "$@"; }
   for class in $ctx_class_types

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ### U-c syslog lib
 
@@ -12,7 +12,7 @@
 
 
 #
-syslog_uc_lib_load ()
+syslog_uc_lib__load ()
 {
   # XXX: These will need to be defaulted based on context. For system profile or
   # RC's and even user files they would be more conservative at first...
@@ -48,7 +48,7 @@ syslog_uc_lib_load ()
   test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:="severity colorize"}"
 }
 
-syslog_uc_lib_init () # ~
+syslog_uc_lib__init () # ~
 {
   true
 }

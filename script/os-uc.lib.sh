@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ## OS: files, paths
 
-os_uc_lib_load()
+os_uc_lib__load()
 {
   true "${uname:="$(uname -s)"}"
   true "${hostname:="$(hostname -s)"}"

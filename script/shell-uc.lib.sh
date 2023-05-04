@@ -1,14 +1,14 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ### A minimal shell sh-env-init
 
 
-shell_uc_lib_load ()
+shell_uc_lib__load ()
 {
   true
 }
 
-shell_uc_lib_init ()
+shell_uc_lib__init ()
 {
   # Fix SHELL setting.
 
@@ -45,7 +45,7 @@ shell_uc_lib_init ()
 
   ! ${shell_uc_debug:-false} || {
     {
-      echo shell_uc_lib_init
+      echo shell_uc_lib__init
       declare -p SHELL SHELL_NAME PID_CMD ENV_CMD CMD_ARG
       echo "$(tty) $\$: $$ 0: '$0' *: '$*'"
       echo

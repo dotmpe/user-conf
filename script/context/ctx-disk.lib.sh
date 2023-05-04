@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-ctx_disk_lib_load () { :;}
-ctx_disk_lib_init () { :;}
+ctx_disk_lib__load () { :;}
+ctx_disk_lib__init () { :;}
 
 at_Disk__init ()
 {

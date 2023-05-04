@@ -6,7 +6,7 @@
 #shellcheck disable=2015,2086,2162
 
 
-rules_lib_load ()
+rules_lib__load ()
 {
   true "${RULE_EXT:=.list}"
   true "${RULE_NS:=user/rules}"
@@ -18,7 +18,7 @@ rules_lib_load ()
   true "${_E_break:=197}" # Ie. loop/read done, ie. for infinite loops
 }
 
-rules_lib_init()
+rules_lib__init()
 {
   lib_require env-main
 }

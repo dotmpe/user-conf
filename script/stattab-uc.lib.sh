@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-stattab_uc_lib_load ()
+stattab_uc_lib__load ()
 {
   test -n "${HOME-}" || HOME=/srv/home-local
   test -n "${STTTAB-}" || STTTAB=$HOME/.local/var/stttab.list

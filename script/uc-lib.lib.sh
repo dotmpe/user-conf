@@ -1,19 +1,51 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-uc_lib_init ()
+### User-Conf lib-load impl.
+
+
+## Core-ext
+
+uc_lib__load ()
 {
-  uc_func "${lib_load:-lib_load}" || {
-    lib_load=uc_lib_load
-    lib_exists=uc_lib_exists
-    lib_loaded=uc_lib_loaded
-    lib_require=uc_lib_loaded
+  true "${lib_loaded:=}"
+}
+
+uc_lib__init ()
+{
+  sh_fun "${lib_load:-lib_load}" || {
+    declare -a uc_lib_dyn=()
+    uc_lib__define
+  }
+  test -z "${SCRIPTPATH:-}" || {
+    local scrp
+    for scrp in ${SCRIPTPATH//:/ }
+    do
+      append_path "$scrp"
+    done
+    export PATH
   }
 }
 
-uc_lib_export ()
+#uc_lib__exports="core base extra"
+#
+#uc_lib__declare ()
+#{
+#  SH_DECL[uc_lib:core]="uc_script_load uc_lib_load uc_lib_init"
+#}
+
+# Define (or override) lib-* functions with uc-lib-* variants
+uc_lib__define ()
 {
-  export -f uc_script_load uc_lib_load uc_lib_init
+  local dynfun
+  for dynfun in ${us_lib_api:-exists load loaded init require}
+  do
+    eval "lib_$dynfun () { uc_lib_$dynfun \"\$@\"; }"
+    uc_lib_dyn+=( "lib_$dynfun" )
+  done
 }
+
+
+## Base
 
 # Test lib exists in scriptpath
 uc_lib_exists () # ~ <Name>
@@ -21,103 +53,170 @@ uc_lib_exists () # ~ <Name>
   command -v "${1:?}".lib.sh
 }
 
+uc_lib_ids ()
+{
+  test $# -gt 0 || set -- ${lib_loaded:?}
+  local lib_name
+  for lib_name in "${@:?}"
+  do
+    echo "${lib_name//[^A-Za-z0-9_]/_}"
+  done
+}
+
+# XXX: Track <nameid>_script_loaded and set ENV_SRC
 uc_script_load ()
 {
-  local scr_path scr_varn scr_st
-  while test $# -gt 0
+  local scr_name scr_path scr_varn scr_st
+  for scr_name in "${@:?}"
   do
-    scr_path=$(command -v "$1.sh") || {
-      $LOG error ":uc:script-load" "Not found" "$1" $?
+    scr_path=$(command -v "$scr_name.sh") || {
+      $LOG error ":uc:script-load" "Not found" "$scr_name" $?
       return
     }
-    scr_varn=${1//-/_}
+    scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_loaded
-    test 0 -eq ${!scr_st:--1} || {
-      . "$scr_path"
-      eval ${scr_st}=$?
-      ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
-      test 0 -eq ${!scr_st:?} || return
-    }
-    shift
+    test 0 -eq ${!scr_st:--1} && {
+        ! uc_debug ||
+          $LOG debug :uc:script-load "Skipping sourced script" "$scr_name"
+      } || {
+        ! uc_debug ||
+          $LOG info :uc:script-load "Sourcing script" "$scr_name"
+        . "$scr_path"
+        eval ${scr_st}=$?
+        ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
+        test 0 -eq ${!scr_st:?} || {
+          $LOG warn :uc:script-load "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
+        }
+      }
   done
 }
 
 # Load sh-lib on PATH
 uc_lib_load ()
 {
-  true "${lib_loaded:=}"
-  test -n "${__load_lib-}" || local __load_lib=1
-  test -n "${1-}" || set -- ${default_sh_lib:?}
+  test -n "${lib_load:-}" || local lib_load=1
+  test $# -gt 0 || set -- ${default_sh_lib:?}
 
-  local lib_varn lib_stat lib_path f_lib_load
-  while test $# -gt 0
+  local lib_name lib_varn lib_stat lib_path f_lib_load
+  for lib_name in "${@:?}"
   do
-    lib_varn=${1//-/_}
+    lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
-    test 0 -eq ${!lib_stat:--1} && { shift; continue; }
-    lib_path=$(command -v "$1.lib.sh") || {
-      $LOG error ":uc:lib-load" "Not found" "$1" $?
+    test 0 -eq ${!lib_stat:--1} && { continue; }
+    lib_path=$(command -v "$lib_name.lib.sh") || {
+      $LOG error ":uc:lib-load" "Not found" "$lib_name" $?
       return
     }
     # XXX: not the same var.. UC_TOOLS_DEBUG?
-    test -z "${USER_CONF_DEBUG-}" ||
+    #test -z "${USER_CONF_DEBUG-}" ||
+    ! uc_debug ||
       $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
     . "$lib_path" && {
       ENV_LIB="${ENV_LIB:-}${ENV_LIB:+ }$lib_path"
-      f_lib_load=${lib_varn}_lib_load
+      f_lib_load=${lib_varn}_lib__load
+      type $f_lib_load >/dev/null 2>&1 || {
+        f_lib_load=${lib_varn}_lib_load
+        ! type $f_lib_load >/dev/null 2>&1 || {
+          $LOG warn : "Deprecated lib core 'load' hook name" "$f_lib_load"
+        }
+      }
       ! type $f_lib_load >/dev/null 2>&1 || {
         $f_lib_load
       }
     } || {
       eval ${lib_stat}=$?
-      $LOG error ":uc:lib-load" "Sourcing" "$1" $?
+      $LOG error ":uc:lib-load" "Sourcing" "E${!lib_stat}:$lib_name" ${!lib_stat}
       return
     }
     eval ${lib_stat}=0
-    lib_loaded="${lib_loaded-}${lib_loaded:+ }$1"
-    shift
+    lib_loaded="${lib_loaded-}${lib_loaded:+ }$lib_name"
   done
 }
 
 uc_lib_init ()
 {
-  test -n "${1-}" || set -- ${lib_loaded:?}
-
-  local lib_varn lib_stat lib_init f_lib_init
-  while test $# -gt 0
+  test $# -gt 0 || set -- ${lib_loaded:?}
+  local lib_name lib_varn lib_stat lib_init f_lib_init
+  for lib_name in "${@:?}"
   do
-    lib_varn=${1//-/_}
+    lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} || {
-      $LOG error ":uc:lib-init" "Missing or failed to load" "E${!lib_stat}:$1" $?
+      $LOG error ":uc:lib-init" "Missing or failed to load" "E${!lib_stat}:$lib_name" $?
       return
     }
-    lib_init=${lib_varn}_lib_initialized
-    f_lib_init=${lib_varn}_lib_init
+    lib_init=${lib_varn}_lib_init
+    f_lib_init=${lib_varn}_lib__init
+    type $f_lib_init >/dev/null 2>&1 || {
+      f_lib_load=${lib_varn}_lib_init
+      ! type $f_lib_init >/dev/null 2>&1 || {
+        $LOG warn : "Deprecated lib core 'init' hook name" "$f_lib_init"
+      }
+    }
     ! type $f_lib_init >/dev/null 2>&1 || {
       $f_lib_init
     }
     eval ${lib_init}=$?
     test ${!lib_init} -eq 0 || {
-      $LOG error ":uc:lib-init" "Init failed" "E${!lib_init}:$1" $?
+      $LOG error ":uc:lib-init" "Init failed" "E${!lib_init}:$lib_name" $?
       return
     }
-    shift
   done
 }
 
+# Test if $lib_loaded all sourced/loaded OK. To see which, use $lib_loaded.
 uc_lib_loaded ()
 {
-  local lv llv
-  while test $# -gt 0
+  test $# -gt 0 || set -- ${lib_loaded:?}
+  local lib_name lib_varn lib_stat
+  for lib_name in "${@:?}"
   do
-    lv=${1//-/_}
-    llv=${lv}_lib_loaded
-    test 0 -eq ${!llv:--1} && { shift; continue; }
+    lib_varn=${lib_name//[^A-Za-z0-9_]/_}
+    lib_stat=${lib_varn}_lib_loaded
+    test 0 -eq ${!lib_stat:--1} && { continue; }
     return 1
   done
 }
 
+# Exactly like lib-loop, except given symbols do not need to exist and are
+# skipped silently if missing.
+uc_lib_hook () # ~ <Type> <Name-key-suffix> <Names...>
+{
+  lib_loop_require=false uc_lib_loop "$@"
+}
+
+# Go over symbols generated from suffix and loaded lib names, and either echo
+# or invoke those variable(s) and function(s) respectively.
+uc_lib_loop () # ~ <Type> <Name-key-suffix> <Names...>
+{
+  local hook_tp=${1:-fun} hook_suf=${2:?}
+  shift 2
+  test $# -gt 0 || set -- ${lib_loaded:?}
+  local lib_name lib_varn lib_hook
+  for lib_name in "${@:?}"
+  do
+    lib_varn=${lib_name//[^A-Za-z0-9_]/_}
+    lib_hook=${lib_varn}${hook_suf}
+    case "$hook_tp" in
+      ( fun )
+          sh_fun "${lib_hook}" || {
+            ${lib_loop_require:-true} && return 1 || continue
+          }
+          $lib_hook || return
+        ;;
+      ( var ) ${lib_loop_require:-true} &&
+          echo "${!lib_hook:?}" ||
+          echo "${!lib_hook:-}"
+        ;;
+      ( * ) return 1 ;;
+    esac
+  done
+}
+
+uc_lib_require ()
+{
+  false
+}
 
 # Id: user-conf/0.0.1-dev script/uc-lib.lib.sh
 # From: script-mpe/0.0.4-dev src/sh/lib/lib.lib.sh

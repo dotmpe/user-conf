@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # TODO: re-enable existing settings if line matches
 # XXX: <keyword><sp> syntax does not help with shell script variables

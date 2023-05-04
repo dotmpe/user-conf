@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 
 # Insert into file using `ed`. Accepts literal content as argument.

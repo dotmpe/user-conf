@@ -4,12 +4,12 @@
 
 
 # XXX: should be overwritten by uc-lib.lib.sh
-#uc_lib_load ()
+#uc_lib__load ()
 #{
 #  true
 #}
 
-uc_lib_init ()
+uc_lib__init ()
 {
   # Some more things hardcoded, ripe for clean-up
   uc_main_init || return

@@ -55,7 +55,7 @@ uc_main_log () # ~ (env|[log] <log-args>)
   }
 
   # Check arguments, if libs are loaded
-  uc_func argv_uc__argc && { argv_uc__argc :uc-main-log $# gt || return; }
+  uc_fun argv_uc__argc && { argv_uc__argc :uc-main-log $# gt || return; }
 
   # Check arguments, perform, exit.
   test "$1" = "log" && shift
@@ -94,7 +94,7 @@ uc_log_init () # ~
   uc_profile_load_lib || return
 
   # Setup logger (but not LOG)
-  { uc_func uc_log || syslog_uc_init uc_log
+  { uc_fun uc_log || syslog_uc_init uc_log
     } &&
 
   true "${uc_log:=uc_log}"

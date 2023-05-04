@@ -34,19 +34,19 @@ uc_profile_source_lib () # ~
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
   . "${UC_LIB_PATH:?}"/shell-uc.lib.sh &&
-  shell_uc_lib_init &&
+  shell_uc_lib__init &&
   . "$UC_LIB_PATH"/str-uc.lib.sh &&
   . "$UC_LIB_PATH"/argv-uc.lib.sh &&
   . "$UC_LIB_PATH"/stdlog-uc.lib.sh &&
-  stdlog_uc_lib_load &&
+  stdlog_uc_lib__load &&
   . "$UC_LIB_PATH"/ansi-uc.lib.sh &&
-  ansi_uc_lib_load &&
+  ansi_uc_lib__load &&
   . "$UC_LIB_PATH"/syslog-uc.lib.sh &&
-  syslog_uc_lib_load &&
+  syslog_uc_lib__load &&
 
-  ansi_uc_lib_init &&
-  #stdlog_uc_lib_init &&
-  #syslog_uc_lib_init &&
+  ansi_uc_lib__init &&
+  #stdlog_uc_lib__init &&
+  #syslog_uc_lib__init &&
 
   UC_PROFILE_SRC_LIB=0
 }
@@ -350,7 +350,7 @@ uc_var_update ()
 {
   argv_uc__argc :uc-var-update $# eq 1 || return
   local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
-  uc_func var_${varname}_update && {
+  uc_fun var_${varname}_update && {
 
     var_${varname}_update || return
   }
@@ -407,6 +407,11 @@ uc_profile__record_env__diff_keys () # ~ FROM TO
   comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
 }
 
+uc_debug ()
+{
+  ${UC_DEBUG:-false}
+}
+
 uc_mkid () # ~
 {
   argv_uc__argc :env-keys $# || return
@@ -414,7 +419,7 @@ uc_mkid () # ~
 }
 
 # TODO: replace these with sh_env either from shell-uc.lib or shell.lib
-uc_func () # ~ <Function-name>
+uc_fun () # ~ <Function-name>
 {
   # DEV: argv_uc__argc :uc-func $# eq 1 || return
   #test "$(type -t "$1")" = "function"

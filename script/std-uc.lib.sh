@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ## std: dealing with the shell's stdio decriptors
 
@@ -20,7 +20,7 @@
 # I think std.lib should provide the idioms for that as well. Maybe std:status.
 
 
-std_uc_lib_load ()
+std_uc_lib__load ()
 {
   test -n "${uname-}" || uname="$(uname -s)"
 
@@ -42,7 +42,7 @@ std_uc_lib_load ()
   true "${verbosity:=$UC_DEFAULT_VERBOSITY}"
 }
 
-std_uc_lib_init ()
+std_uc_lib__init ()
 {
   test -n "${INIT_LOG-}" || return 109
   test -x "$(command -v readlink)" || error "readlink util required for stdio-type" 1

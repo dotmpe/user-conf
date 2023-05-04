@@ -17,12 +17,12 @@
 #       set -- ...
 # } || return <irrecoverable status>
 
-stdargv_lib_load ()
+stdargv_lib__load ()
 {
   true
 }
 
-stdargv_lib_init ()
+stdargv_lib__init ()
 {
   if `getopt -T >/dev/null 2>&1` ; [ $? = 4 ] ; then
     $LOG "info" ":std:argv:lib-init" "Found enhanced getopt(1)"

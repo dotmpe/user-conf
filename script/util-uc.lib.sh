@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 
 # Load sh-lib
@@ -10,7 +10,7 @@ lib_load()
   while test $# -gt 0 # -n "$1"
   do
     . "$1".lib.sh load-ext
-    f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_lib_load
+    f_lib_load=$(printf "${1}" | tr -Cs 'A-Za-z0-9_' '_')_lib__load
     type ${f_lib_load} 2> /dev/null 1> /dev/null && {
       ${f_lib_load}
     }

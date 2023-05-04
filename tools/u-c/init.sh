@@ -9,7 +9,7 @@ true "${UC_LIB_PATH:?Expected UC shell lib}"
 INIT_LOG=$LOG
 
 . "$U_S/src/sh/lib/shell.lib.sh"
-shell_lib_load
+shell_lib__load
 shell_init_mode
 sh_init_mode
 
@@ -84,18 +84,18 @@ done
 . "$UC_LIB_PATH"/context/ctx-class.lib.sh
 . "$UC_LIB_PATH"/shell-uc.lib.sh
 
-sys_uc_lib_load
-std_uc_lib_load
-os_uc_lib_load
-ansi_uc_lib_load
-stdlog_uc_lib_load
-#syslog_uc_lib_load
-stattab_uc_lib_load
-ctx_class_lib_load
+sys_uc_lib__load
+std_uc_lib__load
+os_uc_lib__load
+ansi_uc_lib__load
+stdlog_uc_lib__load
+#syslog_uc_lib__load
+stattab_uc_lib__load
+ctx_class_lib__load
 
-shell_uc_lib_init
-std_uc_lib_init
-ctx_class_lib_init
+shell_uc_lib__init
+std_uc_lib__init
+ctx_class_lib__init
 
 case "${TERM-}" in
   ( "" ) ;;
@@ -104,6 +104,6 @@ case "${TERM-}" in
 esac
 
 # For log and color output
-ansi_uc_lib_init
+ansi_uc_lib__init
 
 #

@@ -2,7 +2,7 @@
 
 ## Sys: dealing with vars, functions, env.
 
-sys_uc_lib_load()
+sys_uc_lib__load()
 {
   true "${uname:="$(uname -s)"}"
   true "${hostname:="$(hostname -s | tr 'A-Z' 'a-z')"}"
@@ -26,13 +26,13 @@ trueish () # Str
   esac
 }
 
-uc_func append_path ||
+uc_fun append_path ||
 append_path ()
 {
   add_env_path "" "${1:?}"
 }
 
-uc_func prepend_path ||
+uc_fun prepend_path ||
 prepend_path ()
 {
   add_env_path "${1:?}"
@@ -65,7 +65,7 @@ add_env_path() # <Prepend-Value> <Append-Value>
   #}
 }
 
-#uc_func append_path_lookup ||
+#uc_fun append_path_lookup ||
 append_path_lookup ()
 {
   add_env_path_lookup "${1:?}" "" "${2:?}"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-ansi_uc_lib_load ()
+ansi_uc_lib__load ()
 {
   # Ask terminal about possible colors if we can
   test "${TERM:-dumb}" = "dumb" && true "${ncolors:=0}" || {
@@ -14,7 +14,7 @@ ansi_uc_lib_load ()
   test "${COLORIZE:-0}" -eq 1 || ansi_uc_env_def
 }
 
-ansi_uc_lib_init ()
+ansi_uc_lib__init ()
 {
   test ${COLORIZE:-1} -eq 1 || {
     # Declare empty if required (if not found yet)

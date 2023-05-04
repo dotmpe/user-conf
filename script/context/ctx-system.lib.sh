@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-ctx_system_lib_load () { :;}
-ctx_system_lib_init () { :;}
+ctx_system_lib__load () { :;}
+ctx_system_lib__init () { :;}
 
 # @System.init
 at_System__init ()

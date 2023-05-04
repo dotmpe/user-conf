@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ### A simple 'logger' interface for shell use
 
@@ -14,7 +14,7 @@
 # pass a message and an optional status code.
 
 
-stdlog_uc_lib_load ()
+stdlog_uc_lib__load ()
 {
   # Like verbosity but for handlers in this lib
   true "${STDLOG_UC_LEVEL:=6}" # Info
@@ -26,7 +26,7 @@ stdlog_uc_lib_load ()
   #true "${STDLOG_UC_ANSI:=1}"
 }
 
-stdlog_uc_lib_init ()
+stdlog_uc_lib__init ()
 {
   true
 }
