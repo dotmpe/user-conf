@@ -407,9 +407,11 @@ uc_profile__record_env__diff_keys () # ~ FROM TO
   comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
 }
 
+# Use UC_DEBUG to get more logs about what uc-profile is doing, see also
+# US_DEBUG and DEBUG. XXX: SHDEBUG
 uc_debug ()
 {
-  ${UC_DEBUG:-false}
+  ${UC_DEBUG:-${DEBUG:-false}}
 }
 
 uc_mkid () # ~

@@ -87,7 +87,8 @@ std_uc_env_def ()
   # E:retry 198: pending; retry later
   # E:limit 199: limit;
   # E:more : more;
-
+  # E:updated 200
+  # E:done 200
 }
 
 # Test if all [given] stdio are at terminal.

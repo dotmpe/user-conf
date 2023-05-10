@@ -23,14 +23,14 @@ true "${uc_sh_lib_rest:="vc-uc sd-uc sh-ansi-tpl-uc volume-uc context-uc todotxt
 test -n "${scriptname-}" || scriptname="$(basename -- "$scriptpathname" .sh)"
 test -n "${verbosity-}" || verbosity=5
 
-test -z "${__load-}" && {
-  test -z "${__load_lib-}" && {
-    test -n "${1-}" && uc_init_act="$1" || uc_init_act=load
+#test -z "${__load-}" && {
+  test -z "${lib_load-}" && {
+    true # test -n "${1-}" && uc_init_act="$1" || uc_init_act=load
   } || uc_init_act="load-ext"
-} || uc_init_act=$__load
-$LOG notice ":u-c:init" "Util boot mode" "$uc_init_act"
+#} || uc_init_act=$__load
+$LOG notice ":u-c:init" "Util boot mode" "${uc_init_act-empty}:${uc_init_act:-unset}"
 
-case "$uc_init_act" in
+case "${uc_init_act:-}" in
 
   load-ext ) ;; # External include, do nothing
 

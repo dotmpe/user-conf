@@ -1,17 +1,33 @@
 #!/usr/bin/env bash
 
 # XXX: cleanup
-# [2022-01-29] Tried getting basdb but only works with 4.1, have Bash 5
+# [2022-01-29] Tried getting bashdb but only works with 4.1, have Bash 5
 	#shopt -s extdebug
 #  stacktrace
 #  return
 
   #set +o xtrace
 
+# Auto-install trap for Bash when in debug mode.
+bash_uc_lib__init ()
+{
+  # FIXME: set std mode, track modes
+  #sh-mode strict
+  set -euo pipefail || return
+
+  ! ${SH_DEBUG:-${DEBUG:-false}} && {
+    true
+  } || {
+    #sh-mode dev # Enable shell stacktrace print on errexit
+    set -hET &&
+    shopt -s extdebug &&
+    trap 'bash_uc_errexit' ERR || return
+  }
+}
 
 bash_env_exists () # ~ NAMES...
 {
-  declare -p $@ >&2 2>/dev/null
+  declare -p "$@" >&2 2>/dev/null
 }
 #alias is-var=bash_env_exists
 

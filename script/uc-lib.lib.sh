@@ -30,6 +30,7 @@ uc_lib__init ()
 #
 #uc_lib__declare ()
 #{
+#  declare -ga uc_lib_dyn=( )
 #  SH_DECL[uc_lib:core]="uc_script_load uc_lib_load uc_lib_init"
 #}
 
@@ -94,8 +95,11 @@ uc_script_load ()
 # Load sh-lib on PATH
 uc_lib_load ()
 {
-  test -n "${lib_load:-}" || local lib_load=1
-  test $# -gt 0 || set -- ${default_sh_lib:?}
+  test -z "${lib_load:-}" || return ${_E_recursion:-111}
+  local lib_load=1
+  test $# -gt 0 && {
+    test -n "${1-}" || return ${_E_GAE:-193}
+  } || set -- ${default_sh_lib:?}
 
   local lib_name lib_varn lib_stat lib_path f_lib_load
   for lib_name in "${@:?}"
@@ -103,10 +107,8 @@ uc_lib_load ()
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} && { continue; }
-    lib_path=$(command -v "$lib_name.lib.sh") || {
-      $LOG error ":uc:lib-load" "Not found" "$lib_name" $?
-      return
-    }
+    lib_path=$(command -v "$lib_name.lib.sh") ||
+      $LOG error ":uc:lib-load" "Not found" "$lib_name" $? || return
     # XXX: not the same var.. UC_TOOLS_DEBUG?
     #test -z "${USER_CONF_DEBUG-}" ||
     ! uc_debug ||
@@ -125,7 +127,8 @@ uc_lib_load ()
       }
     } || {
       eval ${lib_stat}=$?
-      $LOG error ":uc:lib-load" "Sourcing" "E${!lib_stat}:$lib_name" ${!lib_stat}
+      test ${_E_retry:-198} -eq ${!lib_stat} && return $_
+      $LOG error ":uc:lib-load" "Loading shell library" "E$_:$lib_name" $_
       return
     }
     eval ${lib_stat}=0
@@ -135,6 +138,8 @@ uc_lib_load ()
 
 uc_lib_init ()
 {
+  test -z "${lib_init:-}" || return ${_E_recursion:-111}
+  local lib_init=1
   test $# -gt 0 || set -- ${lib_loaded:?}
   local lib_name lib_varn lib_stat lib_init f_lib_init
   for lib_name in "${@:?}"
@@ -142,7 +147,8 @@ uc_lib_init ()
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} || {
-      $LOG error ":uc:lib-init" "Missing or failed to load" "E${!lib_stat}:$lib_name" $?
+      $LOG error ":uc:lib-init" "Missing or failed to load" \
+        "E${!lib_stat:-unset}:$lib_name" $_
       return
     }
     lib_init=${lib_varn}_lib_init
@@ -150,15 +156,18 @@ uc_lib_init ()
     type $f_lib_init >/dev/null 2>&1 || {
       f_lib_load=${lib_varn}_lib_init
       ! type $f_lib_init >/dev/null 2>&1 || {
-        $LOG warn : "Deprecated lib core 'init' hook name" "$f_lib_init"
+        $LOG warn : "Deprecated lib core 'init' hook name (ignored)" "$f_lib_init"
       }
     }
     ! type $f_lib_init >/dev/null 2>&1 || {
       $f_lib_init
     }
     eval ${lib_init}=$?
-    test ${!lib_init} -eq 0 || {
-      $LOG error ":uc:lib-init" "Init failed" "E${!lib_init}:$lib_name" $?
+    test 0 -eq ${!lib_init} || {
+      test ${_E_retry:-198} -ne $_ || return $_
+      #  $LOG crit :uc:lib-init "Not implemented: pending in lib-init" "" \
+      #      ${_E_todo:-125} || return
+      $LOG error ":uc:lib-init" "Init hook failed" "E$_:$lib_name" $_
       return
     }
   done
@@ -174,7 +183,7 @@ uc_lib_loaded ()
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} && { continue; }
-    return 1
+    return $_
   done
 }
 
@@ -208,14 +217,50 @@ uc_lib_loop () # ~ <Type> <Name-key-suffix> <Names...>
           echo "${!lib_hook:?}" ||
           echo "${!lib_hook:-}"
         ;;
+      ( pairs ) ${lib_loop_require:-true} &&
+          echo "$lib_name ${!lib_hook:?}" ||
+          echo "$lib_name ${!lib_hook:-}"
+        ;;
       ( * ) return 1 ;;
     esac
   done
 }
 
-uc_lib_require ()
+uc_lib_require () # ~ <Libs...>
 {
-  false
+  #local uc_lib_require=1
+  test $# -gt 0 || return ${_E_MA:-194}
+  #test -z "${lib_init:-}" || {
+  #  return ${_E_retry:-198}
+  #  return ${_E_todo:-125}
+  #}
+
+  test -z "${lib_load-}" || {
+    set -- $(for lib_name in "${@:?}"
+      do
+        lib_varn=${lib_name//[^A-Za-z0-9_]/_}
+        lib_stat=${lib_varn}_lib_loaded
+        test 0 -eq ${!lib_stat:--1} && continue
+        echo "$lib_name"
+      done)
+    test $# -eq 0 && return
+    # Pending libs
+    LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
+    return ${_E_retry:-198}
+  }
+  lib_load "$@" && return ||
+    test ${_E_retry:-198} -eq $? ||
+      $LOG error :uc:lib-require "During load" "E$_:$*" $_ || return
+
+  : "${LIB_REQ:?"Expected LIB_REQ"}"
+  until test -z "${LIB_REQ-}"
+  do
+    $LOG info :uc:lib-require "Pending:" "$LIB_REQ:for $*"
+    set -- $LIB_REQ "$@" ; unset LIB_REQ
+    lib_load "$@" && return || {
+      test ${_E_retry:-198} -eq $? || return $_
+    }
+  done
 }
 
 # Id: user-conf/0.0.1-dev script/uc-lib.lib.sh
