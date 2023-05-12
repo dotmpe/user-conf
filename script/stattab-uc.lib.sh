@@ -349,14 +349,15 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
         stattab_commit $($($self.tab-ref).tab-ref)
       ;;
 
-    .info | .toString ) ctx_class_info ;;
+    .class-context ) class.tree .tree ;;
+    .info | .toString ) class.info ;;
 
     * ) $super$m "$@" ;;
   esac
 }
 
 class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
-#   .StatTab <Tab>
+#   .StatTab <Tab>                  - constructor
 #   .tab
 #   .tab-exists
 #   .tab-init
@@ -393,7 +394,8 @@ class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
         create "$1" StatTabEntry "$id"
       ;;
 
-    .info | .toString ) ctx_class_info ;;
+    .class-context ) class.tree .tree ;;
+    .info | .toString ) class.info ;;
 
     * ) $super$m "$@" ;;
   esac

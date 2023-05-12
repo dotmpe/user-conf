@@ -9,18 +9,33 @@ ctx_class_lib__load ()
 ctx_class_lib__init ()
 {
   create() { class.init "$@"; }
+  class.load
+}
+
+
+class.info () # ~ # Print human readable Id info for current class context
+{
+  echo "class.$name <#$id> ${Class__instances[$id]}"
+}
+
+class.tree () # ~ <Method> # Print tree of Id info of current class and all super-types
+{
+  class.info
+  test -z "${super:-}" ||
+    $super$1 | sed 's/^/  /'
+}
+
+# Run load handler of every class that has one
+class.load ()
+{
   for class in $ctx_class_types
   do sh_fun class.$class.load || continue
     class.$class.load
   done
 }
 
-ctx_class_info ()
-{
-  echo "class.$name <#$id> ${Class__instances[$id]}"
-}
-
-# The 'new' handler. Initialize a new instance of Type.
+# The 'new' handler. Initialize a new instance of Type, the lib-init hook
+# defines 'create' to defer to this.
 class.init () # ~ <Target-Var> <Type> <Constructor-Args...>
 {
   test $# -ge 1 || return 177
@@ -45,7 +60,7 @@ class.Class () # Instance-Id Message-Name Arguments...
 {
   test $# -gt 0 || return 177
   test $# -gt 1 || set -- $1 .default
-  local name=Class self="class.Class $1 " id=$1 m=$2
+  local name=Class self="class.Class $1 " super_type=root super id=$1 m=$2
   shift 2
 
   case "$m" in
@@ -56,10 +71,12 @@ class.Class () # Instance-Id Message-Name Arguments...
     .__$name ) unset Class__instances[$id] ;;
 
     .id ) echo "$id" ;;
+    .params ) echo "${Class__instances[$id]}" ;;
 
+    .tree ) class.tree ;;
     .toString | \
     .default | \
-    .info ) ctx_class_info ;;
+    .info ) class.info ;;
 
     * )
         $LOG error "" "No such endpoint '$m' on" "$($self.info)" 1
