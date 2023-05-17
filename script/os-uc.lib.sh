@@ -81,6 +81,15 @@ file_stat_flags()
   test "$flags" != "-" || flags=
 }
 
+filter_dir_paths ()
+{
+  local path len; while read -r path
+  do
+    len="$(( ${#path} - 1 ))"
+    test "${path:$len}" = / || continue
+    echo "${path:0:$len}"
+  done
+}
 
 # Go over arguments and echo. If no arguments given, or on argument '-' the
 # standard input is cat instead or in-place respectively. Strips empty lines.

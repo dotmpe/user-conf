@@ -8,6 +8,8 @@ ctx_class_lib__load ()
 
 ctx_class_lib__init ()
 {
+  test -z "${ctx_class_lib_init:-}" || return $ctx_class_lib_init
+
   create() { class.init "$@"; }
   class.load
 }
@@ -15,7 +17,7 @@ ctx_class_lib__init ()
 
 class.info () # ~ # Print human readable Id info for current class context
 {
-  echo "class.$name <#$id> ${Class__instances[$id]}"
+  echo "class.$name <#$id> ${Class__instances[$id]:?Expected class instance #$id}"
 }
 
 class.tree () # ~ <Method> # Print tree of Id info of current class and all super-types
@@ -25,7 +27,8 @@ class.tree () # ~ <Method> # Print tree of Id info of current class and all supe
     $super$1 | sed 's/^/  /'
 }
 
-# Run load handler of every class that has one
+# Run load handler of every class that has one, to prepare associative arrays
+# for class instance properties
 class.load ()
 {
   for class in $ctx_class_types
@@ -36,27 +39,34 @@ class.load ()
 
 # The 'new' handler. Initialize a new instance of Type, the lib-init hook
 # defines 'create' to defer to this.
-class.init () # ~ <Target-Var> <Type> <Constructor-Args...>
+class.init () # ~ <Target-Var> [<Type>] [<Constructor-Args...>]
 {
-  test $# -ge 1 || return 177
-  local id=$RANDOM var=$1 type=$2 ; shift 2
+  local var=${1:?} type=${2:-Class}
+  test $# -gt 1 && shift 2 || shift
 
-  # XXX: at some point, should check wether $id is already used
-  local new="class.$type $id "
+  # Find new ID for instance
+  local new_prefix="class.$type $RANDOM "
+  while $new_prefix.defined
+  do
+    new_prefix="class.$type $RANDOM "
+  done
 
-  # Call constructor(s)
-  $new.$type "$@"
+  # Call constructor(s) and store concrete type and optional params for Id
+  $new_prefix.$type "$type" "$@" ||
+    $LOG error : "Calling constructor" "E$?:$new_prefix.$type:$*" $? || return
 
-  declare -g $var="$new"
+  # Keep ref key for new class instance at given variable name
+  declare -g $var="$new_prefix"
 }
 
 class.Class.load () #
 {
-  # To store arguments passed up to Class constructor
+  # Assoc-array to store arguments passed into Class constructor
   declare -g -A Class__instances=()
 }
 
-class.Class () # Instance-Id Message-Name Arguments...
+class.Class () # ~ <Instance-Id> .<Message-name> <Args...>
+#   .Class <Type> - constructor
 {
   test $# -gt 0 || return 177
   test $# -gt 1 || set -- $1 .default
@@ -65,13 +75,27 @@ class.Class () # Instance-Id Message-Name Arguments...
 
   case "$m" in
 
-    # 'Constructor' just stores arguments in array
-    .$name ) Class__instances[$id]="$*" ;;
+    # 'Constructor' just stores arguments in array. By convention the first
+    # word should indicate the concrete type for the Id.
+    ".$name" )
+        test -n "${1:-}" ||
+            $LOG error : "Concrete type expected" "" 1 || return
+        Class__instances[$id]="$*" ;;
     # 'Destructor'
-    .__$name ) unset Class__instances[$id] ;;
+    ".__$name" )
+        : "${Class__instances[$id]:?Expected class instance #$id}"
+        unset "Class__instances[$id]" ;;
 
     .id ) echo "$id" ;;
-    .params ) echo "${Class__instances[$id]}" ;;
+    .defined ) test -n "${Class__instances[$id]:-}" ;;
+    .class )
+        : "${Class__instances[$id]:?Expected class instance #$id}"
+        echo "${_/ *}" ;;
+    .params )
+        : "${Class__instances[$id]:?Expected class instance #$id}"
+        : "$($self.class)"
+        : "$(( ${#_} + 1 ))"
+        echo "${Class__instances[$id]:$_}" ;;
 
     .tree ) class.tree ;;
     .toString | \
