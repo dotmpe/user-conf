@@ -77,7 +77,14 @@ std_uc_env_def ()
     #echo "val='$val'" >&2
   done
 
-  # nr. should not already be used in context.
+  #: "${_E_cont:=100}"
+  : "${_E_recursion:=111}" # unwanted recursion detected
+
+  : "${_E_no_file:=124}" # no-such-file(set): file missing or nullglob
+  : "${_E_not_exec:=126}" # NEXEC not-executable
+  : "${_E_not_found:=127}" # NSFC no-such-file-or-command
+  # 128+ is mapped for signals (see trap -l)
+  # on debian linux last mapped number is 192: RTMAX signal
   : "${_E_GAE:=193}" # Generic Argument Error.
   # : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules

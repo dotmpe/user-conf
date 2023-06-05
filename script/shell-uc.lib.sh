@@ -120,6 +120,15 @@ shell_uc_def ()
 {
   test $IS_BASH -eq 1 && {
 
+    sh_arr ()
+    {
+      typeset var=${1:?}
+      # XXX: Can't make string-expression syntax work for dynamic variable names
+      #case "${!var[@]@A}" in ( -*[Aa]* ) true ;; ( * ) false ;; esac
+      : "$(declare -p $var)"
+      case "$_" in ( "declare -"*[Aa]*" "* ) true ;; ( * ) false ;; esac
+    }
+
     sh_env () # List all variable names, exported or not # sh:no-stat
     {
       test $# -eq 0 && {

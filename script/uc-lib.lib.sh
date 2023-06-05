@@ -65,7 +65,7 @@ uc_lib_ids ()
 }
 
 # XXX: Track <nameid>_script_loaded and set ENV_SRC
-uc_script_load ()
+uc_script_load () # ~ <Src-name...>
 {
   local scr_name scr_path scr_varn scr_st
   for scr_name in "${@:?}"

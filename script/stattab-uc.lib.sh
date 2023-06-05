@@ -2,9 +2,9 @@
 
 ### StatTab-UC
 
-# Functions to tetrieves record using fetch/grep and parse them.
+# Functions to retrieve simple status record using fetch/grep and parse them.
 
-# Started adding psuedo-class to deal with simultaneous instances.
+# Started adding psuedo-class to deal with simultaneous instances (and subtypes)
 
 
 stattab_uc_lib__load ()
@@ -12,9 +12,10 @@ stattab_uc_lib__load ()
   lib_require str-uc todotxt || return
   # XXX: lib_require_alt str-htd str-uc || return
   #lib_require str-uc || return
+  : "${gsed:=sed}"
   test -n "${HOME-}" || HOME=/srv/home-local
   test -n "${STTTAB-}" || STTTAB=$HOME/.local/var/stttab.list
-  : "${ctx_class_types:="${ctx_class_types-}${ctx_class_types+" "}StatTabEntry StatTab"}"
+  ctx_class_types="${ctx_class_types-}${ctx_class_types+" "}StatTabEntry StatTab"
   : "${stattab_var_keys:=status btime ctime utime short refs idrefs meta}"
 }
 
@@ -310,7 +311,7 @@ class.StatTabEntry.load () # ~
   declare -g -A StatTabEntry__tags=()
 }
 
-class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
+class.StatTabEntry () # :Class ~ <ID> .<METHOD> <ARGS...>
 #   .StatTabEntry <Entry...>
 #   XXX: .StatTabEntry <Type> [<Src:Line>] - constructor
 #   .tab-ref
@@ -321,8 +322,8 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
 #   .commit
 {
   test $# -gt 0 || return 177
-  test $# -gt 1 || set -- $1 .toString
-  local name=StatTabEntry super_type=Class self super id=$1 m=$2
+  test $# -gt 1 || set -- "$1" .toString
+  local name=StatTabEntry super_type=Class self super id=${1:?} m=$2
   shift 2
   self="class.$name $id "
   super="class.$super_type $id "
@@ -341,7 +342,19 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
         unset StatTabEntry__refs[$id]
       ;;
 
-    .tab-ref ) echo "class.StatTab ${Class__instances[$id]} " ;;
+    .tab-id )
+      if_ok "$($self.params)" && echo "${_/ *}" ;;
+    .tab-class )
+      if_ok "$($self.tab-id)" && echo "$(class.Class $_ .class)" ;;
+    .tab-ref )
+      if_ok "$($self.tab-id)" && echo "class.$(class.Class $_ .class) $_ " ;;
+    .srcspec )
+      if_ok "$($self.params)" && echo "${_/* }" ;;
+    .src )
+      if_ok "$($self.srcspec)" && echo "${_/:*}" ;;
+    .line )
+      if_ok "$($self.srcspec)" && echo "${_/*:}" ;;
+
     .tab ) $($self.tab-ref).tab ;;
 
     .get )
@@ -375,11 +388,11 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
         stattab_commit $($($self.tab-ref).tab-ref)
       ;;
 
-    .attr ) # ~ <Name-key>
+    .attr ) # ~ <Name-key>           # Get field value from class instance value
         : "StatTabEntry__${1//-/_}"
         echo "${!_[$id]}"
       ;;
-    .var ) # ~ <Var-key>
+    .var ) # ~ <Var-key>             # Get field value from regular env variable
         : "stttab_${1//-/_}"
         echo "${!_}"
       ;;
@@ -390,14 +403,14 @@ class.StatTabEntry () # ~ <ID> .<METHOD> <ARGS...>
         #todotxt_field_${field//-/_} <<< "$"
       ;;
 
-    .class-context ) class.tree .tree ;;
+    .class-context ) class.info-tree .tree ;;
     .info | .toString ) class.info ;;
 
-    * ) $super$m "$@" ;;
+    * ) $super"$m" "$@" ;;
   esac
 }
 
-class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
+class.StatTab () # :Class ~ <ID> .<METHOD> <ARGS...>
 #   .StatTab <Tab> [<EntryType>]         - constructor
 #   .tab
 #   .tab-exists
@@ -409,8 +422,8 @@ class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
 #   .commit
 {
   test $# -gt 0 || return 177
-  test $# -gt 1 || set -- $1 .toString
-  local name=StatTab super_type=Class self super id=$1 m=$2
+  test $# -gt 1 || set -- "$1" .toString
+  local name=StatTab super_type=Class self super id=${1:?} m=$2
   shift 2
   self="class.$name $id "
   super="class.$super_type $id "
@@ -425,10 +438,10 @@ class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
 
     .tab ) stattab_tab "${1:-}" "$($self.tab-ref)" ;;
     .tab-ref )
-        : "$($self.params)" && : "${_/ *}" && echo "$_"
+        if_ok "$($self.params)" && : "${_/ *}" && echo "$_"
       ;;
     .tab-entry-class )
-        : "$($self.params)" && : "${_/* }" && echo "$_"
+        if_ok "$($self.params)" && : "${_/* }" && echo "$_"
       ;;
     .tab-exists ) test -s "$($self.tab-ref)" ;;
     .tab-init ) stattab_tab_init "$($self.tab-ref)" ;;
@@ -448,10 +461,10 @@ class.StatTab () # ~ <ID> .<METHOD> <ARGS...>
         ${!1}.get
       ;;
 
-    .class-context ) class.tree .tree ;;
+    .class-context ) class.info-tree .tree ;;
     .info | .toString ) class.info ;;
 
-    * ) $super$m "$@" ;;
+    * ) $super"$m" "$@" ;;
   esac
 }
 

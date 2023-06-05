@@ -3,8 +3,8 @@
 
 statdirtab_uc_lib__load ()
 {
-  lib_require ctx-class # statusdir
-  : "${ctx_class_types:="${ctx_class_types-}${ctx_class_types+" "}StatDirTab"}"
+  lib_require ctx-class || return # statusdir
+  ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}StatDirTab
 }
 
 statdirtab_uc_lib__init ()
@@ -13,23 +13,24 @@ statdirtab_uc_lib__init ()
 }
 
 
-class.StatDirTab () # ~ <ID> .<METHOD> <ARGS...>
+class.StatDirTab () # :Class ~ <ID> .<METHOD> <ARGS...>
 #   .StatDirTab <Basename> <TabClass>                 - constructor
 {
   test $# -gt 0 || return 177
-  test $# -gt 1 || set -- $1 .toString
-  local name=StatDirTab super_type=Class self super id=$1 method=$2
+  test $# -gt 1 || set -- "$1" .toString
+  local name=StatDirTab super_type=Class self super id=${1:?} method=$2
   shift 2
   self="class.$name $id "
   super="class.$super_type $id "
 
   case "$method" in
-    .$name ) $super.$super_type "$@" ;;
-    .__$name ) $super.__$super_type ;;
+    ".$name" ) $super.$super_type "$@" ;;
+    ".__$name" ) $super.__$super_type ;;
 
     .basenames ) : "${Class__instances[$id]}" && : "${_% *}" && echo "${_// /$'\n'}" ;;
     .tabclass ) : "${Class__instances[$id]}" && echo "${_//* }" ;;
     .directories )
+        # metadir_basedirs
         user_lookup_path ~/.local/statusdir/index -- .meta/tabs .meta/stat/index .local/statusdir/index .statusdir/index
       ;;
     .names )
@@ -53,10 +54,9 @@ class.StatDirTab () # ~ <ID> .<METHOD> <ARGS...>
         done
       ;;
 
-    .class-context ) class.tree .tree ;;
+    .class-context ) class.info-tree .tree ;;
     .class-info | .toString ) class.info ;;
 
     * ) $super$method "$@" ;;
   esac
 }
-

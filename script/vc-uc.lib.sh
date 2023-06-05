@@ -1,48 +1,17 @@
 #!/usr/bin/env bash
 
 
-vc_gitdir()
+vc_uc_lib__init()
 {
-  test $# -le 1 || err "vc-gitdir surplus arguments" 1
-  test -n "${1-}" || set -- "."
-  test -d "$1" || err "vc-gitdir expected dir argument" 1
-
-  test -d "$1/.git" && {
-    echo "$1/.git"
-  } || {
-    test "$1" = "." || cd $1 || return
-    git rev-parse --git-dir 2>/dev/null
-  }
-# XXX: cleanup
-  #local pwd="$(pwd)"
-  #cd "$1"
-  #repo=$(git rev-parse --git-dir 2>/dev/null)
-  #while fnmatch "*/.git/modules*" "$repo"
-  #do repo="$(dirname "$repo")" ; done
-  #test -n "$repo" || return 1
-  #echo "$repo"
-  ##repo="$(git rev-parse --show-toplevel)"
-  ##echo $repo/.git
-  #cd "$pwd"
+  test "${vc_uc_lib_init-}" = "0" && return
+  #lib_groups \
+  #  git: \
+  #  hg: \
+  #  bzr: \
+  #  svn: \
+  #  fields:vc-fields-{}
 }
 
-vc_hgdir()
-{
-  test -d "${1-}" || error "vc-hgdir expected dir argument: '$1'" 1
-  ( cd "$1" && go_to_dir_with .hg && echo "$(pwd)"/.hg || return 1 )
-}
-
-vc_issvn()
-{
-  test -d "${1-}" || error "vc-issvn expected dir argument: '$1'" 1
-  test -e "$1"/.svn
-}
-
-vc_svndir()
-{
-  test -d "${1-}" || error "vc-svndir expected dir argument: '$1'" 1
-  ( test -e "$1/.svn" && echo $(pwd)/.svn || return 1 )
-}
 
 vc_bzrdir()
 {
@@ -55,6 +24,18 @@ vc_bzrdir()
     fi
   )
   return 1
+}
+
+# vc_git_initialized
+vc_check_git()
+{
+  test $# -eq 1 -a -n "${1-}" || return
+
+  # There should be a head
+  # other checks on .git/refs seem to fail after garbage collect
+  git rev-parse HEAD >/dev/null ||
+  test "$(echo $1/refs/heads/*)" != "$1/refs/heads/*" ||
+  test "$(echo $1/refs/remotes/*/HEAD)" != "$1/refs/remotes/*/HEAD"
 }
 
 # NOTE: scanning like this does not allow to nest in different repositories
@@ -71,101 +52,22 @@ vc_dir()
   return 1
 }
 
-vc_isscmdir()
-{
-  test -n "${1-}" || set -- "."
-  test -d "$1" || error "vc-isscmdir expected dir argument: '$1'" 1
-  vc_isgit "$1" && return
-  vc_isbzr "$1" && return
-  vc_issvn "$1" && return
-  vc_ishg "$1" && return
-  return 1
-}
-
-vc_scmdir()
-{
-  vc_dir "$@" || error "can't find SCM-dir" 1
-}
-
-vc_getscm()
-{
-  scmdir="$(vc_dir "$@")"
-  test -n "$scmdir" || return 1
-  scm="$(basename "$scmdir" | cut -c2-)"
-}
-
-# See if path is in GIT checkout
-vc_isgit()
-{
-  test -e "${1-}" || err "vc-isgit expected path argument" 1
-  test -d "$1" || {
-    set -- "$(dirname "$1")"
-  }
-  ( cd "$1" && go_to_dir_with .git || return 1 )
-}
-
-vc_gitremote()
-{
-  test $# -le 2 || err "vc-gitremote surplus arguments" 1
-  test -n "${1-}" || set -- "." "origin"
-  test -d "$1" || err "vc-gitremote expected dir argument" 1
-  test -n "${2-}" || err "vc-gitremote expected remote name" 1
-
-  cd "$(vc_gitdir "$1")"
-  git config --get remote.$2.url
-}
-
-# Given COPY src and trgt file from user-conf repo,
-# see if target path is of a known version for src-path in repo,
-# and that its the currently checked out version.
-vc_gitdiff ()
-{
-  test -n "${1-}" || err "vc-gitdiff expected src" 1
-  test -n "${2-}" || err "vc-gitdiff expected trgt" 1
-  test -z "${3-}" || err "vc-gitdiff surplus arguments" 1
-  test -n "${GITDIR-}" || err "vc-gitdiff expected GITDIR env" 1
-  test -d "$GITDIR" || err "vc-gitdiff GITDIR env is not a dir" 1
-
-  target_sha1="$(${sudor:-} git hash-object "$2")"
-  co_path="$(cd $GITDIR;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
-  test -n "$co_path" -a "$1" = "$GITDIR/$co_path" && {
-    # known state, file can be safely replaced
-    test "$target_sha1" = "$(git hash-object "$1")" \
-      && return 0 \
-      || {
-        return 1
-      }
-  } || {
-    return 2
-  }
-}
-
-# vc_git_initialized
-vc_check_git()
-{
-  test $# -eq 1 -a -n "${1-}" || return
-
-  # There should be a head
-  # other checks on .git/refs seem to fail after garbage collect
-  git rev-parse HEAD >/dev/null ||
-  test "$(echo $1/refs/heads/*)" != "$1/refs/heads/*" ||
-  test "$(echo $1/refs/remotes/*/HEAD)" != "$1/refs/remotes/*/HEAD"
-}
-
-vc_revision_git()
-{
-  git show-ref --head HEAD -s
-}
-
-# __vc_git_flags accepts 0 or 1 arguments (i.e., format string)
-# returns text to add to bash PS1 prompt (includes branch name)
 vc_flags_git()
+# Flags:
+#   b:branch
+#   c:repotype - BARE: if no working tree is checked out
+#   g:gitdir - the gitdir for the given or current basedir
+#   i:staged
+#   r:state
+#   s:stashed
+#   u:untracked
+#   w:modified
 {
   test $# -le 2 || return
   test $# -eq 1 || set -- "$PWD"
   test -n "$1" -a -d "$1" || err "No such directory '$1'" 3
   local b r= g fmt
-  test -n "${2-}" && fmt="$2" || fmt='(%s%s%s%s%s%s%s%s)'
+  fmt=${2:-printf:(%s%s%s%s%s%s%s%s)}
 
   g="$(vc_gitdir "$1")"
   test -e "$g" || return
@@ -281,6 +183,147 @@ vc_flags_git()
   cd "$1"
 }
 
+vc_getscm()
+{
+  scmdir="$(vc_dir "$@")"
+  test -n "$scmdir" || return 1
+  scm="$(basename "$scmdir" | cut -c2-)"
+}
+
+# Given COPY src and trgt file from user-conf repo,
+# see if target path is of a known version for src-path in repo,
+# and that its the currently checked out version.
+vc_gitdiff ()
+{
+  test -n "${1-}" || err "vc-gitdiff expected src" 1
+  test -n "${2-}" || err "vc-gitdiff expected trgt" 1
+  test -z "${3-}" || err "vc-gitdiff surplus arguments" 1
+  test -n "${GITDIR-}" || err "vc-gitdiff expected GITDIR env" 1
+  test -d "$GITDIR" || err "vc-gitdiff GITDIR env is not a dir" 1
+
+  target_sha1="$(${sudor:-} git hash-object "$2")"
+  co_path="$(cd $GITDIR;git rev-list --objects --all | grep "^$target_sha1" | cut -d ' ' -f 2)"
+  test -n "$co_path" -a "$1" = "$GITDIR/$co_path" && {
+    # known state, file can be safely replaced
+    test "$target_sha1" = "$(git hash-object "$1")" \
+      && return 0 \
+      || {
+        return 1
+      }
+  } || {
+    return 2
+  }
+}
+
+vc_gitdir()
+{
+  test $# -le 1 || err "vc-gitdir surplus arguments" 1
+  test -n "${1-}" || set -- "."
+  test -d "$1" || err "vc-gitdir expected dir argument" 1
+
+  test -d "$1/.git" && {
+    echo "$1/.git"
+  } || {
+    test "$1" = "." || cd $1 || return
+    git rev-parse --git-dir 2>/dev/null
+  }
+# XXX: cleanup
+  #local pwd="$(pwd)"
+  #cd "$1"
+  #repo=$(git rev-parse --git-dir 2>/dev/null)
+  #while fnmatch "*/.git/modules*" "$repo"
+  #do repo="$(dirname "$repo")" ; done
+  #test -n "$repo" || return 1
+  #echo "$repo"
+  ##repo="$(git rev-parse --show-toplevel)"
+  ##echo $repo/.git
+  #cd "$pwd"
+}
+
+vc_hgdir()
+{
+  test -d "${1-}" || error "vc-hgdir expected dir argument: '$1'" 1
+  ( cd "$1" && go_to_dir_with .hg && echo "$(pwd)"/.hg || return 1 )
+}
+
+# See if path is in GIT checkout
+vc_isgit()
+{
+  test -e "${1-}" || err "vc-isgit expected path argument" 1
+  test -d "$1" || {
+    set -- "$(dirname "$1")"
+  }
+  ( cd "$1" && go_to_dir_with .git || return 1 )
+}
+
+vc_isscmdir()
+{
+  test -n "${1-}" || set -- "."
+  test -d "$1" || error "vc-isscmdir expected dir argument: '$1'" 1
+  vc_isgit "$1" && return
+  vc_isbzr "$1" && return
+  vc_issvn "$1" && return
+  vc_ishg "$1" && return
+  return 1
+}
+
+vc_issvn()
+{
+  test -d "${1-}" || error "vc-issvn expected dir argument: '$1'" 1
+  test -e "$1"/.svn
+}
+
+# special updater (for Bash PROMPT_COMMAND)
+vc_prompt_command()
+{
+  test $# -le 1 || return
+  test $# -eq 1 || set -- "$PWD"
+  test -n "$1" -a -d "$1" || err "No such directory '$1'" 3
+
+  local pwdref cache
+
+  # cache response in file
+  pwdref="$(echo "$1" | tr '/' '-' )"
+  cache="$(statusdir.sh assert-dir vc prompt-command "$pwdref")" || return
+
+  test ! -e "$cache" -o "$1"/.git -nt "$cache" && {
+    __vc_status "$1" > "$cache"
+  }
+
+  cat "$cache"
+}
+
+vc_ps1()
+{
+  local s
+  s="$(vc_status "$PWD")" || return $?
+  echo "$s"
+}
+
+vc_remote()
+{
+  test -n "$1" || set -- "." "origin"
+  test -d "$1" || error "vc-remote expected dir argument" 1
+  test -n "$2" || error "vc-remote expected remote name" 1
+  test -z "$3" || error "vc-remote surplus arguments" 1
+
+  local pwd=$PWD
+  cd "$1"
+  vc_remote_$scm "$2"
+  cd "$pwd"
+}
+
+vc_remote_git()
+{
+  git config --get remote.$1.url
+}
+
+# XXX: unused
+vc_remote_hg()
+{
+  hg paths "$1"
+}
+
 vc_status ()
 {
   test $# -le 1 || return
@@ -353,29 +396,20 @@ vc_status ()
   cd "$1"
 }
 
-vc_ps1()
+vc_revision_git()
 {
-  local s
-  s="$(vc_status "$PWD")" || return $?
-  echo "$s"
+  git show-ref --head HEAD -s
 }
 
-# special updater (for Bash PROMPT_COMMAND)
-vc_prompt_command()
+vc_scmdir()
 {
-  test $# -le 1 || return
-  test $# -eq 1 || set -- "$PWD"
-  test -n "$1" -a -d "$1" || err "No such directory '$1'" 3
-
-  local pwdref cache
-
-  # cache response in file
-  pwdref="$(echo "$1" | tr '/' '-' )"
-  cache="$(statusdir.sh assert-dir vc prompt-command "$pwdref")" || return
-
-  test ! -e "$cache" -o "$1"/.git -nt "$cache" && {
-    __vc_status "$1" > "$cache"
-  }
-
-  cat "$cache"
+  vc_dir "$@" || error "can't find SCM-dir" 1
 }
+
+vc_svndir()
+{
+  test -d "${1-}" || error "vc-svndir expected dir argument: '$1'" 1
+  ( test -e "$1/.svn" && echo $(pwd)/.svn || return 1 )
+}
+
+

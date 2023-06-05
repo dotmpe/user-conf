@@ -157,6 +157,11 @@ str_sh_clean ()
   ansi_clean "$1" | sed -e 's/\(\\\(\[\|\]\)\)//g' | tr -d '[:cntrl:]'
 }
 
+str_sh_expand_braces ()
+{
+  eval "echo $1"
+}
+
 # Get the length of the string counting the number of visible characters
 # Strips ANSI codes and delimiter escapes (for Bash PS1) before count
 str_sh_len ()
