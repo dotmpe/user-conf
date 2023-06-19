@@ -5,7 +5,7 @@
 
 shell_uc_lib__load ()
 {
-  true
+  if_ok () { return; }
 }
 
 shell_uc_lib__init ()
@@ -25,8 +25,8 @@ shell_uc_lib__init ()
   # expressions will make the shell remain the parent process.
   # Observed with Bash.
 
-  # Get the path to executable of the current PID
-  PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1)
+  # Get the path to executable of the current PID (ie. not the same as 'comm')
+  PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1) || return
 
   test -n "${SHELL:-}" || {
     test -n "${ENV_CMD:-}" && {
@@ -40,8 +40,8 @@ shell_uc_lib__init ()
     }
   }
 
-  true "${SHELL:="$(command -v -- "$SHELL_NAME")"}"
-  true "${SHELL_NAME:="$(basename -- "$SHELL")"}"
+  if_ok "${SHELL:="$(command -v -- "$SHELL_NAME")"}" &&
+  if_ok "${SHELL_NAME:="$(basename -- "$SHELL")"}" || return
 
   ! ${shell_uc_debug:-false} || {
     {
@@ -52,12 +52,11 @@ shell_uc_lib__init ()
     } >&2
   }
 
-  # XXX: Bash exports SHELL, dont like that. But its not easy to unset. I
-  # a similar line at the top of /etc/profile
+  # XXX: Bash exports SHELL, dont like that. But its not easy to unset.
   test "$SHELL_NAME" = "bash" && {
     declare +x SHELL=$SHELL
-    # Still, when unexported, /bin/sh mode bash still manages to get this setting.
-    # Unless we clear it like SHELL= /bin/sh only then it is empty as expected.
+    # when unexported, /bin/sh mode bash still manages to get this setting.
+    # Unless we clear it like SHELL= /bin/sh, only then it stays empty as expected.
   }
 
   test -x "$SHELL" || {

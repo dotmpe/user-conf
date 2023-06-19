@@ -27,7 +27,7 @@ class.deinit () # ~ <Var-name>
 # Helper for class functions
 class.info () # ~ # Print human readable Id info for current class context
 {
-  echo "class.$name <#$id> ${Class__instances[$id]:?Expected class instance #$id}"
+  echo "class.$name:${Class__instances[$id]:?Expected class instance #$id}#$id"
 }
 
 # The 'new' handler. Initialize a new instance of Type, the lib-init hook
@@ -129,7 +129,7 @@ class.Class () # ~ <Instance-Id> .<Message-name> <Args...>
         : "$(( ${#_} + 1 ))"
         echo "${Class__instances[$id]:$_}" ;;
 
-    # XXX: maybe/prolly want to split-off .context to something that iter's ID/types
+    # XXX: maybe/prolly want to split-off .context to something that iters ID/types
     .tree|.context ) class.info-tree ;;
     .toString | \
     .default | \

@@ -1,6 +1,6 @@
 class_gitdir_lib__load ()
 {
-  lib_require vc-uc || return
+  lib_require uc-fields vc-uc || return
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}GitDir
 }
 
@@ -27,7 +27,7 @@ class.GitDir ()
         class_GitDir__basedirs[$id]=$_
         if_ok "$(vc_gitdir "$2")" || return
         class_GitDir__gitdirs[$id]=$_
-        uc_fields_define vc-gitsubdir
+        uc_fields_define vc-gitsubdir &&
         $super.$super_type "$1"
       ;;
     ".__$name" ) $super.__$super_type ;;

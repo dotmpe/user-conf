@@ -34,6 +34,7 @@ uc_profile_source_lib () # ~
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
   . "${UC_LIB_PATH:?}"/shell-uc.lib.sh &&
+  shell_uc_lib__load &&
   shell_uc_lib__init &&
   . "$UC_LIB_PATH"/str-uc.lib.sh &&
   . "$UC_LIB_PATH"/argv-uc.lib.sh &&

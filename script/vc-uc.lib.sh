@@ -67,7 +67,7 @@ vc_flags_git()
   test $# -eq 1 || set -- "$PWD"
   test -n "$1" -a -d "$1" || err "No such directory '$1'" 3
   local b r= g fmt
-  fmt=${2:-printf:(%s%s%s%s%s%s%s%s)}
+  fmt=${2:-(%s%s%s%s%s%s%s%s)}
 
   g="$(vc_gitdir "$1")"
   test -e "$g" || return

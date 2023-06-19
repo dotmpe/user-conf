@@ -9,7 +9,7 @@
 
 stattab_uc_lib__load ()
 {
-  lib_require str-uc todotxt || return
+  lib_require str-uc date-uc todotxt || return
   # XXX: lib_require_alt str-htd str-uc || return
   #lib_require str-uc || return
   : "${gsed:=sed}"
@@ -323,7 +323,7 @@ class.StatTabEntry () # :Class ~ <ID> .<METHOD> <ARGS...>
 {
   test $# -gt 0 || return 177
   test $# -gt 1 || set -- "$1" .toString
-  local name=StatTabEntry super_type=Class self super id=${1:?} m=$2
+  local name=StatTabEntry super_type=Class self super id=${1:?} m=${2:-}
   shift 2
   self="class.$name $id "
   super="class.$super_type $id "
@@ -389,8 +389,8 @@ class.StatTabEntry () # :Class ~ <ID> .<METHOD> <ARGS...>
       ;;
 
     .attr ) # ~ <Name-key>           # Get field value from class instance value
-        : "StatTabEntry__${1//-/_}"
-        echo "${!_[$id]}"
+        : "StatTabEntry__${1//-/_}[$id]"
+        echo "${!_}"
       ;;
     .var ) # ~ <Var-key>             # Get field value from regular env variable
         : "stttab_${1//-/_}"
@@ -403,8 +403,20 @@ class.StatTabEntry () # :Class ~ <ID> .<METHOD> <ARGS...>
         #todotxt_field_${field//-/_} <<< "$"
       ;;
 
+    .toString )
+        echo \
+          $($self.attr status) \
+          $($self.attr btime) \
+          $($self.attr ctime) \
+          $($self.attr utime) \
+          $($self.attr id) \
+          $($self.attr short) \
+          $($self.attr refs) \
+          $($self.attr tags)
+      ;;
+
     .class-context ) class.info-tree .tree ;;
-    .info | .toString ) class.info ;;
+    .info ) class.info ;;
 
     * ) $super"$m" "$@" ;;
   esac
@@ -423,7 +435,7 @@ class.StatTab () # :Class ~ <ID> .<METHOD> <ARGS...>
 {
   test $# -gt 0 || return 177
   test $# -gt 1 || set -- "$1" .toString
-  local name=StatTab super_type=Class self super id=${1:?} m=$2
+  local name=StatTab super_type=Class self super id=${1:?} m=${2:-}
   shift 2
   self="class.$name $id "
   super="class.$super_type $id "
@@ -455,7 +467,9 @@ class.StatTab () # :Class ~ <ID> .<METHOD> <ARGS...>
         create "$var" StatTabEntry "$id"
       ;;
     .fetch ) # ~ <Var-name> <Stat-id>
-        stattab_fetch "$2" "" "$($self.tab-ref)" &&
+        : "${1:?Expected Var-name argument}"
+        : "${2:?Expected Stat-id argument}"
+        stattab_fetch "$_" "" "$($self.tab-ref)" &&
         $LOG info : "Retrieved $($self.class) entry" "$1=$_:E$?" $? &&
         create "$1" $($self.tab-entry-class) "$id" "$stttab_src:$stttab_lineno" &&
         ${!1}.get

@@ -7,6 +7,8 @@
 
 uc_lib__load ()
 {
+  #true "${ENV_SRC:=}"
+  #true "${ENV_LIB:=}"
   true "${lib_loaded:=}"
 }
 
@@ -48,13 +50,13 @@ uc_lib__define ()
 
 ## Base
 
-# Test lib exists in scriptpath
+# Test lib exists on PATH and echo source path
 uc_lib_exists () # ~ <Name>
 {
   command -v "${1:?}".lib.sh
 }
 
-uc_lib_ids ()
+uc_lib_ids () # ~ <Names...>
 {
   test $# -gt 0 || set -- ${lib_loaded:?}
   local lib_name
@@ -70,30 +72,37 @@ uc_script_load () # ~ <Src-name...>
   local scr_name scr_path scr_varn scr_st
   for scr_name in "${@:?}"
   do
-    scr_path=$(command -v "$scr_name.sh") || {
-      $LOG error ":uc:script-load" "Not found" "$scr_name" $?
-      return
-    }
+    scr_path=$(command -v "$scr_name.sh") ||
+      $LOG error ":uc:script-load" "Not found" "$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_loaded
     test 0 -eq ${!scr_st:--1} && {
-        ! uc_debug ||
-          $LOG debug :uc:script-load "Skipping sourced script" "$scr_name"
-      } || {
-        ! uc_debug ||
-          $LOG info :uc:script-load "Sourcing script" "$scr_name"
-        . "$scr_path"
-        eval ${scr_st}=$?
-        ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
-        test 0 -eq ${!scr_st:?} || {
-          $LOG warn :uc:script-load "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
-        }
+      ! uc_debug ||
+        $LOG debug :uc:script-load "Skipping sourced script" "$scr_name"
+    } || {
+      ! uc_debug ||
+        $LOG info :uc:script-load "Sourcing script" "$scr_name"
+      . "$scr_path"
+      eval ${scr_st}=$?
+      ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
+      test 0 -eq ${!scr_st:?} || {
+        $LOG warn :uc:script-load "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
       }
+    }
   done
 }
 
-# Load sh-lib on PATH
-uc_lib_load ()
+# Track <nameid>_lib_loaded and set ENV_LIB.
+#
+# Load sh-libs <Names> from PATH, or load <default-libs>. Loading is two steps:
+# sourcing the script, and invoking the lib load hook (if present). The load
+# hook return status or 0 is tracked using a variable.
+# The routine also populates <ENV-LIB> for every source path loaded, and
+# <lib-loaded> with every lib name that correctly loaded. Load hooks can return
+# E:retry or E:next to signal that loading failed but other libs can proceed,
+# with the status returned only at the end. Other states trigger an abort
+# directly after they are recorded.
+uc_lib_load () # <Names...>
 {
   test -z "${lib_load:-}" || return ${_E_recursion:-111}
   local lib_load=1
@@ -101,42 +110,50 @@ uc_lib_load ()
     test -n "${1-}" || return ${_E_GAE:-193}
   } || set -- ${default_sh_lib:?}
 
-  local lib_name lib_varn lib_stat lib_path f_lib_load
+  local lib_name lib_varn lib_stat lib_path f_lib_load retry
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} && { continue; }
-    lib_path=$(command -v "$lib_name.lib.sh") ||
-      $LOG error ":uc:lib-load" "Not found" "$lib_name" $? || return
-    # XXX: not the same var.. UC_TOOLS_DEBUG?
-    #test -z "${USER_CONF_DEBUG-}" ||
-    ! uc_debug ||
-      $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
-    . "$lib_path" && {
+    # Stored status means file already loaded and lookup is not needed
+    test "$_" != "-1" || {
+      lib_path=$(command -v "$lib_name.lib.sh") ||
+        $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
+      # XXX: not the same var.. UC_TOOLS_DEBUG?
+      #test -z "${USER_CONF_DEBUG-}" ||
+      ! uc_debug ||
+        $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
+      . "$lib_path" ||
+        $LOG error ":uc:lib-load" "Sourcing library" "E$?:$lib_name" $? ||
+          return
       ENV_LIB="${ENV_LIB:-}${ENV_LIB:+ }$lib_path"
-      f_lib_load=${lib_varn}_lib__load
-      type $f_lib_load >/dev/null 2>&1 || {
-        f_lib_load=${lib_varn}_lib_load
-        ! type $f_lib_load >/dev/null 2>&1 || {
-          $LOG warn : "Deprecated lib core 'load' hook name" "$f_lib_load"
-        }
-      }
-      ! type $f_lib_load >/dev/null 2>&1 || {
-        $f_lib_load
-      }
-    } || {
-      eval ${lib_stat}=$?
-      test ${_E_retry:-198} -eq ${!lib_stat} && return $_
-      $LOG error ":uc:lib-load" "Loading shell library" "E$_:$lib_name" $_
-      return
     }
-    eval ${lib_stat}=0
+    # Execute load hook if found, and set status
+    f_lib_load=${lib_varn}_lib__load
+    declare -F $f_lib_load >/dev/null 2>&1 || {
+      f_lib_load=${lib_varn}_lib_load
+      ! declare -F $f_lib_load >/dev/null 2>&1 || {
+        $LOG warn : "Deprecated lib core 'load' hook name" "$f_lib_load"
+      }
+    }
+    ! declare -F $f_lib_load >/dev/null 2>&1 || {
+      $f_lib_load
+    }
+    declare -g ${lib_stat}=$?
     lib_loaded="${lib_loaded-}${lib_loaded:+ }$lib_name"
+    test 0 -eq ${!lib_stat} && continue
+    { test ${_E_next:-196} -eq $_ ||
+      test ${_E_retry:-198} -eq $_
+    } && retry=true || return $_
   done
+  ! ${retry:-false} || return ${_E_retry:-198}
 }
 
-uc_lib_init ()
+# Invoke lib 'init' hook and track result, but only if present. On subsquent
+# invocations only missing hooks or non-zero states are tried again. <Names>
+# defaults to <lib-loaded>.
+uc_lib_init () # ~ [<Names...>]
 {
   test -z "${lib_init:-}" || return ${_E_recursion:-111}
   local lib_init=1
@@ -146,23 +163,21 @@ uc_lib_init ()
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
-    test 0 -eq ${!lib_stat:--1} || {
+    test 0 -eq ${!lib_stat:--1} ||
       $LOG error ":uc:lib-init" "Missing or failed to load" \
-        "E${!lib_stat:-unset}:$lib_name" $_
-      return
-    }
+        "E${!lib_stat:-unset}:$lib_name" $_ || return
     lib_init=${lib_varn}_lib_init
     f_lib_init=${lib_varn}_lib__init
-    type $f_lib_init >/dev/null 2>&1 || {
+    declare -F $f_lib_init >/dev/null 2>&1 || {
       f_lib_load=${lib_varn}_lib_init
-      ! type $f_lib_init >/dev/null 2>&1 || {
+      ! declare -F $f_lib_init >/dev/null 2>&1 || {
         $LOG warn : "Deprecated lib core 'init' hook name (ignored)" "$f_lib_init"
       }
     }
-    ! type $f_lib_init >/dev/null 2>&1 || {
+    ! declare -F $f_lib_init >/dev/null 2>&1 || {
       $f_lib_init
     }
-    eval ${lib_init}=$?
+    declare -g ${lib_init}=$?
     test 0 -eq ${!lib_init} || {
       test ${_E_retry:-198} -ne $_ || return $_
       #  $LOG crit :uc:lib-init "Not implemented: pending in lib-init" "" \
@@ -173,10 +188,12 @@ uc_lib_init ()
   done
 }
 
-# Test if $lib_loaded all sourced/loaded OK. To see which, use $lib_loaded.
-uc_lib_loaded ()
+# Test if all given names loaded correctly.
+uc_lib_loaded () # ~ [<Names...>]
 {
-  test $# -gt 0 || set -- ${lib_loaded:?}
+  test $# -gt 0 || {
+    test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
+  }
   local lib_name lib_varn lib_stat
   for lib_name in "${@:?}"
   do
@@ -189,18 +206,23 @@ uc_lib_loaded ()
 
 # Exactly like lib-loop, except given symbols do not need to exist and are
 # skipped silently if missing.
-uc_lib_hook () # ~ <Type> <Name-key-suffix> <Names...>
+uc_lib_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
 {
   lib_loop_require=false uc_lib_loop "$@"
 }
 
-# Go over symbols generated from suffix and loaded lib names, and either echo
-# or invoke those variable(s) and function(s) respectively.
-uc_lib_loop () # ~ <Type> <Name-key-suffix> <Names...>
+# Go over symbols for lib names and suffix, and either invoke those as functions
+# or resolve to values from variables.
+# XXX: this is provided as helper, but all of the uc-lib-* functions do their
+# own loop implementation. The type 'pairs' is added as a convenient tool to
+# inspect lib-load, lib-init states and similar.
+uc_lib_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
 {
-  local hook_tp=${1:-fun} hook_suf=${2:?}
+  local hook_tp=${1:-fun} hook_suf=${2:?uc-lib-loop:2:Hook suffix argument}
   shift 2
-  test $# -gt 0 || set -- ${lib_loaded:?}
+  test $# -gt 0 || {
+    test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
+  }
   local lib_name lib_varn lib_hook
   for lib_name in "${@:?}"
   do
@@ -226,14 +248,15 @@ uc_lib_loop () # ~ <Type> <Name-key-suffix> <Names...>
   done
 }
 
-uc_lib_require () # ~ <Libs...>
+# A wrapper for lib-load, that also works inside lib 'load' hooks. Normally
+# calls during lib-load (ie. from a load hook) results in recursion, but this
+# functions populates LIB_REQ and returns E:retry status in that case. These
+# prerequisite names are accumulated and prefixed to the current <names>, libs
+# that loaded correctly are filtered out, and lib-load is invoked for the rest
+# until either all are loaded or an unexpected status occurs.
+uc_lib_require () # ~ <Names...>
 {
-  #local uc_lib_require=1
   test $# -gt 0 || return ${_E_MA:-194}
-  #test -z "${lib_init:-}" || {
-  #  return ${_E_retry:-198}
-  #  return ${_E_todo:-125}
-  #}
 
   test -z "${lib_load-}" || {
     set -- $(for lib_name in "${@:?}"
@@ -243,11 +266,11 @@ uc_lib_require () # ~ <Libs...>
         test 0 -eq ${!lib_stat:--1} && continue
         echo "$lib_name"
       done)
-    test $# -eq 0 && return
     # Pending libs
     LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
-    return ${_E_retry:-198}
+    test -z "$LIB_REQ" && return || return ${_E_retry:-198}
   }
+
   lib_load "$@" && return ||
     test ${_E_retry:-198} -eq $? ||
       $LOG error :uc:lib-require "During load" "E$_:$*" $_ || return
@@ -255,8 +278,17 @@ uc_lib_require () # ~ <Libs...>
   : "${LIB_REQ:?"Expected LIB_REQ"}"
   until test -z "${LIB_REQ-}"
   do
-    $LOG info :uc:lib-require "Pending:" "$LIB_REQ:for $*"
+    $LOG info :uc:lib-require "Required:" "$LIB_REQ:for:$*"
     set -- $LIB_REQ "$@" ; unset LIB_REQ
+    set -- $(for lib_name in "${@:?}"
+      do
+        lib_varn=${lib_name//[^A-Za-z0-9_]/_}
+        lib_stat=${lib_varn}_lib_loaded
+        test 0 -eq ${!lib_stat:--1} && continue
+        echo "$lib_name"
+      done | awk '!a[$0]++')
+    test $# -eq 0 && return
+    $LOG info :uc:lib-require "Pending:" "$*"
     lib_load "$@" && return || {
       test ${_E_retry:-198} -eq $? || return $_
     }
