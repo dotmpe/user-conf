@@ -73,11 +73,16 @@ vc_flags_git()
   test -e "$g" || return
 
   vc_check_git "$g" || {
-    echo "(git:unborn)"
+    echo "(!git:unborn)"
     return
   }
 
   cd "$1"
+  std_quiet git status -s || {
+    echo "(!git:E$?)"
+    return
+  }
+
   if [ -f "$g/rebase-merge/interactive" ]; then
     r="|REBASE-i"
     b="$(cat "$g/rebase-merge/head-name")"
