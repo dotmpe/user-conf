@@ -16,6 +16,8 @@
 
 stdlog_uc_lib__load ()
 {
+  lib_require argv-uc || return
+
   # Like verbosity but for handlers in this lib
   true "${STDLOG_UC_LEVEL:=6}" # Info
   # XXX: Determines return status of log statement
@@ -94,11 +96,11 @@ log_src_id_var()
       log_key="$stderr_log_channel"
     } || {
       test -n "${base-}" || {
-        base="\$scriptname[\$\$]"
-        test -n "${scriptname-}" || {
-          scriptpathname="$(realpath -- "$0")"
-          scriptname=$(basename -- "$scriptname")
-        }
+        base="\${scriptname:?}[\$\$]"
+        #test -n "$scriptname" || {
+        #  scriptpathname="$(realpath -- "$0")"
+        #  scriptname=$(basename -- "$scriptname")
+        #}
       }
       test -n "$base" && {
         test -n "${scriptext-}" || scriptext=.sh
@@ -119,7 +121,7 @@ log()
   printf -- "[$(log_src_id)] $1\n"
 }
 
-stderr()
+stderr_log_inner ()
 {
   case "$(echo $1 | tr 'A-Z' 'a-z')" in
     warn*|err*|notice ) log "$1: $2" 1>&2 ;;
@@ -139,7 +141,7 @@ stderr_log () # ~ <...:ll>
 {
   stdlog_v && test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
   [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
-  log_key=$2 stderr "$1" "$3 <$4>"
+  log_key=$2 stderr_log_inner "$1" "$3 <$4>"
 }
 
 # std-v <level>
@@ -165,50 +167,50 @@ std_exit () # [exit-at-level]
 emerg()
 {
   test $# -le 2 || return 64
-  std_v 0 && stderr "Emerg" "$1"
+  std_v 0 && stderr_log_inner "Emerg" "$1"
   std_exit ${2-}
 }
 std_alert()
 {
   test $# -le 2 || return 64
-  std_v 1 && stderr "Alert" "$1"
+  std_v 1 && stderr_log_inner "Alert" "$1"
   std_exit ${2-}
 }
 crit()
 {
   test $# -le 2 || return 64
-  std_v 2 && stderr "Crit" "$1"
+  std_v 2 && stderr_log_inner "Crit" "$1"
   std_exit ${2-}
 }
 error()
 {
   test $# -le 2 || return 64
-  std_v 3 && stderr "Error" "$1"
+  std_v 3 && stderr_log_inner "Error" "$1"
   std_exit ${2-}
 }
 warn()
 {
   test $# -le 2 || return 64
-  std_v 4 && stderr "Warning" "$1"
+  std_v 4 && stderr_log_inner "Warning" "$1"
   std_exit ${2-}
 }
 note()
 {
   test $# -le 2 || return 64
-  std_v 5 && stderr "Notice" "$1"
+  std_v 5 && stderr_log_inner "Notice" "$1"
   std_exit ${2-}
 }
 notice() { note "$@"; }
 std_info()
 {
   test $# -le 2 || return 64
-  std_v 6 && stderr "Info" "$1"
+  std_v 6 && stderr_log_inner "Info" "$1"
   std_exit ${2-}
 }
 debug()
 {
   test $# -le 2 || return 64
-  std_v 7 && stderr "Debug" "$1"
+  std_v 7 && stderr_log_inner "Debug" "$1"
   std_exit ${2-}
 }
 

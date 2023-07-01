@@ -70,7 +70,7 @@ uc_main_log () # ~ (env|[log] <log-args>)
   $uc_log "$@"
 }
 
-# Setup uc_log handler using syslog-uc.lib
+# Setup uc_log handler using syslog-uc.lib (and INIT_LOG but not LOG)
 uc_log_init () # ~
 {
   # Get log key base. This is the first part a tag/facility prefixed to each

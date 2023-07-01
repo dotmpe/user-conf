@@ -14,6 +14,9 @@
 #
 syslog_uc_lib__load ()
 {
+  lib_require $( test "1" != "${COLORIZE:-1}" || echo ansi-uc ) stdlog-uc ||
+    return
+
   # XXX: These will need to be defaulted based on context. For system profile or
   # RC's and even user files they would be more conservative at first...
 
@@ -45,7 +48,7 @@ syslog_uc_lib__load ()
 
   # XXX: this could be off at 'dumb' and non-interactive by default
   # not sure when/if to toggle this yet.
-  test -n "${UC_PROFILE_LOG_FILTERS-}" || : "${UC_PROFILE_LOG_FILTERS:="severity colorize"}"
+  true "${UC_PROFILE_LOG_FILTERS:="severity colorize"}"
 }
 
 syslog_uc_lib__init () # ~

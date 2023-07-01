@@ -22,7 +22,8 @@
 
 std_uc_lib__load ()
 {
-  test -n "${uname-}" || uname="$(uname -s)"
+  : "${uname:="$(uname -s)"}"
+  : "${scriptname:=$(basename -- "$0")}"
 
   # The deeper get within subshells, the more likely stdio is re-routed from
   # tty. This test should be performed in the scripts main.
@@ -55,7 +56,7 @@ std_uc_lib__init ()
   }
 
   std_uc_env_def
-  $INIT_LOG "debug" "" "Initialized std-uc.lib" "$*"
+  ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*"
 }
 
 
