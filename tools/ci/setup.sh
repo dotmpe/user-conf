@@ -12,6 +12,8 @@ export STDLOG_UC_ANSI=1
 export STDLOG_UC_LEVEL=7
 export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
 export XDG_CACHE_HOME=\$PWD/build/cache
+export U_C=$HOME/project
+export U_S=$HOME/src/user-scripts
 EOM
 } > ~/.profile
 
@@ -28,5 +30,9 @@ shopt -s extdebug
 trap bash_uc_errexit ERR
 EOM
 } > test-env.sh
+
+test -e ~/src/user-scripts || {
+  git clone https://github.com/dotmpe/user-scripts r0.0 ~/src/user-scripts
+}
 
 #
