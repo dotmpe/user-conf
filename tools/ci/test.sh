@@ -1,6 +1,6 @@
 #!/bin/sh
 
-UC_LIB_PATH=${U_C:?}/script
+UC_LIB_PATH=${U_C:-$HOME/project}/script
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh
 
