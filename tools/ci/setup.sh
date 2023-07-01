@@ -38,7 +38,7 @@ ls -la ~/src/
 echo
 
 test -e ~/src/bitbucket.org/user-scripts || {
-  mkdir -vp ~/src/{bitbucketet.org,github.com}/dotmpe
+  mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
   #git clone https://github.com/dotmpe/user-scripts -b r0.0 \
   #  ~/src/github.com/dotmpe/user-scripts
   git clone git@bitbucket.org:dotmpe/user-scripts -b r0.0 \
