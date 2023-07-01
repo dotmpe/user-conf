@@ -42,7 +42,7 @@ test -e ~/src/bitbucket.org/user-scripts || {
   #git clone https://github.com/dotmpe/user-scripts -b r0.0 \
   #  ~/src/github.com/dotmpe/user-scripts
   #git clone git@bitbucket.org:dotmpe/user-scripts -b r0.0 \
-  git clone https://bitbucket.org/dotmpe/user-scripts -b r0.0 \
+  git clone https://dotmpe@bitbucket.org/dotmpe/user-scripts.git -b r0.0 \
     ~/src/bitbucket.org/dotmpe/user-scripts
 }
 
