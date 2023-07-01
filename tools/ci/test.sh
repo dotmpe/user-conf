@@ -1,10 +1,5 @@
 #!/bin/sh
 
-ls -la ~/.local/
-echo
-ls -la ~/src/
-echo
-
 UC_LIB_PATH=${U_C:?}/script
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh

@@ -31,6 +31,11 @@ trap bash_uc_errexit ERR
 EOM
 } > test-env.sh
 
+ls -la ~/.local/
+echo
+ls -la ~/src/
+echo
+
 test -e ~/src/user-scripts || {
   git clone https://github.com/dotmpe/user-scripts -b r0.0 ~/src/user-scripts
 }
