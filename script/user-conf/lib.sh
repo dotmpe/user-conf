@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Created: 2015-09-21
 
+test -n "${UC_LIB_PATH:-}" || return 123
 true "${UC_LIB_PATH:?Expected UC shell lib}"
 
 . ${UC_LIB_PATH}/../tools/u-c/init.sh
