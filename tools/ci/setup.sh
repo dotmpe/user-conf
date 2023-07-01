@@ -13,8 +13,9 @@ export STDLOG_UC_LEVEL=7
 export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
 export XDG_CACHE_HOME=\$PWD/build/cache
 export U_C=$HOME/project
-export U_S=$HOME/src/user-scripts
+export U_S=$HOME/src/bitbucket.org/user-scripts
 EOM
+#export U_S=$HOME/src/github.com/user-scripts
 } > ~/.profile
 
 test -e ~/.local/lib/user-conf || {
@@ -36,8 +37,12 @@ echo
 ls -la ~/src/
 echo
 
-test -e ~/src/user-scripts || {
-  git clone https://github.com/dotmpe/user-scripts -b r0.0 ~/src/user-scripts
+test -e ~/src/bitbucket.org/user-scripts || {
+  mkdir -vp ~/src/{bitbucketet.org,github.com}/dotmpe
+  #git clone https://github.com/dotmpe/user-scripts -b r0.0 \
+  #  ~/src/github.com/dotmpe/user-scripts
+  git clone git@bitbucket.org:dotmpe/user-scripts -b r0.0 \
+    ~/src/bitbucket.org/dotmpe/user-scripts
 }
 
 #
