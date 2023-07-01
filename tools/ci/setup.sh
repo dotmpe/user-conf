@@ -32,7 +32,7 @@ EOM
 } > test-env.sh
 
 test -e ~/src/user-scripts || {
-  git clone https://github.com/dotmpe/user-scripts r0.0 ~/src/user-scripts
+  git clone https://github.com/dotmpe/user-scripts -b r0.0 ~/src/user-scripts
 }
 
 #
