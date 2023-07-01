@@ -1,8 +1,9 @@
 #!/bin/sh
 
-ls -la ~/
+ls -la ~/src
 echo
-ls -la ~/build
+ls -la ~/project
+echo
 
 UC_LIB_PATH=${U_C:=$HOME/project}/script
 uc_lib=script/user-conf
