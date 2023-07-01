@@ -6,7 +6,12 @@
 #   r:state
 #   s:stash
 
-vc_ucnew_lib__init()
+vc_ucnew_lib__load ()
+{
+  lib_require uc-cmdcache || return
+}
+
+vc_ucnew_lib__init ()
 {
   test "${vc_ucnew_lib_init-}" = "0" && return
   : "${vc_fields:=branch revision type status index stash branches remotes}"

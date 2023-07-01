@@ -27,6 +27,27 @@ uc_lib__init ()
   $uctab.tab-exists || $uctab.tab-init
 }
 
+# Generate current bases sequence, default to <base>.
+# Recursively adds every super-group.
+# XXX: This uses the same name pattern as user-script-bases.
+uc_bases () # ~ [<bases..>]
+{
+  test $# -gt 0 || set -- "$base"
+
+  local _baseid
+  while test $# -gt 0
+  do
+    #uc_bases="${uc_bases:-}${uc_bases:+ }$1"
+    _baseid=${1//[:.-]/_}
+    #uc_base_keys="${uc_base_keys:-}${uc_base_keys:+ }$_baseid"
+    echo "$1"
+    shift
+    # Repeat loop while key has group attribute, prefixing it to args
+    : ${_baseid}__grp
+    test -z "${!_:-}" || set -- "$_" "$@"
+  done
+}
+
 uc_env_defaults ()
 {
   test -n "${human_out:-}" || {

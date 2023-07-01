@@ -19,6 +19,8 @@
 
 uc_fields_lib__load ()
 {
+  lib_require str-uc shell-uc uc || return
+
   : "${uc_fields_default_validator:=change}"
 }
 
@@ -31,22 +33,28 @@ uc_fields_lib__load ()
 # Simple get/set'er for field. To check the value before storing use uc-vfield.
 uc_field () # [base] ~ <Name> <Key> [<Value>]
 {
-  local field=${1:?} key=${2:?} newval=${3:-} varn base=${base:-uc}
+  local field=${1:?} key=${2:?} newval=${3:-} varn base=${base:-uc} stat
   uc_field_varname || return
   test 2 -eq $# && {
+    # Respond with current value
     ${uc_field_required:-false} &&
       echo "${!varn}" ||
       echo "${!varn:-}"
   } || {
-    # Don't know any other way to do this than to use eval
+    # Set new value in field array for key
+    # XXX: Don't know any other way to do this (for a global Array) than to use eval
     eval "$varn=\"$newval\""
-    ${quiet:-false} $? && return $_ ||
-      ! uc_fields_debug $_ && return $_ ||
-        $LOG debug :$base-field "Updated value" "$field:$key:E$_" $_
+    # Not sure if status matters really?
+    stat=$?
+    "${quiet:-false}" && return $stat ||
+      ! uc_fields_debug "$stat" && return $stat ||
+        $LOG debug :$base-field "Updated value" "$field:$key:E$stat" $stat
   }
 }
 
-# Invoke named hook function for field/group.
+# Invoke named hook function for field/group. This does not touch/fetch field
+# values in any way, but does invoke a function name using the same name format
+# as the uc-fields array variables.
 uc_field_hook () # [base,hook{,-{group,require}}] ~ <Name> <Hook-arg...>
 {
   local field=${1//-/_} group funn base=${base:-uc} hook=${hook:-update}
@@ -57,6 +65,15 @@ uc_field_hook () # [base,hook{,-{group,require}}] ~ <Name> <Hook-arg...>
     ${hook_require:-false} && return 1 || return 0
   }
   "$funn" "${@:2}"
+}
+
+uc_field_hooks () # ~ <uc-field-hook-args...>
+{
+  local _base
+  for _base in $(uc_bases)
+  do
+    base=$_base uc_field_hook "$@" || return
+  done
 }
 
 # A wrapper for setter operations, this calls the 'update' hook if defined for
@@ -102,15 +119,18 @@ uc_fields_define () # [field-group] ~ <Base> <Braces-exprs...|Field-names...>
 }
 
 # A wrapper for the uc-field set'er that runs validators on new value for
-# given field before.
+# given field before. Because both field variable names and hooks depend on
+# <base>, the current base is used to set <varn>, but during loop/hook <base>
+# will be whatever the hook is from.
 uc_vfield () # [base] ~ <Name> <Key> [<Value>]
 {
-  local field=${1:?} key=${2:?} newval=${3:-} base=${base:-uc} \
+  local field=${1:?} key=${2:?} varn newval=${3:-} _base base=${base:-uc} \
     hook=validate hook_group=vfield \
     vvdtors=${uc_fields_validator:-${uc_fields_default_validator:?}}
+  uc_field_varname || return
   for vvdtor in ${vvdtors//,/ }
   do
-    uc_field_hook "$vvdtor" "$field" "$key" "$newval" || return
+    uc_field_hooks "$vvdtor" "$field" "$key" "$newval" || return
   done
   uc_field "$@"
 }
@@ -119,7 +139,6 @@ uc_vfield () # [base] ~ <Name> <Key> [<Value>]
 uc_vfield_change_validate () # ~ <Name> <Key> <Value>
 {
   local field=${1:?} key=${2:?} newval=${3:-} varn base=${base:-uc}
-  uc_field_varname || return
   test "${newval}" != "${!varn:-}" || return ${_E_next:-196}
 }
 

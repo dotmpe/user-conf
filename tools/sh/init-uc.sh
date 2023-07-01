@@ -41,10 +41,10 @@ case "${uc_init_act:-}" in
       #$LOG notice : "Loading" "UC_LIB_PATH=${UC_LIB_PATH:-}"
       true "${UC_LIB_PATH:="$UCONF/script"}"
 
-      ${sh_assert_func:-uc_fun} ${lib_load:=uc_lib_load} || {
+      ${sh_assert_func:-uc_fun} ${lib_load:=lib_uc_load} || {
 
-        test -e $UC_LIB_PATH/uc-lib.lib.sh && {
-          . $UC_LIB_PATH/uc-lib.lib.sh || {
+        test -e $UC_LIB_PATH/lib-uc.lib.sh && {
+          . $UC_LIB_PATH/lib-uc.lib.sh || {
             $LOG error ":u-c:init" "Error loading uc lib" "$UC_LIB_PATH" 1
           }
           #uc_lib_init

@@ -5,18 +5,18 @@
 
 ## Core-ext
 
-uc_lib__load ()
+lib_uc__load ()
 {
   #true "${ENV_SRC:=}"
   #true "${ENV_LIB:=}"
   true "${lib_loaded:=}"
 }
 
-uc_lib__init ()
+lib_uc__init ()
 {
   sh_fun "${lib_load:-lib_load}" || {
-    declare -a uc_lib_dyn=()
-    uc_lib__define
+    declare -a lib_uc_dyn=()
+    lib_uc__define
   }
   test -z "${SCRIPTPATH:-}" || {
     local scrp
@@ -28,22 +28,22 @@ uc_lib__init ()
   }
 }
 
-#uc_lib__exports="core base extra"
+#lib_uc__exports="core base extra"
 #
-#uc_lib__declare ()
+#lib_uc__declare ()
 #{
-#  declare -ga uc_lib_dyn=( )
-#  SH_DECL[uc_lib:core]="uc_script_load uc_lib_load uc_lib_init"
+#  declare -ga lib_uc_dyn=( )
+#  SH_DECL[uc_lib:core]="uc_script_load lib_uc_load lib_uc_init"
 #}
 
 # Define (or override) lib-* functions with uc-lib-* variants
-uc_lib__define ()
+lib_uc__define ()
 {
   local dynfun
   for dynfun in ${us_lib_api:-exists load loaded init require}
   do
-    eval "lib_$dynfun () { uc_lib_$dynfun \"\$@\"; }"
-    uc_lib_dyn+=( "lib_$dynfun" )
+    eval "lib_$dynfun () { lib_uc_$dynfun \"\$@\"; }"
+    lib_uc_dyn+=( "lib_$dynfun" )
   done
 }
 
@@ -51,12 +51,12 @@ uc_lib__define ()
 ## Base
 
 # Test lib exists on PATH and echo source path
-uc_lib_exists () # ~ <Name>
+lib_uc_exists () # ~ <Name>
 {
   command -v "${1:?}".lib.sh
 }
 
-uc_lib_ids () # ~ <Names...>
+lib_uc_ids () # ~ <Names...>
 {
   test $# -gt 0 || set -- ${lib_loaded:?}
   local lib_name
@@ -102,7 +102,7 @@ uc_script_load () # ~ <Src-name...>
 # E:retry or E:next to signal that loading failed but other libs can proceed,
 # with the status returned only at the end. Other states trigger an abort
 # directly after they are recorded.
-uc_lib_load () # <Names...>
+lib_uc_load () # <Names...>
 {
   test -z "${lib_load:-}" || return ${_E_recursion:-111}
   local lib_load=1
@@ -137,6 +137,9 @@ uc_lib_load () # <Names...>
         $LOG warn : "Deprecated lib core 'load' hook name" "$f_lib_load"
       }
     }
+    ! uc_debug ||
+      ! declare -F $f_lib_load >/dev/null 2>&1 ||
+        $LOG debug : "Running lib 'load' hook" "$lib_name"
     ! declare -F $f_lib_load >/dev/null 2>&1 || {
       $f_lib_load
     }
@@ -153,7 +156,7 @@ uc_lib_load () # <Names...>
 # Invoke lib 'init' hook and track result, but only if present. On subsquent
 # invocations only missing hooks or non-zero states are tried again. <Names>
 # defaults to <lib-loaded>.
-uc_lib_init () # ~ [<Names...>]
+lib_uc_init () # ~ [<Names...>]
 {
   test -z "${lib_init:-}" || return ${_E_recursion:-111}
   local lib_init=1
@@ -189,7 +192,7 @@ uc_lib_init () # ~ [<Names...>]
 }
 
 # Test if all given names loaded correctly.
-uc_lib_loaded () # ~ [<Names...>]
+lib_uc_loaded () # ~ [<Names...>]
 {
   test $# -gt 0 || {
     test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
@@ -206,9 +209,9 @@ uc_lib_loaded () # ~ [<Names...>]
 
 # Exactly like lib-loop, except given symbols do not need to exist and are
 # skipped silently if missing.
-uc_lib_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
+lib_uc_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
 {
-  lib_loop_require=false uc_lib_loop "$@"
+  lib_loop_require=false lib_uc_loop "$@"
 }
 
 # Go over symbols for lib names and suffix, and either invoke those as functions
@@ -216,9 +219,9 @@ uc_lib_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
 # XXX: this is provided as helper, but all of the uc-lib-* functions do their
 # own loop implementation. The type 'pairs' is added as a convenient tool to
 # inspect lib-load, lib-init states and similar.
-uc_lib_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
+lib_uc_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
 {
-  local hook_tp=${1:-fun} hook_suf=${2:?uc-lib-loop:2:Hook suffix argument}
+  local hook_tp=${1:-fun} hook_suf=${2:?lib-uc-loop:2:Hook suffix argument}
   shift 2
   test $# -gt 0 || {
     test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
@@ -254,7 +257,7 @@ uc_lib_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
 # prerequisite names are accumulated and prefixed to the current <names>, libs
 # that loaded correctly are filtered out, and lib-load is invoked for the rest
 # until either all are loaded or an unexpected status occurs.
-uc_lib_require () # ~ <Names...>
+lib_uc_require () # ~ <Names...>
 {
   test $# -gt 0 || return ${_E_MA:-194}
 
