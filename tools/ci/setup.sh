@@ -47,7 +47,7 @@ export -f uc_fun uc_debug
 . \${U_C:?}/script/shell-uc.lib.sh && shell_uc_lib__load && shell_uc_lib__init
 
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
-export -f lib_{exists,load,loaded,init,require}
+export -f lib_{uc_,}{exists,load,loaded,init,require}
 EOM
 } > test-env.sh
 
