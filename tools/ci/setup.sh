@@ -1,5 +1,7 @@
 #!/bin/sh
 
+U_S=HOME/src/github.com/user-scripts
+
 { cat <<EOM
 # Added by Uc:tools/ci/setup.sh <$0> on $(date --iso=min)"
 export LOG=\$PWD/tools/sh/log.sh
@@ -13,7 +15,7 @@ export STDLOG_UC_LEVEL=7
 export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
 export XDG_CACHE_HOME=\$PWD/build/cache
 export U_C=$HOME/project
-export U_S=$HOME/src/github.com/user-scripts
+export U_S=$U_S
 EOM
 #export U_S=$HOME/src/bitbucket.org/user-scripts
 } > ~/.profile
@@ -35,14 +37,15 @@ EOM
 ls -la ~/.local/{etc,lib,usr,var}
 echo
 
-test -e ~/src/bitbucket.org/user-scripts || {
+test -e "$U_S" || {
   mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
   # XXX: bb needs auth
-  git clone https://github.com/dotmpe/user-scripts -b r0.0 \
-    ~/src/github.com/dotmpe/user-scripts
+  git clone https://github.com/dotmpe/user-scripts -b r0.0 "$U_S"
   #git clone git@bitbucket.org:dotmpe/user-scripts -b r0.0 \
   #git clone https://dotmpe@bitbucket.org/dotmpe/user-scripts.git -b r0.0 \
   #  ~/src/bitbucket.org/dotmpe/user-scripts
 }
+
+ls -la "$U_S/src/sh/lib"
 
 #
