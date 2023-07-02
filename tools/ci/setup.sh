@@ -39,7 +39,7 @@ test -e "$U_S" || {
 . ~/.profile
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
-sh_mode dev debug
+sh_mode strict dev
 
 . \${U_C:?}/script/uc-profile.lib.sh
 export -f uc_fun uc_debug
