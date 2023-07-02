@@ -35,7 +35,7 @@ test -e "$U_S" || {
 }
 
 pwd
-ls -la "$HOME/project"
+ls -la "$HOME/project/script"
 
 { cat <<EOM
 . ~/.profile
