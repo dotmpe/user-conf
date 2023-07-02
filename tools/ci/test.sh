@@ -1,5 +1,6 @@
 #!/bin/sh
 
+echo Starting CI test >&2
 UC_LIB_PATH=${U_C:?}/script
 uc_lib=script/user-conf
 . "$uc_lib"/lib.sh

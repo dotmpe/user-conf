@@ -39,7 +39,7 @@ test -e "$U_S" || {
 . ~/.profile
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
-sh_mode build
+sh_mode dev debug
 
 . \${U_C:?}/script/uc-profile.lib.sh
 export -f uc_fun uc_debug
@@ -48,6 +48,8 @@ export -f uc_fun uc_debug
 
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
+
+echo Loaded test-env >&2
 EOM
 } > test-env.sh
 
