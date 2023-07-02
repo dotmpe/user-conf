@@ -22,9 +22,6 @@ jobs:
     - run:
         name: Unit tests
         command: |
-          pwd
-          ls -la $HOME/project/script
-          ls -la $HOME/project/script/uc-profile.lib.sh
           . ./test-env.sh
           . ./tools/ci/test.sh
           . ./tools/ci/convert.sh
