@@ -1,9 +1,12 @@
 #!/bin/sh
 
 echo Starting CI test >&2
-UC_LIB_PATH=${U_C:?}/script
-uc_lib=script/user-conf
-. "$uc_lib"/lib.sh
+bats --version
+bats --help
+
+#UC_LIB_PATH=${U_C:?}/script
+#uc_lib=script/user-conf
+#. "$uc_lib"/lib.sh
 
 mkdir -vp build
 test ! -e ./build/test-results.tap || rm ./build/test-results.tap
