@@ -13,9 +13,9 @@ export STDLOG_UC_LEVEL=7
 export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
 export XDG_CACHE_HOME=\$PWD/build/cache
 export U_C=$HOME/project
-export U_S=$HOME/src/bitbucket.org/user-scripts
+export U_S=$HOME/src/github.com/user-scripts
 EOM
-#export U_S=$HOME/src/github.com/user-scripts
+#export U_S=$HOME/src/bitbucket.org/user-scripts
 } > ~/.profile
 
 test -e ~/.local/lib/user-conf || {
