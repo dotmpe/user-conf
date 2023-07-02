@@ -5,14 +5,14 @@
 
 ## Core-ext
 
-lib_uc__load ()
+lib_uc_lib__load ()
 {
   #true "${ENV_SRC:=}"
   #true "${ENV_LIB:=}"
   true "${lib_loaded:=}"
 }
 
-lib_uc__init ()
+lib_uc_lib__init ()
 {
   sh_fun "${lib_load:-lib_load}" || {
     declare -a lib_uc_dyn=()

@@ -41,8 +41,8 @@ test -e "$U_S" || {
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 sh_mode build
 . \${U_C:?}/script/uc-profile.lib.sh
-. \${U_C:?}/script/shell-uc.lib.sh && shell_uc__load && shell_uc__init
-. \${U_C:?}/script/lib-uc.lib.sh && lib_uc__load && lib_uc__init
+. \${U_C:?}/script/shell-uc.lib.sh && shell_uc_lib__load && shell_uc_lib__init
+. \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 EOM
 } > test-env.sh
 
