@@ -34,6 +34,9 @@ test -e "$U_S" || {
   #  ~/src/bitbucket.org/dotmpe/user-scripts
 }
 
+pwd
+ls -la "$HOME/project"
+
 { cat <<EOM
 . ~/.profile
 . \"\${U_C:?}/script/uc-profile.lib.sh\"
