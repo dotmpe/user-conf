@@ -29,6 +29,9 @@ jobs:
     - run:
         name: Test
         command: |
+          pwd
+          ls -la "$HOME/project/script"
+          ls -la "$HOME/project/script/uc-profile.lib.sh"
           . ./test-env.sh
           . ./tools/ci/run.sh
 
