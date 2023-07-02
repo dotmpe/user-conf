@@ -36,8 +36,8 @@ test -e "$U_S" || {
 
 { cat <<EOM
 . ~/.profile
-. \"\${U_C:?}/script/uc-profile.lib.sh\"
-. \"\${U_S:?}/tools/sh/parts/sh-mode.sh\"
+. \${U_C:?}/script/uc-profile.lib.sh
+. \${U_S:?}/tools/sh/parts/sh-mode.sh
 sh_mode build
 EOM
 } > test-env.sh
