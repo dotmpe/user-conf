@@ -25,18 +25,6 @@ test -e ~/.local/lib/user-conf || {
   ln -s ~/project ~/.local/lib/user-conf
 }
 
-{ cat <<EOM
-. ~/.profile
-set -euTEo pipefail
-shopt -s extdebug
-. ./script/bash-uc.lib.sh
-trap bash_uc_errexit ERR
-EOM
-} > test-env.sh
-
-ls -la ~/.local/{etc,lib,usr,var}
-echo
-
 test -e "$U_S" || {
   mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
   # XXX: bb needs auth
@@ -46,6 +34,12 @@ test -e "$U_S" || {
   #  ~/src/bitbucket.org/dotmpe/user-scripts
 }
 
-ls -la "$U_S/src/sh/lib"
+{ cat <<EOM
+. ~/.profile
+. \"\${U_C:?}/script/uc-profile.lib.sh\"
+. \"\${U_S:?}/tools/sh/parts/sh-mode.sh\"
+sh_mode build
+EOM
+} > test-env.sh
 
 #

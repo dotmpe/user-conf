@@ -22,6 +22,7 @@ jobs:
     - run:
         name: Unit tests
         command: |
+          redo -v
           . ./test-env.sh
           . ./tools/ci/test.sh
           . ./tools/ci/convert.sh
