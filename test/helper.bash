@@ -3,7 +3,7 @@
 
 # Add fallbacks for non-std BATS functions
 
-. "${US_BIN:-$HOME/bin}/script-mpe.lib.sh"
+#. "${US_BIN:-$HOME/bin}/script-mpe.lib.sh"
 
 # XXX: conflicts with ztombl assert's lib
 type fail >/dev/null 2>&1 || {
