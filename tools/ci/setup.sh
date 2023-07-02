@@ -36,10 +36,13 @@ test -e "$U_S" || {
 
 { cat <<EOM
 . ~/.profile
-. \${U_C:?}/script/uc-profile.lib.sh
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 sh_mode build
+. \${U_C:?}/script/uc-profile.lib.sh
+. \${U_C:?}/script/lib-uc.lib.sh &&
+lib_uc__load &&
+lib_uc__init
 EOM
 } > test-env.sh
 
