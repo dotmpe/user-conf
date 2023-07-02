@@ -14,6 +14,7 @@ export STDLOG_UC_ANSI=1
 export STDLOG_UC_LEVEL=7
 export XDG_RUNTIME_HOME=\$PWD/build/runtime-data
 export XDG_CACHE_HOME=\$PWD/build/cache
+export UCONF=$HOME/.conf
 export U_C=$HOME/project
 export U_S=$U_S
 EOM
@@ -40,9 +41,8 @@ test -e "$U_S" || {
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 sh_mode build
 . \${U_C:?}/script/uc-profile.lib.sh
-. \${U_C:?}/script/lib-uc.lib.sh &&
-lib_uc__load &&
-lib_uc__init
+. \${U_C:?}/script/shell-uc.lib.sh && shell_uc__load && shell_uc__init
+. \${U_C:?}/script/lib-uc.lib.sh && lib_uc__load && lib_uc__init
 EOM
 } > test-env.sh
 
