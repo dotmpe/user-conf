@@ -10,8 +10,7 @@ mkdir -vp build
 test ! -e ./build/test-results.tap || rm ./build/test-results.tap
 
 bats_report=./build/test-results.tap
-set -x
-#exec 5> ./build/test-results.tap
+#exec 5> "$bats_report"
 for bats_case in test/[a-z]*-spec.bats
 do
   $LOG notice "" "Testing..." "$bats_case"
