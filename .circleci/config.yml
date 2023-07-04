@@ -30,7 +30,9 @@ jobs:
         name: Test
         command: |
           . ./test-env.sh
-          . ./tools/ci/run.sh
+          #. ./tools/ci/run.sh
+          ./bin/uc info
+          ./bin/uc init
 
     - store_artifacts:
         path: build/

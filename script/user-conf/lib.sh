@@ -7,7 +7,7 @@ true "${UC_LIB_PATH:?Expected UC shell lib}"
 . ${UC_LIB_PATH}/../tools/u-c/init.sh
 
 # Finally, run init for Uc lib
-lib_uc_lib__init
+uc_lib__init
 
 
 # And define startup sequence for main, to load settings.
