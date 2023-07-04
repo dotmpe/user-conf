@@ -13,7 +13,7 @@ jobs:
     - run:
         name: Setup
         command: |
-          . ~/.profile
+          #. ~/.profile
           . ./tools/ci/setup.sh
           { echo "# Added by $0:Setup on $(date --iso=min)"
             echo export scriptname=Circle-CI

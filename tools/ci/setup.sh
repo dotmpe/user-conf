@@ -4,6 +4,7 @@ U_S=$HOME/src/github.com/user-scripts
 
 { cat <<EOM
 # Added by Uc:tools/ci/setup.sh <$0> on $(date --iso=min)"
+export verbosity=7
 export LOG=\$PWD/tools/sh/log.sh
 export TERM=xterm-256color
 export USER=circleci
