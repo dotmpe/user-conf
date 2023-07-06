@@ -21,12 +21,12 @@ jobs:
             echo export scriptname=Circle-CI
           } >> ~/.profile
           # Log-profile needs a bit of special attention
-          . ~/.test-env.sh
+          . ./.test-env.sh
 
     - run:
         name: Unit tests
         command: |
-          . ~/.test-env.sh
+          . ./.test-env.sh
           #./tools/sh/log.sh notice foo bar baz
           #./tools/sh/log.sh warn foo bar baz
           #./tools/sh/log.sh error foo bar baz

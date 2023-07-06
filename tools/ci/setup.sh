@@ -63,6 +63,6 @@ echo Loaded test-env >&2
 
 exit 123
 EOM
-} >| ~/.test-env.sh
+} >| ./.test-env.sh
 
 #
