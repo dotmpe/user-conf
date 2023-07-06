@@ -120,6 +120,7 @@ lib_uc_load () # <Names...>
     test "$_" != "-1" || {
       lib_path=$(command -v "$lib_name.lib.sh") ||
         $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
+      stderr echo lib-uc-load found $lib_path
       # XXX: not the same var.. UC_TOOLS_DEBUG?
       #test -z "${USER_CONF_DEBUG-}" ||
       ! uc_debug ||
