@@ -9,7 +9,6 @@ U_S=$HOME/src/github.com/user-scripts
 { cat <<EOM
 # Added by Uc:tools/ci/setup.sh <$0> on $(date --iso=min)"
 export verbosity=7
-export LOG=\$PWD/tools/sh/log.sh
 export TERM=xterm-256color
 export USER=circleci
 export COLORIZE=1
@@ -54,12 +53,7 @@ export -f uc_fun uc_debug
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
-. \$U_C/tools/sh/log.sh &&
-uc_log_init &&
-LOG=uc_log &&
-\$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
-
-echo Loaded test-env >&2
+\$LOG notice :test-env "Loaded" "0:\$0 -:\$- #:\$# *:\$*"
 EOM
 } >| ./.test-env.sh
 
