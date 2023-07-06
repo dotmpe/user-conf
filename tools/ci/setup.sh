@@ -22,11 +22,13 @@ EOM
 #export U_S=$HOME/src/bitbucket.org/user-scripts
 } > ~/.profile
 
+# Current project is user-conf main repo
 test -e ~/.local/lib/user-conf || {
   mkdir -vp ~/.local/lib
   ln -s ~/project ~/.local/lib/user-conf
 }
 
+# Get user-scripts main repo
 test -e "$U_S" || {
   mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
   # XXX: bb needs auth
@@ -38,6 +40,7 @@ test -e "$U_S" || {
 
 { cat <<EOM
 . ~/.profile
+
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 #sh_mode build
@@ -51,8 +54,15 @@ export -f uc_fun uc_debug
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
+. \$U_C/tools/sh/log.sh &&
+uc_log_init &&
+LOG=uc_log &&
+$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
+
 echo Loaded test-env >&2
+
+exit 123
 EOM
-} > test-env.sh
+} >| ~/.test-env.sh
 
 #

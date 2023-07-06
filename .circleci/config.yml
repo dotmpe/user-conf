@@ -13,16 +13,19 @@ jobs:
     - run:
         name: Setup
         command: |
-          #. ~/.profile
+          # XXX: not sure if these commands are executing in login-shell
+          . ~/.profile
+          # Prepare ~/.test-env.sh file and overwrite ~/.profile
           . ./tools/ci/setup.sh
           { echo "# Added by $0:Setup on $(date --iso=min)"
             echo export scriptname=Circle-CI
           } >> ~/.profile
+          # Log-profile needs a bit of special attention
 
     - run:
         name: Unit tests
         command: |
-          . ./test-env.sh
+          . ~/.test-env.sh
           ./tools/sh/log.sh notice foo bar baz
           ./tools/sh/log.sh warn foo bar baz
           ./tools/sh/log.sh error foo bar baz
@@ -34,7 +37,7 @@ jobs:
     - run:
         name: Test
         command: |
-          . ./test-env.sh
+          . ~/.test-env.sh
           #. ./tools/ci/run.sh
           ./bin/uc info
           ./bin/uc init

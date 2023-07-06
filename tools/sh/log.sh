@@ -113,8 +113,7 @@ case "$0" in
         ( "" ) exit 1 ;;
 
         ( env ) shift; uc_log_env "$@"; exit $? ;;
-        ( log | * ) set -x
-          uc_main_log "$@"; exit $? ;;
+        ( log | * ) uc_main_log "$@"; exit $? ;;
       esac
 
     ;;
