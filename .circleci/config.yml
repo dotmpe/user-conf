@@ -23,6 +23,10 @@ jobs:
           # Log-profile needs a bit of special attention, check here
           #set -x
           . ./.test-env.sh
+          echo shell-command: $0 $*
+          echo shell-mode: $-
+          echo shell-traps:
+          trap
 
     - run:
         name: Unit tests

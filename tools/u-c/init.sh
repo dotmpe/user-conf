@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 
-#test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
-true "${LOG:=${U_C:?}/tools/sh/log.sh}"
-export LOG
 true "${U_S:?Requires User-Script installation}"
 true "${UC_LIB_PATH:?Expected UC shell lib}"
 
+#test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
+true "${LOG:=${U_C:?}/tools/sh/log.sh}"
+export LOG
 INIT_LOG=$LOG
 
 . "$U_S/src/sh/lib/shell.lib.sh"
