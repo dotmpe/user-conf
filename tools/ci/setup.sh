@@ -63,4 +63,4 @@ EOM
 } >| ./.test-env.sh
 
 echo "Tools CI setup script done" >&2
-#
+# Id: U-C
