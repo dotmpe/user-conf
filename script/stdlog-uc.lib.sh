@@ -141,7 +141,8 @@ stderr_log () # ~ <...:ll>
 {
   stdlog_v && test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
   [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
-  log_key=$2 stderr_log_inner "$1" "$3 <$4>"
+  log_key=$2 stderr_log_inner "$1" "$3 <$4>" || return
+  test -z "${5:-}" || return $5
 }
 
 # std-v <level>
