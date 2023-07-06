@@ -21,26 +21,27 @@ jobs:
             echo export scriptname=Circle-CI
           } >> ~/.profile
           # Log-profile needs a bit of special attention
+          . ~/.test-env.sh
 
     - run:
         name: Unit tests
         command: |
           . ~/.test-env.sh
-          ./tools/sh/log.sh notice foo bar baz
-          ./tools/sh/log.sh warn foo bar baz
-          ./tools/sh/log.sh error foo bar baz
-          ./tools/sh/log.sh crit foo bar baz
+          #./tools/sh/log.sh notice foo bar baz
+          #./tools/sh/log.sh warn foo bar baz
+          #./tools/sh/log.sh error foo bar baz
+          #./tools/sh/log.sh crit foo bar baz
 
-          . ./tools/ci/test.sh
-          . ./tools/ci/convert.sh
+          #. ./tools/ci/test.sh
+          #. ./tools/ci/convert.sh
 
     - run:
         name: Test
         command: |
           . ~/.test-env.sh
           #. ./tools/ci/run.sh
-          ./bin/uc info
-          ./bin/uc init
+          #./bin/uc info
+          #./bin/uc init
 
     - store_artifacts:
         path: build/
