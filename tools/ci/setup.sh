@@ -22,8 +22,8 @@ export XDG_CACHE_HOME=\$PWD/build/cache
 export UCONF=$HOME/.conf
 export U_C=$HOME/project
 export U_S=$U_S
-#export PATH=\$PATH:\$U_S/src/sh/lib:\$U_S/src/bash/lib:\$U_S/commands:\$U_S/contexts
-#export PATH=\$PATH:\$U_C/script:\$U_C/script/context
+export PATH=\$PATH:\$U_S/src/sh/lib:\$U_S/src/bash/lib:\$U_S/commands:\$U_S/contexts
+export PATH=\$PATH:\$U_C/script:\$U_C/script/context
 EOM
 } >| ~/.profile
 
@@ -41,16 +41,10 @@ test -e "$U_S" || {
 { cat <<EOM
 . ~/.profile
 
-stderr () { "\$@" >&2; }
-init_log () # ~ <level> <key-> <msg> [<ctx> [<stat>]]
-{ stderr echo "\$@" || return; test -z "\${5:-}" || return \$5; }
-export -f stderr init_log
-export INIT_LOG=init_log LOG=init_log
-
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 #sh_mode build
-sh_mode strict dev
+sh_mode strict dev log-init
 
 . \${U_C:?}/script/uc-profile.lib.sh
 export -f uc_fun uc_debug
@@ -61,9 +55,9 @@ export -f uc_fun uc_debug
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
 . \$U_C/tools/sh/log.sh &&
-uc_log_init
-#LOG=uc_log &&
-#$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
+uc_log_init &&
+LOG=uc_log &&
+$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
 
 echo Loaded test-env >&2
 EOM
