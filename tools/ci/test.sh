@@ -11,12 +11,7 @@ test ! -e ./build/test-results.tap || rm ./build/test-results.tap
 
 bats_report=./build/test-results.tap
 #exec 5> "$bats_report"
-for bats_case in test/[a-z]*-spec.bats
-do
-  $LOG notice "" "Testing..." "$bats_case"
-  bats "$bats_case" >> "$bats_report" || result=$?
-  #1>&5 || result=$?
-done
+bats test/[a-z]*-spec.bats >"$bats_report"
 #exec 5<&-
 
 test ! -s "$bats_report" || {
