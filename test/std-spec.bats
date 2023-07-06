@@ -36,16 +36,18 @@ init
 }
 
 
-@test "${lib}/${base} - std_exit <n> should call exit <n> if <n> is an integer number or return 1. No output. " {
+@test "${lib}/${base} - std_exit <n> should call exit <n> if <n> is an integer number or return 1. " {
 
-  mockexit () { echo "exit $1 ok"; exit $1; }
-  std_exit=mockexit
+  exit_shim () { echo "exit $1 ok"; exit $1; }
+  std_exit=exit_shim
+
+  run type exit_shim
+  test "${lines[*]}" = "$(type exit_shim)" || stdfail 0
 
   run std_exit
   { test ${status} -eq 0 -a "exit 0 ok" = "${lines[*]}"
   } || stdfail 1
 
-type mockexit
   run std_exit 0
   { test ${status} -eq 0 -a "exit 0 ok" = "${lines[*]}"
   } || stdfail 2
@@ -54,7 +56,7 @@ type mockexit
   { test ${status} -eq 1 -a "exit 1 ok" = "${lines[*]}"
   } || stdfail 3
 
-  unset -f mockexit
+  unset -f exit_shim
 }
 
 
