@@ -9,7 +9,7 @@ lib_require std-uc uc-fields
 @test "Can define from simple braces spec-sets" {
 
   run uc_fields_define foo {bar,baz-{a,b}}
-  test_ok_empty
+  test_ok_empty || stdfail 1
 
   # Now do again, but check for variables
   uc_fields_define foo {bar,baz-{a,b}}
@@ -44,7 +44,7 @@ lib_require std-uc uc-fields
   uc_field foo my-data my-value
 
   run uc_vfield foo my-data my-value
-  test_ok_empty
+  test_ok_empty || stdfail 1
 }
 
 #

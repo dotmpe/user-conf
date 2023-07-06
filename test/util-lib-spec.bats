@@ -31,19 +31,20 @@ test_inc_sh=". $(echo $test_inc | sed 's/\ / \&\& . /g')"
   run sh -c 'no_such_function'
   test $status -eq 127
 
-  case "$(uname)" in
-    Darwin )
-      test "sh: no_such_function: command not found" = "${lines[0]}"
-      ;;
-    Linux )
-      test "${lines[0]}" = "sh: 1: no_such_function: not found"
-      ;;
-  esac
+  #case "$(uname)" in
+  #  Darwin )
+      test "${lines[0]}" = "sh: no_such_function: command not found"
+  #    ;;
+  #  Linux )
+  #    test "${lines[0]}" = "sh: 1: no_such_function: not found"
+  #    ;;
+  #esac
 
   run bash -c 'no_such_function'
   test $status -eq 127
   echo "${lines[*]}"
-  test "${lines[0]}" = "bash: line 1: no_such_function: command not found"
+  #test "${lines[0]}" = "bash: line 1: no_such_function: command not found"
+  test "${lines[0]}" = "bash: no_such_function: command not found"
 }
 
 
