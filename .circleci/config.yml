@@ -15,7 +15,7 @@ jobs:
         command: |
           # XXX: not sure if these commands are executing in login-shell
           . ~/.profile
-          # Prepare ~/.test-env.sh file and overwrite ~/.profile
+          # Prepare .test-env.sh file and overwrite ~/.profile
           . ./tools/ci/setup.sh
           { echo "# Added by $0:Setup on $(date --iso=min)"
             echo export scriptname=Circle-CI
