@@ -18,6 +18,8 @@ export XDG_CACHE_HOME=\$PWD/build/cache
 export UCONF=$HOME/.conf
 export U_C=$HOME/project
 export U_S=$U_S
+export PATH=\$PATH:\$U_S/src/sh/lib:\$U_S/src/bash/lib:\$U_S/commands:\$U_S/contexts
+export PATH=\$PATH:\$U_C/script:\$U_C/script/context
 EOM
 #export U_S=$HOME/src/bitbucket.org/user-scripts
 } > ~/.profile
@@ -60,14 +62,12 @@ export -f uc_fun uc_debug
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
-#. \$U_C/tools/sh/log.sh &&
-#uc_log_init
+. \$U_C/tools/sh/log.sh &&
+uc_log_init
 #LOG=uc_log &&
 #$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
 
 echo Loaded test-env >&2
-
-exit 123
 EOM
 } >| ./.test-env.sh
 
