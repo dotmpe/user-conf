@@ -27,6 +27,8 @@ jobs:
           echo shell-mode: $-
           echo shell-traps:
           trap
+          echo Log: ${LOG:-unset}
+          echo Init-Log: ${INIT_LOG:-}
 
     - run:
         name: Unit tests
