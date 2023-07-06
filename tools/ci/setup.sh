@@ -43,7 +43,7 @@ test -e "$U_S" || {
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 #sh_mode build
-sh_mode strict dev log-init
+sh_mode strict log-init dev
 
 \$LOG info :test-env "Sourcing uc-profile.lib"
 . \${U_C:?}/script/uc-profile.lib.sh
