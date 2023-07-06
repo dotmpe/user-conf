@@ -21,7 +21,7 @@ jobs:
             echo export scriptname=Circle-CI
           } >> ~/.profile
           # Log-profile needs a bit of special attention, check here
-          set -x
+          #set -x
           . ./.test-env.sh
 
     - run:
