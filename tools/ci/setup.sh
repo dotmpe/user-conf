@@ -41,6 +41,10 @@ test -e "$U_S" || {
 { cat <<EOM
 . ~/.profile
 
+stderr () { "\$@" >&2; }
+export -f stderr
+export INIT_LOG=stderr LOG=stderr
+
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
 #sh_mode build
@@ -55,9 +59,9 @@ export -f uc_fun uc_debug
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
 . \$U_C/tools/sh/log.sh &&
-uc_log_init &&
-LOG=uc_log &&
-$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
+uc_log_init
+#LOG=uc_log &&
+#$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
 
 echo Loaded test-env >&2
 
