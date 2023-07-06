@@ -1,6 +1,10 @@
 #!/bin/sh
 
+mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
+
+# XXX: bb needs auth
 U_S=$HOME/src/github.com/user-scripts
+#export U_S=$HOME/src/bitbucket.org/user-scripts
 
 { cat <<EOM
 # Added by Uc:tools/ci/setup.sh <$0> on $(date --iso=min)"
@@ -18,11 +22,10 @@ export XDG_CACHE_HOME=\$PWD/build/cache
 export UCONF=$HOME/.conf
 export U_C=$HOME/project
 export U_S=$U_S
-export PATH=\$PATH:\$U_S/src/sh/lib:\$U_S/src/bash/lib:\$U_S/commands:\$U_S/contexts
-export PATH=\$PATH:\$U_C/script:\$U_C/script/context
+#export PATH=\$PATH:\$U_S/src/sh/lib:\$U_S/src/bash/lib:\$U_S/commands:\$U_S/contexts
+#export PATH=\$PATH:\$U_C/script:\$U_C/script/context
 EOM
-#export U_S=$HOME/src/bitbucket.org/user-scripts
-} > ~/.profile
+} >| ~/.profile
 
 # Current project is user-conf main repo
 test -e ~/.local/lib/user-conf || {
@@ -32,12 +35,7 @@ test -e ~/.local/lib/user-conf || {
 
 # Get user-scripts main repo
 test -e "$U_S" || {
-  mkdir -vp ~/src/{bitbucket.org,github.com}/dotmpe
-  # XXX: bb needs auth
   git clone https://github.com/dotmpe/user-scripts -b r0.0 "$U_S"
-  #git clone git@bitbucket.org:dotmpe/user-scripts -b r0.0 \
-  #git clone https://dotmpe@bitbucket.org/dotmpe/user-scripts.git -b r0.0 \
-  #  ~/src/bitbucket.org/dotmpe/user-scripts
 }
 
 { cat <<EOM

@@ -38,7 +38,7 @@ jobs:
     - run:
         name: Test
         command: |
-          . ~/.test-env.sh
+          . ./.test-env.sh
           #. ./tools/ci/run.sh
           #./bin/uc info
           #./bin/uc init
