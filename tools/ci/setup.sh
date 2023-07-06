@@ -42,8 +42,8 @@ test -e "$U_S" || {
 . ~/.profile
 
 stderr () { "\$@" >&2; }
-# level key msg ctx stat
-stderr_log () { echo "\$@"; test -z "\${5:-}" || return \$5; }
+stderr_log () # ~ <level> <key-> <msg> [<ctx> [<stat>]]
+{ stderr echo "\$@"; test -z "\${5:-}" || return \$5; }
 export -f stderr{,_log}
 export INIT_LOG=stderr_log LOG=stderr_log
 
