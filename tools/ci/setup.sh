@@ -45,6 +45,8 @@ test -e "$U_S" || {
 #sh_mode build
 sh_mode strict dev log-init
 
+echo LOG=\${LOG:-} >&2
+
 \$LOG info :test-env "Sourcing uc-profile.lib"
 . \${U_C:?}/script/uc-profile.lib.sh
 export -f uc_fun uc_debug
