@@ -29,6 +29,8 @@ jobs:
           trap
           echo Log: ${LOG:-unset}
           echo Init-Log: ${INIT_LOG:-}
+          echo Sub-shell Log: $(bash -c 'echo \${LOG:-unset}')
+          echo Sub-shell Init-Log: $(bash -c echo '\${INIT_LOG:-}')
 
     - run:
         name: Unit tests
