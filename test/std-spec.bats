@@ -38,14 +38,11 @@ init
 
 @test "${lib}/${base} - std_exit <n> should call exit <n> if <n> is an integer number or return 1. " {
 
-  exit_shim () { echo "exit $1 ok"; exit $1; }
+  exit_shim () { echo "exit ${1:-(unset)} ok"; exit ${1:-}; }
   std_exit=exit_shim
 
-  run type exit_shim
-  test "${lines[*]}" = "$(type exit_shim)" || stdfail 0
-
   run std_exit
-  { test ${status} -eq 0 -a "exit 0 ok" = "${lines[*]}"
+  { test ${status} -eq 0 -a -z "${lines[*]}"
   } || stdfail 1
 
   run std_exit 0

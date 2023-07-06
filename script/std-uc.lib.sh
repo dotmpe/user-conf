@@ -99,6 +99,14 @@ std_uc_env_def ()
   # E:done 200
 }
 
+# Helper to generate true or false command.
+std_bool () # ~ <Cmd...> # Print true or false, based on command status
+{
+  "$@" && printf true || {
+    test 1 -eq $? || BOOL= : ${BOOL:?Boolean status expected: E$_: $*}
+    printf false
+  }
+}
 # Test if all [given] stdio are at terminal.
 std_term () # ~ [0] [1] [2]...
 {
@@ -117,6 +125,100 @@ std_term () # ~ [0] [1] [2]...
 std_batch_mode ()
 {
   test ${STD_BATCH_MODE:-0} -eq 1 -o ${STD_INTERACTIVE:-0} -eq 0
+}
+
+# Boolean-bit: validate 0/1, or return NZ for other arguments. This uses
+# std_bool to test for 0 (true) or 1 (false) value, and prints either command.
+std_bit ()
+{
+  test $# -eq 1 -a 2 -gt "${1:-2}" || return ${_E_GAE:-193}
+  std_bool test 1 -eq "${1:?}"
+}
+
+# XXX: match command status against globspec.
+std_ifstat () # ~ <Spec> <Cmd...>
+{
+  "${@:2}"
+  str_globmatch "$?" "$1"
+}
+
+std_noerr ()
+{
+  "$@" 2>/dev/null
+}
+
+std_noout ()
+{
+  "$@" >/dev/null
+}
+
+std_stat () # ~ <Cmd...> # Invert status, fail (only) if command returned zero-status
+{
+  ! "$@"
+}
+
+std_quiet () # ~ <Cmd...> # Silence all output (std{out,err})
+{
+  "$@" >/dev/null 2>&1
+}
+
+std_v_exit ()
+{
+  "$@"
+  # XXX: even more verbose... stderr_stat $? "$@"
+  stderr_exit $?
+}
+
+std_v_stat ()
+{
+  "$@"
+  stderr_stat $? "$@"
+}
+
+stderr ()
+{
+  "$@" >&2
+}
+
+stderr_exit ()
+{
+  local stat=${1:-$?}
+  test 0 -eq $stat &&
+    printf 'Exiting\n' ||
+    printf 'Exiting (status %i)\n' $stat
+  exit $stat
+}
+
+# Show whats going on during sleep, print at start and end. Makes it easier to
+# find interrupt points for sensitive scripts. Verbose sleep prints to stderr
+# and does not listen to v{,verbosity} but does have a verbose mode toggle var
+# sleep-v.
+stderr_sleep_int ()
+{
+  local last=$_
+  : "${sleep_q:=$(bool not ${sleep_v:-true})}"
+  ! ${sleep_v:-true} ||
+    printf "> sleep $*$(test -z "$last" || printf " because $last...")" >&2
+  fun_wrap command sleep "$@" || {
+    test 130 -eq $? && {
+      "$sleep_q" ||
+        echo " aborted (press again in ${sleep_itime:-1}s to exit)" >&2
+      command sleep ${sleep_itime:-1} || return
+      return
+    } || return $_
+  }
+  ! ${sleep_v:-true} ||
+    echo " ok, continue run" >&2
+}
+
+stderr_stat ()
+{
+  local last=$_ stat=${1:-$?} ref=${*:2}
+  : "${ref:-$last}"
+  test 0 -eq $stat &&
+    printf "OK '%s'\\n" "$ref" ||
+    printf "Fail E%i: '%s'\\n" "$stat" "$ref"
+  return $stat
 }
 
 # Id: user-conf/0.2.0 script/std-uc.lib.sh
