@@ -176,7 +176,7 @@ init_bin()
 
 init_lib()
 {
-  test_init
+  test_init || return
   # XXX path to shared script files
   test -z "$PROJ_DIR" && lib=./script || lib=$PROJ_DIR/script
 }
@@ -189,9 +189,10 @@ init()
   test -x $base && {
     init_bin
   }
-  init_lib
+  init_lib || return
   uc_lib=$lib/user-conf
   UC_LIB_PATH=$lib
+  : "${LOG:=${U_C:?}/tools/sh/log}"
 }
 
 
