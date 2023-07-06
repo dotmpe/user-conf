@@ -44,7 +44,7 @@ test -e "$U_S" || {
 stderr () { "\$@" >&2; }
 init_log () # ~ <level> <key-> <msg> [<ctx> [<stat>]]
 { stderr echo "\$@" || return; test -z "\${5:-}" || return \$5; }
-export -f stderr{,_log}
+export -f stderr init_log
 export INIT_LOG=init_log LOG=init_log
 
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
