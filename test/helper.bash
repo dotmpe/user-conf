@@ -192,7 +192,7 @@ init()
   init_lib || return
   uc_lib=$lib/user-conf
   UC_LIB_PATH=$lib
-  : "${LOG:=${U_C:?}/tools/sh/log}"
+  : "${LOG:=${U_C:?}/tools/sh/log.sh}"
 }
 
 
