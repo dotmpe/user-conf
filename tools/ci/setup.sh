@@ -43,7 +43,7 @@ test -e "$U_S" || {
 
 stderr () { "\$@" >&2; }
 stderr_log () # ~ <level> <key-> <msg> [<ctx> [<stat>]]
-{ stderr echo "\$@"; test -z "\${5:-}" || return \$5; }
+{ stderr echo "\$@" || return; test -z "\${5:-}" || return \$5; }
 export -f stderr{,_log}
 export INIT_LOG=stderr_log LOG=stderr_log
 
@@ -60,8 +60,8 @@ export -f uc_fun uc_debug
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
-. \$U_C/tools/sh/log.sh &&
-uc_log_init
+#. \$U_C/tools/sh/log.sh &&
+#uc_log_init
 #LOG=uc_log &&
 #$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
 
