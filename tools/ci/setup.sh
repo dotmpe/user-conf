@@ -42,8 +42,10 @@ test -e "$U_S" || {
 . ~/.profile
 
 stderr () { "\$@" >&2; }
-export -f stderr
-export INIT_LOG=stderr LOG=stderr
+# level key msg ctx stat
+stderr_log () { echo "\$@"; test -z "\${5:-}" || return \$5; }
+export -f stderr{,_log}
+export INIT_LOG=stderr_log LOG=stderr_log
 
 . \${U_S:?}/tools/sh/parts/fnmatch.sh
 . \${U_S:?}/tools/sh/parts/sh-mode.sh
