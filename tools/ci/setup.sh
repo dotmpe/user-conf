@@ -57,7 +57,7 @@ export -f lib_{uc_,}{exists,load,loaded,init,require}
 . \$U_C/tools/sh/log.sh &&
 uc_log_init &&
 LOG=uc_log &&
-$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
+\$LOG "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
 
 echo Loaded test-env >&2
 EOM
