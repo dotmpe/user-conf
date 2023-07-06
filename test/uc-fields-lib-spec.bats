@@ -3,7 +3,7 @@
 base=uc-fields-lib-spec
 load helper
 init
-  lib_require uc-fields
+lib_require uc-fields
 #}
 
 @test "Can define from simple braces spec-sets" {

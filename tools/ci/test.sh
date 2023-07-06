@@ -10,14 +10,14 @@ test ! -e ./build/test-results.tap || rm ./build/test-results.tap
 
 bats_report=./build/test-results.tap
 #exec 5> "$bats_report"
-bats test/[a-z]*-spec.bats >"$bats_report"
+bats test/[a-z]*-spec.bats >"$bats_report" || test_status=$?
 #exec 5<&-
 
 test ! -s "$bats_report" || {
-  $LOG info "" "Test results:"
-  cat "$bats_report" | script/bats-colorize.sh
+  $LOG info :tools/ci/test "Test results:"
+  < "$bats_report" script/bats-colorize.sh
 }
 
-#test -n "$result" -o "$result" = "0" &&
-#  log "Test fail, returned '$result'" ||
-#  log "Test OK"
+test "0" = "${test_status:-0}" &&
+  $LOG notice :tools/ci/test "Test OK" ||
+  $LOG warn :tools/ci/test "Test fail: E$_"
