@@ -45,14 +45,18 @@ test -e "$U_S" || {
 #sh_mode build
 sh_mode strict dev log-init
 
+\$LOG info :test-env "Sourcing uc-profile.lib"
 . \${U_C:?}/script/uc-profile.lib.sh
 export -f uc_fun uc_debug
 
+\$LOG info :test-env "Loading shell helpers"
 . \${U_C:?}/script/shell-uc.lib.sh && shell_uc_lib__load && shell_uc_lib__init
 
+\$LOG info :test-env "Loading shell lib helpers"
 . \${U_C:?}/script/lib-uc.lib.sh && lib_uc_lib__load && lib_uc_lib__init
 export -f lib_{uc_,}{exists,load,loaded,init,require}
 
+\$LOG info :test-env "Starting log env"
 sh_mode log-uc-start
 \$LOG notice :test-env "Loaded" "0:\$0 -:\$- #:\$# *:\$*"
 EOM
