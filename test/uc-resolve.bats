@@ -4,10 +4,9 @@ load helper
 init
 uc_lib=${lib}/user-conf
 scriptname=us-resolve.bats
-. ${uc_lib}/lib.sh
-
 setup ()
 {
+  . ${uc_lib}/lib.sh || return
   UC_QUIET=1
   UC_SYSLOG_OFF=1
 }

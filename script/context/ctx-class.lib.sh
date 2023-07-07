@@ -122,7 +122,7 @@ class.Class () # ~ <Instance-Id> .<Message-name> <Args...>
     .defined ) test -n "${Class__instances[$id]:-}" ;;
     .class )
         : "${Class__instances[$id]:?Expected class instance #$id}"
-        echo "${_/ *}" ;;
+        test -n "$_" && echo "${_%% *}" ;;
     .params )
         : "${Class__instances[$id]:?Expected class instance #$id}"
         if_ok "$($self.class)" || return

@@ -98,16 +98,19 @@ bash_uc_errexit ()
       declare argc
       declare frame_argc
 
-      for ((frame_argc=${BASH_ARGC[frame]},frame_argc--,argc=0; frame_argc >= 0; argc++, frame_argc--)) ; do
-        argv[argc]=${BASH_ARGV[argv_offset+frame_argc]}
-        case "${argv[argc]}" in
-            *[[:space:]]*) argv[argc]="'${argv[argc]}'" ;;
-        esac
-      done
-      argv_offset=$((argv_offset + ${BASH_ARGC[frame]}))
+      bash_frame_argc=${BASH_ARGC[frame]:--1}
+      test "$bash_frame_argc" != "-1" && {
+        for ((frame_argc=$bash_frame_argc,frame_argc--,argc=0; frame_argc >= 0; argc++, frame_argc--)) ; do
+          argv[argc]=${BASH_ARGV[argv_offset+frame_argc]}
+          case "${argv[argc]}" in
+              *[[:space:]]*) argv[argc]="'${argv[argc]}'" ;;
+          esac
+        done
+        argv_offset=$((argv_offset + ${BASH_ARGC[frame]}))
+      }
 
-      if [ $frame -eq 0 ]
-      then
+      #if [ $frame -eq 0 ]
+      #then
         # The last (top) 'function' on the stack will be the trap handler (it
         # is on the correct line, where the parser left off/failed. But it is
         # not the failed command, but the name for the handler that Bash called
@@ -117,10 +120,10 @@ bash_uc_errexit ()
         # Since we don't need or want to see that error handler name, replace it
         # instead with the actual command that Bash said has failed so there is
         # no confusion about what worked and what failed.
-        cmd="${_6}'$BASH_COMMAND' "
-      else
+      #  cmd="${_6}'$BASH_COMMAND' "
+      #else
         cmd="${_6}${FUNCNAME[$frame]}${_6_1} ${_6_2}$(printf '%s ' "${argv[@]}")${_6_1}"
-      fi
+      #fi
 
       echo "    ${_4}$frame${_4_1}. ${n}${caller_info[1]}${_4_1}(): ${n}$cmd$n ${_5_1}<${_5}${caller_info[2]}${_5_1_1}:${_5_2}${caller_info[0]}${_5_1}>$n"
 

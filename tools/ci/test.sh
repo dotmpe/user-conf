@@ -9,6 +9,8 @@ mkdir -vp build
 test ! -e ./build/test-results.tap || rm ./build/test-results.tap
 
 bats_report=./build/test-results.tap
+
+#$LOG info :tools/ci/test "Test suites:" "$(echo test/[a-z]*-spec.bats)"
 #exec 5> "$bats_report"
 bats test/[a-z]*-spec.bats >"$bats_report" || test_status=$?
 #exec 5<&-

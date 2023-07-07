@@ -444,7 +444,7 @@ class.StatTab () # :Class ~ <ID> .<METHOD> <ARGS...>
     ".$name" )
         test -e "${2:-}" ||
             $LOG error : "Tab file expected" "$2" 1 || return
-        $super.$super_type "$1" "$2" "${3:-StatTabEntry}"
+        $super.$super_type "$1" "$2" "${3:-StatTabEntry}" || return
       ;;
     ".__$name" ) $super.__$super_type ;;
 

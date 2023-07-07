@@ -48,7 +48,7 @@ type stdfail >/dev/null 2>&1 || {
   stdfail()
   {
     test -n "$1" || set -- "Unexpected. Status"
-    diag "$1: $status, output(${#lines[@]}) was:"
+    diag "$1: E$status, output(${#lines[@]}) was:"
     printf "  %s\n" "${lines[@]}" >>"$BATS_OUT"
     exit 1
   }

@@ -82,6 +82,8 @@ init
   run error "test" 0
   test ${status} -eq 0
   test "exit 0 call" = "${lines[*]}"
+
+  unset -f exit
 }
 
 
