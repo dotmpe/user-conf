@@ -21,6 +21,46 @@ uc_profile_boot_parts ()
   unset bd
 }
 
+
+uc_cmd ()
+{
+  argv_uc__argc :uc-cmd $# eq 1 || return
+  test -x "$(command -v "$1")"
+}
+
+# Use UC_DEBUG to get more logs about what uc-profile is doing, see also
+# US_DEBUG and DEBUG. XXX: SHDEBUG
+uc_debug ()
+{
+  ${UC_DEBUG:-${DEBUG:-false}}
+}
+
+# TODO: replace these with sh_env either from shell-uc.lib or shell.lib
+uc_fun () # ~ <Function-name>
+{
+  # DEV: argv_uc__argc :uc-func $# eq 1 || return
+  #test "$(type -t "$1")" = "function"
+  # Fasted for Bash
+  declare -F "${1:?}" >/dev/null 2>&1
+}
+
+# Same as uc-source but also take snapshot of env vars name-list
+uc_import () # ~ [Source-Path]
+{
+  uc_source "$@" || return
+  uc_profile__record_env__keys $(echo "$1" | tr '/' '-' | uc_mkid)
+
+  # TODO: record ENV-SRC snapshot as well.
+  test -z "${USER_CONF_DEBUG-}" ||
+    $uc_log warn ":import" "New env loaded, keys stored" "$1"
+}
+
+uc_mkid () # ~
+{
+  argv_uc__argc :env-keys $# || return
+  tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
+}
+
 #shellcheck disable=1091 # Cannot add source directives here
 # Source all libs
 uc_profile_source_lib () # ~
@@ -140,15 +180,16 @@ uc_profile_load () # ~ NAME [TAG]
   $uc_log debug :load "" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
-  fnmatch "\**" "$1" && {
-    uc_profile_part_exists=0; uc_profile_partname="$(echo "$1" | cut -c2-)"
+  fnmatch "-*" "$1" && {
+    uc_profile_part_exists=0; uc_profile_partname="${1:1}"
   }
   shift
-  uc_profile_part_envvar=UC_PROFILE_D_$(echo "$uc_profile_partname" | tr '[:lower:]-' '[:upper:]_')
+  : "${uc_profile_partname^^}"
+  uc_profile_part_envvar=UC_PROFILE_D_${_//[^A-Z0-9_]/_}
 
   # XXX: Skip if already loaded
-  test -z "$(eval "echo \"\${$uc_profile_part_envvar-}\"")" || return 0
-  #test -z "${!uc_profile_part_envvar-}" || return 0
+  #test -z "$(eval "echo \"\${$uc_profile_part_envvar-}\"")" || return 0
+  test -z "${!uc_profile_part_envvar:-}" || return 0
 
   # During loading UC_PROFILE_D_<name>=1, and at the end it is set to the source return status.
   # However the script itself....
@@ -226,37 +267,24 @@ uc_profile_cleanup_BASH ()
   uc_profile_cleanup
 }
 
-# Source file (with UC-DEBUG option and updates ENV-SRC)
-uc_source () # ~ [Source-Path]
+# Record env keys only; assuming thats safe, no literal dump b/c of secrets
+uc_profile__record_env__keys ()
 {
-  test $# -gt 0 -a -n "${1-}" || {
-    $uc_log error ":source" "Expected file argument" "$1"; return 64
+  argv_uc__argc_n :record-env:keys $# eq 1 || return
+  test ! -e "$SD_SHELL_DIR/$UC_SH_ID:$1.sh" || {
+    $uc_log "error" ":record-env:keys" "Keys already exist" "$1"
+    return 1
   }
-
-  local rs
-  . "$1"
-  rs=$?
-  ENV_SRC="$ENV_SRC$1 "
-
-  test $rs -eq 0 && {
-    test -z "${USER_CONF_DEBUG-}" ||
-      $uc_log "debug" ":source" "Done sourcing" "$1"
-  } || {
-   test $rs -eq $E_UC_PENDING ||
-     $uc_log "error" ":source" "Error ($rs) sourcing" "$1"
-  }
-  return $rs
+  env_keys > "$SD_SHELL_DIR/$UC_SH_ID:$1.sh"
 }
 
-# Same as uc-source but also take snapshot of env vars name-list
-uc_import () # ~ [Source-Path]
+uc_profile__record_env__ls ()
 {
-  uc_source "$@" || return
-  uc_profile__record_env__keys $(echo "$1" | tr '/' '-' | uc_mkid)
-
-  # TODO: record ENV-SRC snapshot as well.
-  test -z "${USER_CONF_DEBUG-}" ||
-    $uc_log warn ":import" "New env loaded, keys stored" "$1"
+  argv_uc__argc_n :record-env-ls $# || return
+  for name in "$SD_SHELL_DIR/$UC_SH_ID"*
+  do
+    echo "$(ls -la "$name") $( count_lines "$name") keys"
+  done
 }
 
 # Besides init/start/end this is the mayor step of UC-profile, performed
@@ -264,7 +292,7 @@ uc_import () # ~ [Source-Path]
 # return an error.
 uc_profile_boot () # TAB [types...]
 {
-  test -n "${1-}" || -- set $UC_TAB $*
+  test -n "${1-}" || set -- "${UC_TAB:?}" "${@:2}"
   test -s "${1-}" || {
     $uc_log "crit" ":boot" "Missing or empty profile table" "${1-}"
     return
@@ -303,13 +331,16 @@ uc_profile_boot () # TAB [types...]
 
     # uc_profile_load already does the same envvar name building,
     # but we want to pick up any setting left by profile here
-    fnmatch "\**" "$name" && rname=$(echo $name | cut -c2-) || rname=$name
-    envvar=UC_PROFILE_D_$(echo "$rname" | tr '[:lower:]' '[:upper:]')
 
+    # XXX:
+    fnmatch "\**" "$name" && name=-${name:1}
+
+    : "${name^^}"
+    envvar=UC_PROFILE_D_${_//[^A-Z0-9_]/_}
     unset stat $envvar 2>&1 > /dev/null
     uc_profile_load "$name" $type || stat=$?
 
-    local _stat="$(eval "echo \"\${$envvar-}\"")"
+    local _stat="${!envvar-}"
 
     # No such file, only list sourced files
     test ${_stat:-0} -eq -1 && continue
@@ -325,6 +356,49 @@ uc_profile_boot () # TAB [types...]
   $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "${names-}"
 }
 
+uc_profile__record_env__diff_keys () # ~ FROM TO
+{
+  test -n "${1-}" || set -- "$(ls "$SD_SHELL_DIR" | head -n 1)" "${2-}"
+  test -n "${2-}" || set -- "$1" "$(ls "$SD_SHELL_DIR" | tail -n 1)"
+  argv_uc__argc_n :env-diff-keys $# eq 2 || return
+
+  comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
+}
+
+uc_signal_exit ()
+{
+  local code=${1:-${?:-0}}
+  test $code -eq 0 && return 1
+  test $code -gt 128 -a $code -lt 162 || return
+  exit_signal=$(( code - 128 ))
+
+  signal_names='HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2'
+  set -- $signal_names
+  signal_name=${!exit_signal}
+}
+
+# Source file (with UC-DEBUG option and updates ENV-SRC)
+uc_source () # ~ [Source-Path]
+{
+  test $# -gt 0 -a -n "${1-}" || {
+    $uc_log error ":source" "Expected file argument" "$1"; return 64
+  }
+
+  local rs
+  . "$1"
+  rs=$?
+  ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$1"
+
+  test $rs -eq 0 && {
+    test -z "${USER_CONF_DEBUG-}" ||
+      $uc_log "debug" ":source" "Done sourcing" "$1"
+  } || {
+   test $rs -eq $E_UC_PENDING ||
+     $uc_log "error" ":source" "Error ($rs) sourcing" "$1"
+  }
+  return $rs
+}
+
 uc_user_init ()
 {
   argv_uc__argc :uc-user-init $# || return
@@ -335,105 +409,6 @@ uc_user_init ()
       $uc_log "error" "" "Missing user env" "$key"
     }
   done
-}
-
-uc_var_reset ()
-{
-  argv_uc__argc :uc-var-reset $# eq 1 || return
-  local def_key def_val
-  def_key="DEFAULT_$(echo "$1" | tr '[:lower:]' '[:upper:]')"
-  def_val="${!def_key?Cannot reset user env $1}"
-  test -n "$def_val" || return
-  eval "$1=\"$def_val\""
-}
-
-uc_var_update ()
-{
-  argv_uc__argc :uc-var-update $# eq 1 || return
-  local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
-  uc_fun var_${varname}_update && {
-
-    var_${varname}_update || return
-  }
-  test -n "${!1-}" || uc_var_reset "$1"
-}
-
-uc_var_define ()
-{
-  argv_uc__argc :uc-var-define $# eq 1 || return
-  local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
-  eval "$(cat <<EOM
-
-var_${varname}_update ()
-{
-$(cat)
-}
-
-EOM
-)"
-}
-
-# Record env keys only; assuming thats safe, no literal dump b/c of secrets
-uc_profile__record_env__keys ()
-{
-  argv_uc__argc_n :record-env:keys $# eq 1 || return
-  test ! -e "$SD_SHELL_DIR/$UC_SH_ID:$1.sh" || {
-    $uc_log "error" ":record-env:keys" "Keys already exist" "$1"
-    return 1
-  }
-  env_keys > "$SD_SHELL_DIR/$UC_SH_ID:$1.sh"
-}
-
-uc_profile__record_env__ls ()
-{
-  argv_uc__argc_n :record-env-ls $# || return
-  for name in "$SD_SHELL_DIR/$UC_SH_ID"*
-  do
-    echo "$(ls -la "$name") $( count_lines "$name") keys"
-  done
-}
-
-env_keys() # ~
-{
-  argv_uc__argc :env-keys $# || return
-  printenv | sed 's/=.*$//' | grep -v '^_$' | sort -u
-}
-
-uc_profile__record_env__diff_keys () # ~ FROM TO
-{
-  test -n "${1-}" || set -- "$(ls "$SD_SHELL_DIR" | head -n 1)" "${2-}"
-  test -n "${2-}" || set -- "$1" "$(ls "$SD_SHELL_DIR" | tail -n 1)"
-  argv_uc__argc_n :env-diff-keys $# eq 2 || return
-
-  comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
-}
-
-# Use UC_DEBUG to get more logs about what uc-profile is doing, see also
-# US_DEBUG and DEBUG. XXX: SHDEBUG
-uc_debug ()
-{
-  ${UC_DEBUG:-${DEBUG:-false}}
-}
-
-uc_mkid () # ~
-{
-  argv_uc__argc :env-keys $# || return
-  tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
-}
-
-# TODO: replace these with sh_env either from shell-uc.lib or shell.lib
-uc_fun () # ~ <Function-name>
-{
-  # DEV: argv_uc__argc :uc-func $# eq 1 || return
-  #test "$(type -t "$1")" = "function"
-  # Fasted for Bash
-  declare -F "${1:?}" >/dev/null 2>&1
-}
-
-uc_cmd ()
-{
-  argv_uc__argc :uc-cmd $# eq 1 || return
-  test -x "$(command -v "$1")"
 }
 
 uc_var ()
@@ -457,29 +432,63 @@ uc_var ()
   echo "$val"
 }
 
-uc_signal_exit ()
+# Write function to define and update variable value, using given body as
+# function body
+uc_var_define ()
 {
-  local code=${1:-${?:-0}}
-  test $code -eq 0 && return 1
-  test $code -gt 128 -a $code -lt 162 || return
-  exit_signal=$(( code - 128 ))
+  argv_uc__argc :uc-var-define $# eq 1 || return
+  local varname="${1:?}"
+  eval "$(cat <<EOM
 
-  signal_names='HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2'
-  set -- $signal_names
-  signal_name=${!exit_signal}
+var_${varname^^}_update ()
+{
+$(cat)
+}
+
+EOM
+)"
+}
+
+uc_var_reset ()
+{
+  argv_uc__argc :uc-var-reset $# eq 1 || return
+  local def_key def_val
+  def_key="DEFAULT_$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+  def_val="${!def_key?Cannot reset user env $1}"
+  test -n "$def_val" || return
+  eval "$1=\"$def_val\""
+}
+
+uc_var_update ()
+{
+  argv_uc__argc :uc-var-update $# eq 1 || return
+  local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+  uc_fun var_${varname}_update && {
+
+    var_${varname}_update || return
+  }
+  test -n "${!1-}" || uc_var_reset "$1"
 }
 
 
-# Generic tools
+# Misc. functions
 
 append_path () # ~ <DIR> # PATH helper (does not export!)
 {
   case ":$PATH:" in
-      *:"${1:?}":*)
-          ;;
-      *)
-          PATH="${PATH:+$PATH:}${1:?}"
+    ( *:"${1:?}":* ) ;;
+    ( * ) PATH="${PATH:+$PATH:}${1:?}"
   esac
 }
+
+env_keys () # ~
+{
+  #argv_uc__argc :env-keys $# || return
+  #printenv | grep '^[A-Za-z0-9_]*=' | sed 's/=.*$//' | grep -v '^_$' | sort -u
+
+  # Ignore first line '_'
+  compgen -A variable | sort -u | tail -n +2
+}
+
 
 # Id: User-Conf:uc-profile.lib

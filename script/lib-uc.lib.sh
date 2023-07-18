@@ -67,12 +67,12 @@ lib_uc_ids () # ~ <Names...>
 }
 
 # XXX: Track <nameid>_script_loaded and set ENV_SRC
-uc_script_load () # ~ <Src-name...>
+uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 {
   local scr_name scr_path scr_varn scr_st
   for scr_name in "${@:?}"
   do
-    scr_path=$(command -v "$scr_name.sh") ||
+    scr_path=$(command -v "$scr_name.${scr_ext:-sh}") ||
       $LOG error ":uc:script-load" "Not found" "$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_loaded
