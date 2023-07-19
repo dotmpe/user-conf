@@ -67,6 +67,14 @@ uc_profile_source_lib () # ~
 {
   UC_PROFILE_SRC_LIB=1
 
+  # FIXME: build proper cached profile...
+  test -n "${uc_lib_profile:-}" || . "${UCONF:?}/etc/profile.d/bash_fun.sh"
+
+  #set -x
+  #lib_require shell-uc str-uc stdlog-uc ansi-uc syslog-uc &&
+  #  lib_init
+  #return $?
+
   : "${UC_LIB_PATH:=$U_C/script}"
 
   # This is not so nice but there's too many functions involved.
