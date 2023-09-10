@@ -104,8 +104,8 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 # directly after they are recorded.
 lib_uc_load () # <Names...>
 {
-  test -z "${lib_load:-}" || return ${_E_recursion:-111}
-  local lib_load=1
+  test -z "${lib_loading:-}" || return ${_E_recursion:-111}
+  local lib_loading=1
   test $# -gt 0 && {
     test -n "${1-}" || return ${_E_GAE:-193}
   } || set -- ${default_sh_lib:?}
@@ -159,7 +159,7 @@ lib_uc_load () # <Names...>
 lib_uc_init () # ~ [<Names...>]
 {
   test -z "${lib_init:-}" || return ${_E_recursion:-111}
-  local lib_init=1
+  local lib_init=1 INIT_LOG=${INIT_LOG:-${LOG:?}}
   test $# -gt 0 || set -- ${lib_loaded:?}
   local lib_name lib_varn lib_stat lib_init f_lib_init
   for lib_name in "${@:?}"
@@ -278,7 +278,7 @@ lib_uc_require () # ~ <Names...>
     test ${_E_retry:-198} -eq $? ||
       $LOG error :uc:lib-require "During load" "E$_:$*" $_ || return
 
-  : "${LIB_REQ:?"Expected LIB_REQ"}"
+  : "${LIB_REQ:?"Expected LIB_REQ (after lib_load '$*')"}"
   until test -z "${LIB_REQ-}"
   do
     $LOG info :uc:lib-require "Required:" "$LIB_REQ:for:$*"

@@ -10,15 +10,18 @@ ansi_uc_lib__load ()
 
   # Load term-part to set this to more sensible default
   true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
-
   test "${COLORIZE:-0}" -eq 1 || ansi_uc_env_def
 }
 
 ansi_uc_lib__init ()
 {
+  test -z "${ansi_uc_lib_init-}" || return $_
+  test -n "${INIT_LOG-}" || return 102
+
   test ${COLORIZE:-1} -eq 1 || {
     # Declare empty if required (if not found yet)
     declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def
+    ${INIT_LOG:?} notice :uc:ansi.lib "Declared no colors"
     return
   }
 
@@ -30,7 +33,7 @@ ansi_uc_lib__init ()
     ( 256 ) tset=seta ;;
     (   * ) bash_env_exists _f0 || ansi_uc_env_def; return ;;
   esac || {
-    $uc_log warn ":ansi-uc:lib-init" "No color support" "E$?"
+    $uc_log warn ":uc:ansi:lib-init" "No color support" "E$?"
     # If no color support found, simply set vars and return zero-status.
     # Maybe want to fail trying to init ANSI.lib later...
     #bash_env_exists _f0 || ansi_uc_env_def; return;
@@ -49,7 +52,8 @@ ansi_uc_lib__init ()
     screen-256color | \
     tmux-256color | \
     xterm-256color | \
-    xterm )
+    xterm | \
+    linux )
 
       : "${_f0:=${BLACK:=$(tput ${tset}f 0)}}"
       : "${_f2:=${GREEN:=$(tput ${tset}f 2)}}"
@@ -65,7 +69,7 @@ ansi_uc_lib__init ()
     ;;
 
   ( * )
-      ${INIT_LOG:?} warn ":uc:ansi" "Unknown TERM" "${TERM:-null}"
+      ${INIT_LOG:?} warn :uc:ansi:lib-init "Unknown TERM" "${TERM:-null}"
 
       # Just initialize the empty variables, ie. no style or color values
       ansi_uc_env_def
@@ -106,7 +110,7 @@ ansi_uc_lib__init ()
         }
       ;;
   esac
-  # && ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM:$TERM"
+  ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM=$TERM:colors=$ncolors"
 }
 
 ansi_uc_env_def ()

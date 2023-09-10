@@ -14,9 +14,6 @@
 #
 syslog_uc_lib__load ()
 {
-  lib_require $( test "1" != "${COLORIZE:-1}" || echo ansi-uc ) stdlog-uc ||
-    return
-
   # XXX: These will need to be defaulted based on context. For system profile or
   # RC's and even user files they would be more conservative at first...
 
@@ -53,7 +50,8 @@ syslog_uc_lib__load ()
 
 syslog_uc_lib__init () # ~
 {
-  true
+  lib_require $( test "1" != "${COLORIZE:-1}" || echo ansi-uc ) stdlog-uc ||
+    return
 }
 
 # Init generates a new stdlog frontend for uc_syslog_1, the syslog 'logger'

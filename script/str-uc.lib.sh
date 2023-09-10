@@ -8,6 +8,7 @@ fnmatch () # ~ PATTERN STRING
 {
   case "$2" in ( $1 ) return 0 ;; ( * ) return 1 ;; esac
 }
+# Derive: str_globmatch
 
 ## Put each line into lookup table (with Awk), print on first occurence only
 #

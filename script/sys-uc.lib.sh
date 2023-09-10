@@ -8,10 +8,8 @@ sys_uc_lib__load()
   true "${hostname:="$(hostname -s | tr 'A-Z' 'a-z')"}"
 }
 
-func_exists ()
-{
-  type $1 2> /dev/null 1> /dev/null || return $?
-  return 0
+uc_fun "${func_exists:-func_exists}" || {
+  eval "$_ () { uc_fun \"\$@\"; }"
 }
 
 # Error unless non-empty and true-ish

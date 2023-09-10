@@ -5,7 +5,7 @@
 lib_load()
 {
   local f_lib_load=
-  test -n "$load_lib" || local lib_load=1
+  test -n "$load_lib" || local lib_loading=1
   test -n "$1" || set -- str-uc sys-uc os-uc std-uc src-uc match-uc
   while test $# -gt 0 # -n "$1"
   do
@@ -26,7 +26,7 @@ lib_load()
 case "$0" in "" ) ;; "-"* ) ;; * )
   test -n "$scriptname" || scriptname="$(basename "$0" .sh)"
   test -n "$verbosity" || verbosity=5
-  test -z "$lib_load" && lib_util_act="$1" || lib_util_act="load-ext"
+  test -z "$lib_loading" && lib_util_act="$1" || lib_util_act="load-ext"
   case "$lib_util_act" in
 
     load-ext ) ;; # External include, do nothing

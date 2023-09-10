@@ -16,8 +16,6 @@
 
 stdlog_uc_lib__load ()
 {
-  lib_require argv-uc || return
-
   # Like verbosity but for handlers in this lib
   true "${STDLOG_UC_LEVEL:=6}" # Info
   # XXX: Determines return status of log statement
@@ -30,7 +28,7 @@ stdlog_uc_lib__load ()
 
 stdlog_uc_lib__init ()
 {
-  true
+  lib_require argv-uc || return
 }
 
 

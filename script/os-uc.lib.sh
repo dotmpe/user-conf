@@ -22,6 +22,7 @@ os_uc_lib__load()
   esac
 }
 
+
 read_nix_style_file () # [cat_f=] ~ File [Grep-Filter]
 {
   test $# -eq 1 -a -e "${1-}" || return 64

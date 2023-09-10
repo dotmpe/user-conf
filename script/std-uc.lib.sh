@@ -45,7 +45,8 @@ std_uc_lib__load ()
 
 std_uc_lib__init ()
 {
-  test -n "${INIT_LOG-}" || return 109
+  test -z "${std_uc_lib_init-}" || return $_
+  test -n "${INIT_LOG-}" || return 102
   test -x "$(command -v readlink)" || error "readlink util required for stdio-type" 1
   test -x "$(command -v file)" || error "file util required for stdio-type" 1
   test -n "${LOG-}" && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
@@ -54,6 +55,8 @@ std_uc_lib__init ()
   test -n "${STD_INTERACTIVE-}" || {
     eval "$std_interactive" && STD_INTERACTIVE=1 || STD_INTERACTIVE=0
   }
+
+  #sh_funbody jk
 
   std_uc_env_def
   ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*"
@@ -99,8 +102,9 @@ std_uc_env_def ()
   # E:done 200
 }
 
-# Helper to generate true or false command.
-std_bool () # ~ <Cmd...> # Print true or false, based on command status
+# Helper to generate true or false command, and produce syntax error on
+# invalid value. XXX: see std-bit. Value should be 1 or 0.
+std_bool () # ~ <Cmd ...> # Print true or false, based on command status
 {
   "$@" && printf true || {
     test 1 -eq $? || BOOL= : ${BOOL:?Boolean status expected: E$_: $*}
@@ -122,27 +126,30 @@ std_term () # ~ [0] [1] [2]...
   ${tty:-true}
 }
 
-std_batch_mode ()
+std_batch_mode () # (STD-BATCH-MODE) ~ <...>
 {
   test ${STD_BATCH_MODE:-0} -eq 1 -o ${STD_INTERACTIVE:-0} -eq 0
 }
 
 # Boolean-bit: validate 0/1, or return NZ for other arguments. This uses
-# std_bool to test for 0 (true) or 1 (false) value, and prints either command.
-std_bit ()
+# std-bool with the test command. Test returns a for 0 (true) or 1 (false),
+# and 2 for sytax error and std-bool produces a syntax error as well. This
+# catches other values than 0|1 and returns E:GAE instead. If empty values
+# should imply either 0 or 1, set the second parameter.
+std_bit () # ~ <Bit-value> [<If-empty=2>]
 {
-  test $# -eq 1 -a 2 -gt "${1:-2}" || return ${_E_GAE:-193}
-  std_bool test 1 -eq "${1:?}"
+  test $# -eq 1 -a 2 -gt "${1:-${2:-2}}" || return ${_E_GAE:-193}
+  std_bool test 0 -eq "${1:?}"
 }
 
 # XXX: match command status against globspec.
-std_ifstat () # ~ <Spec> <Cmd...>
+std_ifstat () # ~ <Spec> <Cmd ...>
 {
   "${@:2}"
   str_globmatch "$?" "$1"
 }
 
-std_noerr ()
+std_noerr () # ~ <Cmd ...>
 {
   "$@" 2>/dev/null
 }
@@ -152,20 +159,24 @@ std_noout ()
   "$@" >/dev/null
 }
 
-std_stat () # ~ <Cmd...> # Invert status, fail (only) if command returned zero-status
-{
-  ! "$@"
-}
-
 std_quiet () # ~ <Cmd...> # Silence all output (std{out,err})
 {
   "$@" >/dev/null 2>&1
 }
 
-std_v_exit ()
+std_stat () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
+{
+  ! "$@"
+}
+
+std_v () # ~ <Message ...> # Print message
+{
+  stderr echo "$@" || return 3
+}
+
+std_v_exit () # ~ <Cmd ...> # Wrapper to command that exits verbosely
 {
   "$@"
-  # XXX: even more verbose... stderr_stat $? "$@"
   stderr_exit $?
 }
 
@@ -175,18 +186,46 @@ std_v_stat ()
   stderr_stat $? "$@"
 }
 
-stderr ()
+std_vs () # ~ <Message ...> # Print message, but pass previous status code.
+{
+  local stat=$?
+  stderr echo "$@" || return 3
+  return $stat
+}
+
+stderr () # ~ <Cmd <...>>
 {
   "$@" >&2
 }
 
-stderr_exit ()
+stderr_exit () # ~ <Status=$?> <...> # Verbosely exit passing status code,
+# with status message on stderr. See also std-v-exit.
 {
   local stat=${1:-$?}
-  test 0 -eq $stat &&
+  stderr echo "$(test 0 -eq $stat &&
     printf 'Exiting\n' ||
-    printf 'Exiting (status %i)\n' $stat
+    printf 'Exiting (status %i)\n' $stat)" "$stat"
   exit $stat
+}
+
+stderr_v_exit () # ~ <Message> [<Status>] # Exit shell after printing message
+{
+  local stat=$?
+  stderr echo "$1" || return 3
+  exit ${2:-$stat}
+}
+
+# Like stderr-v-exit, but exits only if status is given explicitly, or else
+# if previous status was non-zero.
+#sh_fun_decl stderr_ \
+#  local stat=\$?\;\
+#  stderr echo \"\$1\" "||" return 3\;\
+#  test -z \"\${2:-}\" "&&" test 0 -eq \"\$stat\" "||" exit \$_\;
+stderr_ ()
+{
+  local stat=$?;
+  stderr echo "$1" || return 3;
+  test -z "${2:-}" && test 0 -eq "$stat" || exit $_
 }
 
 # Show whats going on during sleep, print at start and end. Makes it easier to

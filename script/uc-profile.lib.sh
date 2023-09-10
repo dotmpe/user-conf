@@ -3,7 +3,9 @@
 # Helper to source libs only once
 uc_profile_load_lib ()
 {
-  test -n "${UC_PROFILE_SRC_LIB-}" || {
+  test "0" = "${UC_PROFILE_SRC_LIB-}" || {
+    test -z "$_" ||
+      echo "Possible recursion at uc-profile-load-lib" >&2
     uc_profile_source_lib || return
   }
 }
@@ -62,48 +64,72 @@ uc_mkid () # ~
 }
 
 #shellcheck disable=1091 # Cannot add source directives here
-# Source all libs
+# The actual source part for uc-profile-load-lib
 uc_profile_source_lib () # ~
 {
+  test -z "${UC_PROFILE_SRC_LIB-}" || {
+    echo "Possible recursion at uc-profile-source-lib" >&2
+    exit 3
+  }
   UC_PROFILE_SRC_LIB=1
 
-  # FIXME: build proper cached profile...
-  test -n "${uc_lib_profile:-}" || . "${UCONF:?}/etc/profile.d/bash_fun.sh"
-
-  #set -x
-  #lib_require shell-uc str-uc stdlog-uc ansi-uc syslog-uc &&
-  #  lib_init
-  #return $?
-
   : "${UC_LIB_PATH:=$U_C/script}"
+  . "$UC_LIB_PATH/lib-uc.lib.sh" &&
+  lib_uc_lib__load &&
+  lib_uc_lib__init || return
+
+  # FIXME: build proper cached profile...
+  #test -n "${uc_lib_profile:-}" || . "${UCONF:?}/etc/profile.d/bash_fun.sh"
+
+  # FIXME: lib-require in lib-init
+  lib_require shell-uc str-uc syslog-uc &&
+    lib_init &&
+    lib_init
+
+  UC_PROFILE_SRC_LIB=$?
+
+  return $UC_PROFILE_SRC_LIB
+
+  shopt -s extdebug
 
   # This is not so nice but there's too many functions involved.
   # XXX: Keep this file stable. Move essentials here, later probably?
   # Should maybe mark some and keep (working) caches
   #  Or mark these libs as 'global'
   . "${UC_LIB_PATH:?}"/shell-uc.lib.sh &&
-  shell_uc_lib__load &&
+  shell_uc_lib__load
+  shell_uc_lib_load=0
   shell_uc_lib__init &&
+  shell_uc_lib_init=0
   . "$UC_LIB_PATH"/str-uc.lib.sh &&
-  . "$UC_LIB_PATH"/argv-uc.lib.sh &&
+  str_uc_lib_load=0
+  . "$UC_LIB_PATH"/argv-uc.lib.sh
+  argv_uc_lib_load=0
   . "$UC_LIB_PATH"/stdlog-uc.lib.sh &&
+  echo 4
   stdlog_uc_lib__load &&
+  stdlog_uc_lib_load=0
   . "$UC_LIB_PATH"/ansi-uc.lib.sh &&
+  echo 5 &&
   ansi_uc_lib__load &&
+  ansi_uc_lib_load=0
   . "$UC_LIB_PATH"/syslog-uc.lib.sh &&
   syslog_uc_lib__load &&
+  syslog_uc_lib_load=0
 
   ansi_uc_lib__init &&
+  ansi_uc_lib_init=0
+
   #stdlog_uc_lib__init &&
   #syslog_uc_lib__init &&
-
-  UC_PROFILE_SRC_LIB=0
 }
 
 # Set Id for shell session. This should be run first thing,
 # when next to no profile whatsoever has been loaded.
 uc_profile_init () # ~
 {
+  INIT_LOG=$LOG
+
   uc_profile_load_lib || return
 
   argv_uc__argc :init $# eq 1 || return
@@ -142,10 +168,10 @@ uc_profile_init () # ~
     }
   }
 
-  test "0" = "${UC_FAIL:-0}" || return
-  $uc_log "info" ":init" "U-c profile init proceeding"
-
+  test "0" = "${UC_FAIL:-0}" || return $_
+  unset INIT_LOG
   UC_PROFILE_INIT=1
+  $uc_log "info" ":init" "U-c profile init done, proceeding"
 }
 
 # Finalize init for shell session
@@ -185,7 +211,8 @@ uc_profile_start () # ~
 uc_profile_load () # ~ NAME [TAG]
 {
   argv_uc__argc :load $# gt || return
-  $uc_log debug :load "" "$#:$*"
+  ! "${DEBUG:-false}" ||
+    $uc_log debug :load "Start loading part" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
   fnmatch "-*" "$1" && {
@@ -222,7 +249,8 @@ uc_profile_load () # ~ NAME [TAG]
     return 6
   }
 
-  $uc_log debug ":load" "Loading part" "$*:$uc_profile_partname"
+  ! "${DEBUG:-false}" ||
+    $uc_log debug ":load" "Loading part" "$*:$uc_profile_partname"
   uc_source "$uc_profile_load_path"
   uc_profile_part_ret=$?
   $uc_log debug ":load" "Loaded part" "$*:$uc_profile_partname:E$uc_profile_part_ret"
@@ -361,7 +389,9 @@ uc_profile_boot () # TAB [types...]
     #  test $stat -eq $E_UC_PENDING || return $stat
     #}
   done <"$c"
-  $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "${names-}"
+  local context=
+  ! "${DEBUG:-false}" || context="${names-}"
+  $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "$context"
 }
 
 uc_profile__record_env__diff_keys () # ~ FROM TO
