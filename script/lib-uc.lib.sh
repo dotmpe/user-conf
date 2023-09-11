@@ -7,8 +7,8 @@
 
 lib_uc_lib__load ()
 {
-  #true "${ENV_SRC:=}"
-  #true "${ENV_LIB:=}"
+  true "${ENV_SRC:=}"
+  true "${ENV_LIB:=}"
   true "${lib_loaded:=}"
 }
 
@@ -109,6 +109,7 @@ lib_uc_load () # <Names...>
   test $# -gt 0 && {
     test -n "${1-}" || return ${_E_GAE:-193}
   } || set -- ${default_sh_lib:?}
+  ! uc_debug || $LOG info ":uc:lib-load" "Resolving lib(s)" "($#) $*"
 
   local lib_name lib_varn lib_stat lib_path f_lib_load retry
   for lib_name in "${@:?}"
@@ -116,8 +117,9 @@ lib_uc_load () # <Names...>
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
     test 0 -eq ${!lib_stat:--1} && { continue; }
-    # Stored status means file already loaded and lookup is not needed
+    # Stored status means file already loaded
     test "$_" != "-1" || {
+      # Lookup path to lib
       lib_path=$(command -v "$lib_name.lib.sh") ||
         $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
       # XXX: not the same var.. UC_TOOLS_DEBUG?
@@ -129,7 +131,7 @@ lib_uc_load () # <Names...>
           return
       ENV_LIB="${ENV_LIB:-}${ENV_LIB:+ }$lib_path"
     }
-    # Execute load hook if found, and set status
+    # Execute load hook if found, and (re)set status
     f_lib_load=${lib_varn}_lib__load
     declare -F $f_lib_load >/dev/null 2>&1 || {
       f_lib_load=${lib_varn}_lib_load
@@ -138,10 +140,10 @@ lib_uc_load () # <Names...>
       }
     }
     ! uc_debug ||
-      ! declare -F $f_lib_load >/dev/null 2>&1 ||
+      ! declare -F "$f_lib_load" >/dev/null 2>&1 ||
         $LOG debug : "Running lib 'load' hook" "$lib_name"
-    ! declare -F $f_lib_load >/dev/null 2>&1 || {
-      $f_lib_load
+    ! declare -F "$f_lib_load" >/dev/null 2>&1 || {
+      "$f_lib_load"
     }
     declare -g ${lib_stat}=$?
     lib_loaded="${lib_loaded-}${lib_loaded:+ }$lib_name"
