@@ -276,7 +276,7 @@ lib_uc_require () # ~ <Names...>
     test -z "$LIB_REQ" && return || return ${_E_retry:-198}
   }
 
-  lib_load "$@" && return ||
+  lib_loading= lib_load "$@" && return ||
     test ${_E_retry:-198} -eq $? ||
       $LOG error :uc:lib-require "During load" "E$_:$*" $_ || return
 
@@ -294,7 +294,7 @@ lib_uc_require () # ~ <Names...>
       done | awk '!a[$0]++')
     test $# -eq 0 && return
     $LOG info :uc:lib-require "Pending:" "$*"
-    lib_load "$@" && return || {
+    lib_loading= lib_load "$@" && return || {
       test ${_E_retry:-198} -eq $? || return $_
     }
   done

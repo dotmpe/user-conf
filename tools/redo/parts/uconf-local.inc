@@ -15,9 +15,9 @@ uconf-local:init ()
       ln -vs "${UCONF:?}/tools/redo/local.do" "$bd/default.do"
     }
 
-    test -e "$bd/.attributes" || {
-      test ! -h "$bd/.attributes" || rm -v "$bd/.attributes"
-      ln -vs "${UCONF:?}/etc/package/local.asis" "$bd/.attributes"
+    test -e "$bd/.properties" || {
+      test ! -h "$bd/.properties" || rm -v "$bd/.properties"
+      ln -vs "${UCONF:?}/etc/package/local.asis" "$bd/.properties"
     }
 
     test -e "$bd/.build-rules.list" || {

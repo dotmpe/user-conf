@@ -160,7 +160,7 @@ str_sh_clean ()
 
 str_sh_expand_braces ()
 {
-  eval "echo $1"
+  eval "echo $*"
 }
 
 # Get the length of the string counting the number of visible characters

@@ -19,10 +19,10 @@
 # @at.dev:
 # @at.conf: *config
 # @c: *config
-# @at.meta: &attributes &context-local
+# @at.meta: &properties &context-local
 
 
-*caches expand ${PROJECT_CACHE:?}/{attributes,params,redo-env}.sh
+*caches expand ${PROJECT_CACHE:?}/{properties,params,redo-env}.sh
 @build-env eval $LOG warn :build-env Finished ENV=${ENV:-}:${XDG_SESSION_TYPE:-}:${UC_PROFILE_TP:-}:@${HOST:-}+${HOSTTYPE:-}:v=${v:-}
 
 @configured ifdone @configure
