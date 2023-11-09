@@ -1,0 +1,2 @@
+test/*.bats test exec
+test/*.bash test exec=bash-test.sh
