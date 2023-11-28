@@ -2,10 +2,14 @@
 
 ## Sys: dealing with vars, functions, env.
 
-sys_uc_lib__load()
+sys_uc_lib__load ()
 {
-  true "${uname:="$(uname -s)"}"
-  true "${hostname:="$(hostname -s | tr 'A-Z' 'a-z')"}"
+  lib_require os || return
+
+  : "${LOG:?"No LOG env"}"
+  if_ok "${uname:=$(uname -s)}" &&
+  if_ok "${HOST:=$(hostname -s)}" || return
+  : "${hostname:=${HOST,,}}"
 }
 
 uc_fun "${func_exists:-func_exists}" || {

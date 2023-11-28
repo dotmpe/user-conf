@@ -82,7 +82,7 @@ do
   . "$UC_LIB_PATH"/uc-d-$d.lib.sh
 done
 . "$UC_LIB_PATH"/stattab-uc.lib.sh
-. "$UC_LIB_PATH"/context/ctx-class.lib.sh
+. "$UC_LIB_PATH"/script/class-uc.lib.sh
 . "$UC_LIB_PATH"/shell-uc.lib.sh
 
 sys_uc_lib__load
@@ -92,11 +92,11 @@ ansi_uc_lib__load
 stdlog_uc_lib__load
 #syslog_uc_lib__load
 stattab_uc_lib__load
-ctx_class_lib__load
+class_uc_lib__load
 
 shell_uc_lib__init
 std_uc_lib__init
-ctx_class_lib__init
+class_uc_lib__init
 
 case "${TERM-}" in
   ( "" ) ;;

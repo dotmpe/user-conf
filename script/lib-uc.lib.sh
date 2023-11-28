@@ -53,7 +53,12 @@ lib_uc__define ()
 # Test lib exists on PATH and echo source path
 lib_uc_exists () # ~ <Name>
 {
-  command -v "${1:?}".lib.sh
+  test 1 -eq $# || return ${_E_GAE:-193}
+  test -z "${libpath_var-}" && {
+    lib_uc_path "${1:?}" >/dev/null
+    return
+  }
+  declare -g ${libpath_var:?}=$(lib_uc_path "${1:?}")
 }
 
 lib_uc_ids () # ~ <Names...>
@@ -104,7 +109,11 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 # directly after they are recorded.
 lib_uc_load () # <Names...>
 {
-  test -z "${lib_loading:-}" || return ${_E_recursion:-111}
+  test -z "${lib_loading:-}" || {
+    $LOG alert :uc:lib-load "Recursion" "lib_loading=$lib_loading" \
+      ${_E_recursion:-111} ||
+    return
+  }
   local lib_loading=1
   test $# -gt 0 && {
     test -n "${1-}" || return ${_E_GAE:-193}
@@ -160,10 +169,14 @@ lib_uc_load () # <Names...>
 # defaults to <lib-loaded>.
 lib_uc_init () # ~ [<Names...>]
 {
-  test -z "${lib_init:-}" || return ${_E_recursion:-111}
-  local lib_init=1 INIT_LOG=${INIT_LOG:-${LOG:?}}
+  test -z "${lib_init:-}" || {
+    $LOG alert :uc:lib-init "Recursion" "$*:lib_init=$lib_init" \
+      ${_E_recursion:-111} ||
+    return
+  }
+  local lib_init="$*" INIT_LOG=${INIT_LOG:-${LOG:?}}
   test $# -gt 0 || set -- ${lib_loaded:?}
-  local lib_name lib_varn lib_stat lib_init f_lib_init
+  local lib_name lib_varn lib_stat v_lib_init f_lib_init
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
@@ -171,10 +184,9 @@ lib_uc_init () # ~ [<Names...>]
     test 0 -eq ${!lib_stat:--1} ||
       $LOG error ":uc:lib-init" "Missing or failed to load" \
         "E${!lib_stat:-unset}:$lib_name" $_ || return
-    lib_init=${lib_varn}_lib_init
     f_lib_init=${lib_varn}_lib__init
     declare -F $f_lib_init >/dev/null 2>&1 || {
-      f_lib_load=${lib_varn}_lib_init
+      f_lib_init=${lib_varn}_lib_init
       ! declare -F $f_lib_init >/dev/null 2>&1 || {
         $LOG warn : "Deprecated lib core 'init' hook name (ignored)" "$f_lib_init"
       }
@@ -182,8 +194,9 @@ lib_uc_init () # ~ [<Names...>]
     ! declare -F $f_lib_init >/dev/null 2>&1 || {
       $f_lib_init
     }
-    declare -g ${lib_init}=$?
-    test 0 -eq ${!lib_init} || {
+    v_lib_init=${lib_varn}_lib_init
+    declare -g ${v_lib_init}=$?
+    test 0 -eq ${!v_lib_init} || {
       test ${_E_retry:-198} -ne $_ || return $_
       #  $LOG crit :uc:lib-init "Not implemented: pending in lib-init" "" \
       #      ${_E_todo:-125} || return
@@ -191,6 +204,19 @@ lib_uc_init () # ~ [<Names...>]
       return
     }
   done
+}
+
+# Exactly like lib-loop, except given symbols do not need to exist and are
+# skipped silently if missing.
+lib_uc_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
+{
+  lib_loop_require=false lib_uc_loop "$@"
+}
+
+lib_uc_islib () # ~ <Name>
+{
+  lib_uc_loaded "${1:?}" && return
+  lib_uc_exists "$_"
 }
 
 # Test if all given names loaded correctly.
@@ -207,13 +233,6 @@ lib_uc_loaded () # ~ [<Names...>]
     test 0 -eq ${!lib_stat:--1} && { continue; }
     return $_
   done
-}
-
-# Exactly like lib-loop, except given symbols do not need to exist and are
-# skipped silently if missing.
-lib_uc_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
-{
-  lib_loop_require=false lib_uc_loop "$@"
 }
 
 # Go over symbols for lib names and suffix, and either invoke those as functions
@@ -251,6 +270,11 @@ lib_uc_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
       ( * ) return 1 ;;
     esac
   done
+}
+
+lib_uc_path ()
+{
+  command -v "${1:?}".lib.sh
 }
 
 # A wrapper for lib-load, that also works inside lib 'load' hooks. Normally

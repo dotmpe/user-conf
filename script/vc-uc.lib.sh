@@ -3,7 +3,7 @@
 
 vc_uc_lib__init()
 {
-  test "${vc_uc_lib_init-}" = "0" && return
+  test -z "${vc_uc_lib_init-}" || return $_
   #lib_groups \
   #  git: \
   #  hg: \

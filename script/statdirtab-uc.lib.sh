@@ -3,7 +3,7 @@
 
 statdirtab_uc_lib__load ()
 {
-  lib_require ctx-class || return # statusdir
+  lib_require class-uc || return # statusdir
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}StatDirTab
 }
 
@@ -13,19 +13,15 @@ statdirtab_uc_lib__init ()
 }
 
 
-class.StatDirTab () # :Class ~ <ID> .<METHOD> <ARGS...>
+class_StatDirTab__load ()
+{
+  Class__static_type[StatDirTab]=StatDirTab:StatTab
+}
+
+class_StatDirTab_ () # :Class ~ <ID> .<METHOD> <ARGS...>
 #   .StatDirTab <Basename> <TabClass>                 - constructor
 {
-  test $# -gt 0 || return 177
-  test $# -gt 1 || set -- "$1" .toString
-  local name=StatDirTab super_type=Class self super id=${1:?} method=$2
-  shift 2
-  self="class.$name $id "
-  super="class.$super_type $id "
-
-  case "$method" in
-    ".$name" ) $super.$super_type "$@" ;;
-    ".__$name" ) $super.__$super_type ;;
+  case "${call:?}" in
 
     .basenames ) : "${Class__instances[$id]}" && : "${_% *}" && echo "${_// /$'\n'}" ;;
     .tabclass ) : "${Class__instances[$id]}" && echo "${_//* }" ;;
@@ -54,9 +50,8 @@ class.StatDirTab () # :Class ~ <ID> .<METHOD> <ARGS...>
         done
       ;;
 
-    .class-context ) class.info-tree .tree ;;
-    .class-info | .toString ) class.info ;;
+    ( * ) return ${_E_next:?} ;;
 
-    * ) $super$method "$@" ;;
   esac
+  return ${_E_done:?}
 }

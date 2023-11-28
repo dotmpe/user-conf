@@ -59,7 +59,7 @@ std_uc_lib__init ()
   #sh_funbody jk
 
   std_uc_env_def
-  ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*"
+  ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*" $?
 }
 
 
@@ -81,25 +81,35 @@ std_uc_env_def ()
     #echo "val='$val'" >&2
   done
 
+  : "${_E_nsk:=67}"
+  # 67: nsk: no such key
+  : "${_E_nsa:=68}"
+  # 68: nsa: no such action
+
   #: "${_E_cont:=100}"
   : "${_E_recursion:=111}" # unwanted recursion detected
 
   : "${_E_no_file:=124}" # no-such-file(set): file missing or nullglob
   : "${_E_not_exec:=126}" # NEXEC not-executable
   : "${_E_not_found:=127}" # NSFC no-such-file-or-command
-  # 128+ is mapped for signals (see trap -l)
-  # on debian linux last mapped number is 192: RTMAX signal
+  # XXX: 128 is free?
+
+  # 128+(1--64) is mapped for signals (see trap -l), ie. `kill -1 $PID` produces
+  # exit status 129, inserting Ctrl-C in a shell terminal produces exit 131,
+  # etc. On debian linux last mapped number is 192: RTMAX (ie. 128+64).
+
   : "${_E_GAE:=193}" # Generic Argument Error.
   # : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules
-  # E:failure 195: failure, exception; abort
-  # E:continue 196: continue with next alt.; skip; keep-going
-  # E:stop 197: break; stop
-  # E:retry 198: pending; retry later
-  # E:limit 199: limit;
-  # E:more : more;
-  # E:updated 200
-  # E:done 200
+  # E:continue 195: error, exception; but if in loop/batch keep going...
+  : "${_E_next:=196}"
+  # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
+  # E:stop     197: break; OK, but if loop/batch then terminate, stop when first convenient
+  # E:retry    198: pending; not 195/196 but can retry later this loop/batch
+  # E:limit    199: limit; like 198 but some throttling was initiated as well
+  : "${_E_done:=200}"
+  # E:done     200: changed?
+  # E:more     201: more; partially completed ?
 }
 
 # Helper to generate true or false command, and produce syntax error on
