@@ -3,6 +3,7 @@
 class_uc_lib__load ()
 {
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}Class\ ParameterizedClass
+  declare -gA Class__static_calls
   declare -gA Class__static_type
   declare -gA Class__type
 }
@@ -10,7 +11,12 @@ class_uc_lib__load ()
 class_uc_lib__init ()
 {
   test -z "${class_uc_lib_init:-}" || return $_
+  : "${_E_fail:=1}" # std:errors
+  : "${_E_error:=2}" # std:errors
+  : "${_E_nsk:=67}" # std:errors
   : "${_E_nsa:=68}" # std:errors
+  : "${_E_next:=196}" # std:errors
+  : "${_E_done:=200}" # std:errors
   : "${ctx_class_types:?} "
   : "${_// /-class }"
   if_ok "$(filter_args lib_uc_islib $_)" || return
@@ -32,6 +38,7 @@ class_uc_lib__init ()
 class_Class__load ()
 {
   Class__static_type[Class]=Class
+  Class__static_calls[Class]=exists,hasattr
   # Assoc-array to store 'params': arguments passed into Class constructor
   declare -g -A Class__instance=()
 }
@@ -93,7 +100,9 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
 
     ( * ) return ${_E_next:?} ;;
 
-  esac
+  esac ||
+    return
+
   return ${_E_done:?}
 }
 
@@ -170,7 +179,9 @@ class_ParameterizedClass_ () # ~ <Instance-Id> .<Message-name> <Args...>
 
     ( * ) return ${_E_next:?} ;;
 
-  esac
+  esac ||
+    return
+
   return ${_E_done:?}
 }
 
@@ -256,10 +267,10 @@ class_init () # ~ <Var-name> [<Type>] [<Constructor-Args...>]
   test $# -gt 1 && shift 2 || shift
 
   # Find new ID for instance
-  local new_prefix="class__${type:?} $RANDOM "
+  local new_prefix="class.${type:?} $RANDOM "
   while $new_prefix.defined
   do
-    new_prefix="class__$type $RANDOM "
+    new_prefix="class.$type $RANDOM "
   done
 
   # Call constructor(s) and store concrete type and optional params for Id
@@ -303,13 +314,24 @@ class_define_all ()
   for class in $ctx_class_types
   do
     : "
-class__$class () {
+class.$class () {
   local name=$class id=\${1:?} call=\${2:-_repr}
   test 1 -lt \$# && shift 2 || shift
-  local self=\"\${self:-class__$class \$id }\"
+  local self=\"\${self:-class.$class \$id }\"
 
   class_run \"\$call\" \"\$@\"
-}"
+}
+
+$( : "${Class__static_calls[$class]:-}" &&
+  test -z "$_" || for static_call in ${_//[ ,]/}
+  do cat <<EOM
+class.$class.$static_call () {
+  class.$class - .$static_call \"\$@\"
+}
+EOM
+  done
+)
+"
     eval "$_"
   done
 }
@@ -368,8 +390,8 @@ class_loop () # (name,id) ~ <Item-handler> <Args...>
   if_ok "$(class_resolve "$name")" || return
   while read -r name type
   do
-    self="class__${name} $id " \
-    super="${type:+class__${type} $id }" \
+    self="class.${name} $id " \
+    super="${type:+class.${type} $id }" \
     "${1:?}" "${@:2}" || {
       test ${_E_done:?} -eq $? && return
       test ${_E_next:?} -eq $_ && continue

@@ -124,7 +124,7 @@ shell_uc_def ()
       typeset var=${1:?}
       # XXX: Can't make string-expression syntax work for dynamic variable names
       #case "${!var[@]@A}" in ( -*[Aa]* ) true ;; ( * ) false ;; esac
-      : "$(declare -p $var)"
+      if_ok "$(std_noerr declare -p $var)" &&
       case "$_" in ( "declare -"*[Aa]*" "* ) true ;; ( * ) false ;; esac
     }
 

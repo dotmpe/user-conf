@@ -13,9 +13,8 @@ rules_lib__load ()
   true "${RULE_DIRS:=$UCONF $U_C $U_S}"
   true "${LCACHE_DIR:=.meta/cache}"
 
-  true "${_E_failure:=195}" # Unable to process (required step)
-  true "${_E_continue:=196}" # Current iteration failed, but can try next (alternative steps)
-  true "${_E_break:=197}" # Ie. loop/read done, ie. for infinite loops
+  true "${_E_next:=196}" # std:states
+  true "${_E_stop:=197}" # std:states
 }
 
 rules_lib__init()
@@ -39,7 +38,7 @@ rule_run__diag () # (:rr)
 {
   local atime utime ltime lvl rstat stdl errl cwd sh cmdline
   ${read:-read -r} atime utime ltime lvl rstat stdl errl sh cwd cmdline ||
-    return $_E_break
+    return $_E_stop
 
   # Process shell spec as part EC id, part shell session type spec
   env_box_spec=${sh//[^@a-z0-9-]}
@@ -50,7 +49,7 @@ rule_run__diag () # (:rr)
   local env_box_ls env_box_l env_box_n
   env_box_get "$env_box_spec" || {
     $LOG error "" "EC not found" "$sh"
-    return $_E_continue
+    return $_E_next
   }
 
   # Parse rest as session-type spec
@@ -66,11 +65,11 @@ rule_run__diag () # (:rr)
         do
           rule_run__diag__item
         done ||
-            return $_E_continue
+            return $_E_next
   } || {
     read -r env_box_uuid env_box_nameid env_box_type env_box_specs <<< "$env_box_l"
     rule_run__diag__item ||
-        return $_E_continue
+        return $_E_next
   }
 }
 
@@ -86,7 +85,7 @@ rule_run__diag__item ()
     # XXX: we can run pre-run check for local command working directory
     test -d "$cwd" || {
       $LOG warn "" "No such local directory" "$cwd"
-      return $_E_continue
+      return $_E_next
     }
   }
   cmd="cd $cwd && $cmd"
@@ -328,8 +327,8 @@ rules_run () # (:u) ~ [<Ns>] [<Ql>] [<:Rs-select...>] # Pipe rule-select to rule
   RULE_NS=$ns rules_select "$ql" "$@" | while true
       do
         rule_run $ns || {
-          ignore_stat eq $_E_continue && continue || {
-            ignore_stat eq $_E_break && break || return
+          ignore_stat eq $_E_next && continue || {
+            ignore_stat eq $_E_stop && break || return
           }
         }
       done

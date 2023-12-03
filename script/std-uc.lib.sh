@@ -81,6 +81,10 @@ std_uc_env_def ()
     #echo "val='$val'" >&2
   done
 
+  : "${_E_fail:=1}"
+  : "${_E_script_error:=2}"
+  : "${_E_user_error:=3}"
+
   : "${_E_nsk:=67}"
   # 67: nsk: no such key
   : "${_E_nsa:=68}"
@@ -106,7 +110,7 @@ std_uc_env_def ()
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
   # E:stop     197: break; OK, but if loop/batch then terminate, stop when first convenient
   # E:retry    198: pending; not 195/196 but can retry later this loop/batch
-  # E:limit    199: limit; like 198 but some throttling was initiated as well
+  # E:break    limit    199: limit; like 198 but some throttling was initiated as well
   : "${_E_done:=200}"
   # E:done     200: changed?
   # E:more     201: more; partially completed ?
