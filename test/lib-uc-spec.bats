@@ -4,7 +4,7 @@ load helper
 setup ()
 {
   DEBUG=true UC_DEBUG=true
-  v=7
+  : "${v:=${verbosity:-5}}"
   unset -f lib_load
   . script/lib-uc.lib.sh
   lib_uc_lib__load &&
@@ -19,8 +19,8 @@ setup ()
 }
 
 @test "that sources .lib.sh files" {
-  run lib_load argv-uc
-  test $v -le 4 && {
+  run lib_uc_load argv-uc
+  test $v -le 5 && {
       test_ok_empty || stdfail 2.1.
     } ||
       test_ok_nonempty || stdfail 2.1.
@@ -37,12 +37,12 @@ setup ()
 
   lib_load example-empty
   test "$lib_loaded" = "argv-uc example-empty"
-
-  lib_load example-load-hook
 }
 
 @test "that sources .lib.sh files (II)" {
+  #set -x
   lib_load example-load-hook
+  #set +x 
   sh_fun example_load_hook_lib__load
 
   lib_load example-init-hook

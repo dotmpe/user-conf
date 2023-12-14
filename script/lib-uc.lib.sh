@@ -125,9 +125,13 @@ lib_uc_load () # <Names...>
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}_lib_loaded
-    test 0 -eq ${!lib_stat:--1} && { continue; }
+    test 0 -ne "${!lib_stat:--1}" || {
+      ! uc_debug || $LOG debug :uc:lib-load "Skipping loaded" "$_:$lib_name"
+      continue
+    }
     # Stored status means file already loaded
-    test "$_" != "-1" || {
+    # XXX: bats has some debug trap that spoils $_? test "$_" != "-1" || {
+    test "-1" != "${!lib_stat:--1}" || {
       # Lookup path to lib
       lib_path=$(command -v "$lib_name.lib.sh") ||
         $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return

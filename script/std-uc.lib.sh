@@ -57,7 +57,6 @@ std_uc_lib__init ()
   }
 
   #sh_funbody jk
-
   std_uc_env_def
   ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*" $?
 }
