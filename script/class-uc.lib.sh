@@ -103,9 +103,10 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
         done
       }
     ;;
-    .cparams ) echo "${Class__instance[$id]}" ;;
+    .cparams|.class-params ) echo "${Class__instance[$id]}" ;;
     .id ) echo "$id" ;;
     .query-class ) class_query "$@" ;;
+    .switch-class ) class_switch "$@" ;;
     .set-attr )
         test $# -ge 2 -a $# -le 3 || return ${_E_MA:?}
         : "${1:?}"
@@ -377,28 +378,6 @@ class_init () # ~ <Var-name> [<Type>] [<Constructor-Args...>]
   # scope. Even more declare or set are/seem useless, so its eval to the rescue.
 }
 
-# Refresh reference to current class (after Class:instance was changed) or reset
-# to given type.
-class_query () # (id) ~ <Var-name> [<Type>]
-{
-  local var=${1:?} type=${Class__instance[$id]}
-  case "$var" in
-    local:* ) var="${var:6}" ;
-  esac
-  test -z "${2:-}" -o "$2" = "$type" || {
-    $LOG info : "Changing class" "$1:$type->$2"
-    type=$2
-    declare -g Class__instance[$id]=$type
-  }
-  : "class.${type:?} $type $id "
-  test "${!var}" = "$_" ||
-  case "$1" in
-    local:* ) eval "$var=\"$_\"" ;;
-    * ) declare -g $var="$_" ;;
-  esac
-  #$LOG info : "Class reference updated" "$_"
-}
-
 # Run load handler for every class to declare global vars of each
 class_load ()
 {
@@ -480,6 +459,22 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
   done
 }
 
+# Return zero status when Type matches Class:instance[id], and else update
+# setting and return E:done status.
+class_query () # (id) ~ <Type>
+{
+  local type=${Class__instance[$id]}
+  test "${1:?}" = "$type" || {
+    test -n "${Class__type[$1]-}" &&
+    stderr echo $type=${Class__type[$1]} &&
+    $LOG info "" "Changing class" "$id:$type->$1" &&
+    type=$1 &&
+    declare -g "Class__instance[$id]=$type" &&
+    return ${_E_done:?}
+  } ||
+    $LOG alert "" "Query failed" "id=$id:type=$1:E$?" $?
+}
+
 class_resolve () # ~ <name>
 {
   typeset i n class
@@ -535,6 +530,27 @@ class_super_optional_call () # (id,self,super,call) ~ <Args...>
     $LOG error "$lk" "Superclass call failure" \
           "E$r:super=${SUPER_NAME:-}:concrete=${SELF_NAME:?}:$#:$*" $r
   }
+}
+
+# Refresh reference to current class (after Class:instance was changed) or reset
+# to given type.
+class_switch () # (id) ~ <Var-name> [<Type>]
+{
+  local var=${1:?} type
+  case "$var" in
+    local:* ) var="${var:6}" ;
+  esac
+  test -z "${2-}" ||
+    class_query "$2" ||
+    test ${_E_done:?} -eq $? || return $_
+  type=${Class__instance[$id]}
+  : "class.${type:?} $type $id "
+  test "${!var}" = "$_" && return
+  case "$1" in
+    local:* ) eval "$var=\"$_\"" ;;
+    * ) declare -g $var="$_"
+  esac
+  $LOG info "" "Class reference updated" "$_"
 }
 
 #

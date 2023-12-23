@@ -278,7 +278,7 @@ lib_uc_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
 
 lib_uc_path ()
 {
-  command -v "${1:?}".lib.sh
+  command -v -- "${1:?}".lib.sh
 }
 
 # A wrapper for lib-load, that also works inside lib 'load' hooks. Normally
