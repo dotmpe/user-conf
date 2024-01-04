@@ -13,8 +13,9 @@ uc_cmdcache_lib__load ()
 
 uc_cmdcache_lib__init ()
 {
-  test -z "${uc_cmdcache_lib_init:-}" || return $_
-  uc_fields_define uc commands{,-{{start-,}time,ttl,status,stdout}}
+  test -z "${uc_cmdcache_lib_init-}" || return $_
+  uc_fields_define uc commands-{{start-,}time,ttl,status,stdout} &&
+  uc_fields_group_define uc commands
 }
 
 

@@ -158,14 +158,14 @@ uc_conf_load () # ~ <Subcmd-Name>
 
 # FIXME: want to eval/source in sequence as defined in record
 
-  test -z "$stttab_meta" || {
-    eval "$(echo "$stttab_meta" | tr ':' '=')" || {
-      error "Error getting uctab meta for record '$stttab_entry'" 1
+  test -z "$stab_meta" || {
+    eval "$(echo "$stab_meta" | tr ':' '=')" || {
+      error "Error getting uctab meta for record '$stab_entry'" 1
     }
   }
 
   local ref ref_path
-  for ref in $stttab_refs
+  for ref in $stab_refs
   do
     ref_path=$(uc__path "$ref") || {
       error "Cannot find source file for '$ref'"
@@ -175,7 +175,7 @@ uc_conf_load () # ~ <Subcmd-Name>
     . $ref_path && std_info "Sourced <$ref_path>"
   done
 
-  note "Loaded config $tag: '$stttab_short'"
+  note "Loaded config $tag: '$stab_short'"
 }
 
 uc_conf_req ()
@@ -269,7 +269,7 @@ uc_commit_report ()
   $ucstat.update $status "" "" "$utime" "$directives" "$passed" "" "" "$failed" || return
 
   # Don't change file if entry is the same as fetched
-  test "$(stattab_ UC entry)" = "$stttab_entry" && return
+  test "$(stattab_ UC entry)" = "$stab_entry" && return
 
   ctime="$(date +'%s')" &&
   stattab_ UC update "" "" "$ctime" &&

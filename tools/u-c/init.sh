@@ -82,7 +82,7 @@ do
   . "$UC_LIB_PATH"/uc-d-$d.lib.sh
 done
 . "$UC_LIB_PATH"/stattab-uc.lib.sh
-. "$UC_LIB_PATH"/script/class-uc.lib.sh
+. "$UC_LIB_PATH"/class-uc.lib.sh
 . "$UC_LIB_PATH"/shell-uc.lib.sh
 
 sys_uc_lib__load

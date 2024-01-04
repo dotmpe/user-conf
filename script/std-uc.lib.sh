@@ -80,9 +80,20 @@ std_uc_env_def ()
     #echo "val='$val'" >&2
   done
 
+  # XXX: bash returns 1 on cmdline syntax error and 2 on syntax error in
+  # source. grep returns 1 on match failure, 2 on usage/syntax error.
+  # sed returns 1 on usage and syntax parse errors
+
+  # user scripts may fail without blaming either script or user. Or, decide one
+  # of the two and this should be based on the source of the inputs Is the
+  # cause user arguments or data, or was the fault in supposed finalized and
+  # static script? This can be contextually nuanced, and irrelevant too.
   : "${_E_fail:=1}"
-  : "${_E_script_error:=2}"
-  : "${_E_user_error:=3}"
+  # 1: fail: generic non-success status, not an error per se
+  : "${_E_script:=2}"
+  # 2: script: error caused by broken syntax or script misbehavior
+  : "${_E_user:=3}"
+  # 3: user: usage error or faulty data
 
   : "${_E_nsk:=67}"
   # 67: nsk: no such key
