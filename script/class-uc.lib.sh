@@ -356,6 +356,11 @@ class_init () # ~ <Var-name> [<Type>] [<Constructor-Args...>]
   local var=${1:?} type=${2:-Class}
   test $# -gt 1 && shift 2 || shift
 
+  sh_fun class.${type:?} || {
+    : "type=$type;var=$var"
+    $LOG error :class-init "Failed initializing class" "$_" 1 || return
+  }
+
   # Find new ID for instance
   local new_prefix="class.${type:?} $type $RANDOM "
   while $new_prefix.defined
