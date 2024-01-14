@@ -1,8 +1,7 @@
-# Looking at a method to work with either dynamic or static metadata
+# Looking at a method to work with either dynamic or static metadata.
+# Only using variables for metadata, no other AST (currently).
 
-# Only using variables, nother other AST currently for metadata.
-
-# This provides uc-fields-define to create global associative arrays with
+# This lib provides uc-fields-define to create global associative arrays with
 # name pattern {base}_{group}_{field} which normally corresponds to
 # uc_fields_{field_name} here.
 
@@ -14,7 +13,7 @@
 # A variant on uc-field, uc-vfield adds validation to the value before it is
 # stored, but it cannot be used as getter like uc-field.
 
-# The initial function set is used as basis for uc-cmdcache.lib
+# The initial function set was used as basis for uc-cmdcache.lib
 
 
 uc_fields_lib__load ()
