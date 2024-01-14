@@ -217,6 +217,21 @@ lib_uc_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
   lib_loop_require=false lib_uc_loop "$@"
 }
 
+lib_uc_initialized () # ~ [<Names...>]
+{
+  test $# -gt 0 || {
+    test -n "${lib_loaded:-}" && set -- $_ || return ${_E_MA:-194}
+  }
+  local lib_name lib_varn lib_istat
+  for lib_name in "${@:?}"
+  do
+    lib_varn=${lib_name//[^A-Za-z0-9_]/_}
+    lib_istat=${lib_varn}_lib_init
+    test 0 -eq ${!lib_istat:--1} && { continue; }
+    return $_
+  done
+}
+
 lib_uc_islib () # ~ <Name>
 {
   lib_uc_loaded "${1:?}" && return
@@ -227,7 +242,7 @@ lib_uc_islib () # ~ <Name>
 lib_uc_loaded () # ~ [<Names...>]
 {
   test $# -gt 0 || {
-    test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
+    test -n "${lib_loaded:-}" && set -- $_ || return ${_E_MA:-194}
   }
   local lib_name lib_varn lib_stat
   for lib_name in "${@:?}"
