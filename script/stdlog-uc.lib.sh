@@ -41,10 +41,13 @@ stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
   do
     case "$1" in
       ( severity )
-        filters="${filters:-}${filters:+" | "}syslog_logger_stderr_filter"
+          filters="${filters:-}${filters:+" | "}syslog_logger_prifmt_filter"
+        ;;
+      ( datetime )
+          filters="${filters:-}${filters:+" | "}syslog_logger_datetime_filter"
         ;;
       ( colorize )
-        filters="${filters:-}${filters:+" | "}syslog_logger_colorize_filter"
+          filters="${filters:-}${filters:+" | "}syslog_logger_colorize_filter"
         ;;
       ( * ) ${LOG:?} error :stdlog-init "No such filter" "$1" ; return 1 ;;
     esac
@@ -121,7 +124,7 @@ log()
 
 stderr_log_inner ()
 {
-  case "$(echo $1 | tr 'A-Z' 'a-z')" in
+  case "${1,,}" in
     warn*|err*|notice ) log "$1: $2" 1>&2 ;;
     * ) log "$2" 1>&2 ;;
   esac
@@ -244,18 +247,21 @@ stdlog_uc__syslog_colorize ()
       continue
     }
 
-    # Get facility level and severity level
-    flvl=$( echo "$PRI / 8" | bc)
     slvl=$( echo "$PRI % 8" | bc)
+    test "${STDLOG_UC_PRI:-1}" = "1" && {
+      # Get facility level and severity level
+      flvl=$( echo "$PRI / 8" | bc)
 
-    # Optionally display name-codes besides numral facility.severity levels
-    test "${stdlog_uc__syslog_colorize__resolve_num:-0}" = 1 && {
-      fname=$(syslog_facility_name "$flvl"|| echo "(unknown)")
-      sname=$(syslog_level_name "$slvl"|| echo "(unknown)")
+      # FIXME:
+      # Optionally display name-codes besides numral facility.severity levels
+      test "${stdlog_uc__syslog_colorize__resolve_num:-0}" = 1 && {
+        fname=$(syslog_facility_name "$flvl"|| echo "(unknown)")
+        sname=$(syslog_level_name "$slvl"|| echo "(unknown)")
 
-      printf "$bb%2s\%1i.${n}" "$fname" "$flvl"
-    } || {
-      printf "$bb%i.${n}" "$flvl"
+        printf "$bb%2s\%1i.${n}" "$fname" "$flvl"
+      } || {
+        printf "$bb%i.${n}" "$flvl"
+      }
     }
 
     # Assign detail color for log-line based on severity-level
@@ -271,12 +277,15 @@ stdlog_uc__syslog_colorize ()
       7 ) slvlc="${b}${B}" ;; # debug
     esac
 
-    # Optionally display name-codes besides numral facility.severity levels
-    test "${stdlog_uc__syslog_colorize__resolve_num:-0}" = 1 && {
-      printf "$slvlc%s\%i$bb" "$sname" "$slvl"
-    } || {
-      printf "$slvlc%i$bb" "$slvl"
+    test "${STDLOG_UC_PRI:-1}" = "1" && {
+      # Optionally display name-codes besides numral facility.severity levels
+      test "${stdlog_uc__syslog_colorize__resolve_num:-0}" = 1 && {
+        printf "$slvlc%s\%i$bb" "$sname" "$slvl"
+      } || {
+        printf "$slvlc%i$bb" "$slvl"
+      }
     }
+
     printf "$bb<${n}$slvlc$PRI$bb>"
 
     # Color rest of logger line, including our stdlog '<context>' part
@@ -288,41 +297,49 @@ s/: ([^<]*)/'$bb': '${n}${b}'\1'${n}'/g
 s/: ([^<]*)</'$bb': '${n}${b}'\1'$bb'</g
 s/<([^>]*)>/<'${n}${g}'\1'$bb'>'${n}'/g
     '
-
 # Coloring other separators just doesn't work well
 #s/(:|\[[0-9]+\])/'$bb'\1'${n}'/g
 
   done
 }
 
-# Rewrite <PRI> prefix of syslog output lines to something almost identical.
-#
-# XXX: Enables level-threshold filter on syslog tail output
-syslog_logger_stderr_filter ()
-{
-  sed 's/^<\([0-9]*\)>/\1 /g' | while read PRI rest
-  do
-    # XXX: cleanup
-    { test -n "$PRI" && fnmatch "[0-9]*" "$PRI"
-    } || {
-      echo "$PRI $rest"
-      continue
-    }
-
-    # Get facility level and severity level
-    flvl=$( echo "$PRI / 8" | bc )
-    slvl=$( echo "$PRI % 8" | bc )
-
-    # XXX: ?
-    test $slvl -le $STDLOG_UC_LEVEL || continue
-
-    echo "<$PRI>$rest"
-  done
-}
-
 syslog_logger_colorize_filter ()
 {
   test "${STDLOG_UC_ANSI:-1}" = "1" && stdlog_uc__syslog_colorize || cat
+}
+
+syslog_logger_datetime_filter ()
+{
+  test "${STDLOG_UC_DT:-1}" = "0" &&
+    sed 's/>.* [0-9][0-9]:[0-9][0-9]:[0-9][0-9] /> /g' || cat
+}
+
+# Rewrite <PRI> prefix of syslog output lines to something almost identical.
+#
+# XXX: Enables level-threshold filter on syslog tail output
+syslog_logger_prifmt_filter ()
+{
+  # XXX: see colorize filter...
+  test "${STDLOG_UC_PRI:-1}" = "1" && {
+    sed 's/^<\([0-9]*\)>/\1 /g' | while read PRI rest
+    do
+      # XXX: cleanup
+      { test -n "$PRI" && fnmatch "[0-9]*" "$PRI"
+      } || {
+        echo "$PRI $rest"
+        continue
+      }
+
+      # Get facility level and severity level
+      flvl=$( echo "$PRI / 8" | bc )
+      slvl=$( echo "$PRI % 8" | bc )
+
+      # XXX: ?
+      test $slvl -le $STDLOG_UC_LEVEL || continue
+
+      echo "<$PRI>$rest"
+    done
+  } || cat
 }
 
 #

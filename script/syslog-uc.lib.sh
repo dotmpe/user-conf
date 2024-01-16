@@ -45,7 +45,7 @@ syslog_uc_lib__load ()
 
   # XXX: this could be off at 'dumb' and non-interactive by default
   # not sure when/if to toggle this yet.
-  true "${UC_PROFILE_LOG_FILTERS:="severity colorize"}"
+  true "${UC_PROFILE_LOG_FILTERS:="severity datetime colorize"}"
 }
 
 syslog_uc_lib__init () # ~
@@ -207,7 +207,10 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   test -s /etc/log || opts="$opts --socket-errors=off"
 
   local tags="$(printf '%s:' "${@:-$UC_LOG_BASE}")"
-  logger $opts -t "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))" -p "$fac.$lvl" "$msg"
+  # XXX: trying to remove date from stdout
+  #opts=$opts\ --rfc5424=notime # change format entirely
+  #opts=$opts\ --rfc3164 # Adds host
+  logger $opts -p "$fac.$lvl" -t "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))" "$msg"
 }
 
 #

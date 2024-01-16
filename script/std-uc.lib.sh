@@ -22,8 +22,9 @@
 
 std_uc_lib__load ()
 {
-  : "${uname:="$(uname -s)"}"
-  : "${scriptname:=$(basename -- "$0")}"
+  true &&
+  if_ok "${uname:="$(uname -s)"}" &&
+  if_ok "${scriptname:=${SCRIPTNAME:-$(basename -- "$0")}}" || return
 
   # The deeper get within subshells, the more likely stdio is re-routed from
   # tty. This test should be performed in the scripts main.
@@ -35,7 +36,6 @@ std_uc_lib__load ()
   # Default show notices and above
   true "${UC_DEFAULT_VERBOSITY:=5}"
 
-  true "${STD_E:=GE SH CE CN IAE ESOOR}"
   true "${STD_E_SIGNALS:="HUP INT QUIT ILL TRAP ABRT IOT BUS FPE KILL USR1 SEGV\
  USER2 PIPE ALRM TERM STKFLT CHLD CONT STOP TSTP TTIN TTOU URG XCPU XFSZ VTALRM\
  PROF WINCH IO POLL PWR LOST"}"
@@ -56,7 +56,6 @@ std_uc_lib__init ()
     eval "$std_interactive" && STD_INTERACTIVE=1 || STD_INTERACTIVE=0
   }
 
-  #sh_funbody jk
   std_uc_env_def
   ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*" $?
 }
@@ -64,26 +63,6 @@ std_uc_lib__init ()
 
 std_uc_env_def ()
 {
-  local key
-
-  # Set defaults for status codes
-  # XXX: need better variable name convention if integrated with +U-s
-  # Like STD_* for software defined and _STD_ for user-defined or local script
-  # static variables. See also stdlog discussion on more idiomatic flows.
-
-  for key in ${STD_E} ${STD_E_SIGNALS}
-  do
-    vref=UC_DEFAULT_${key^^}
-    declare $vref=false
-    #declare $vref=true
-    #val=${!vref-} || continue
-    #echo "val='$val'" >&2
-  done
-
-  # XXX: bash returns 1 on cmdline syntax error and 2 on syntax error in
-  # source. grep returns 1 on match failure, 2 on usage/syntax error.
-  # sed returns 1 on usage and syntax parse errors
-
   # user scripts may fail without blaming either script or user. Or, decide one
   # of the two and this should be based on the source of the inputs Is the
   # cause user arguments or data, or was the fault in supposed finalized and
@@ -113,7 +92,7 @@ std_uc_env_def ()
   # etc. On debian linux last mapped number is 192: RTMAX (ie. 128+64).
 
   : "${_E_GAE:=193}" # Generic Argument Error.
-  # : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
+  : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules
   # E:continue 195: error, exception; but if in loop/batch keep going...
   : "${_E_next:=196}"

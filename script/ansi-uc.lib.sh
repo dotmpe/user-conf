@@ -3,6 +3,8 @@
 
 ansi_uc_lib__load ()
 {
+  lib_require bash-uc || return
+
   # Ask terminal about possible colors if we can
   test "${TERM:-dumb}" = "dumb" && true "${ncolors:=0}" || {
     true ${ncolors:=$(tput colors </dev/tty)} || return

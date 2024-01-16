@@ -81,11 +81,11 @@ uc_log_init () # ~
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
 
-  . "${UC_LIB_PATH:-"$U_C/script"}/argv-uc.lib.sh" &&
-  argv_uc_lib_loaded=1
+  . "${UC_LIB_PATH:-"$U_C/script"}/argv-uc.lib.sh"
+  argv_uc_lib_load=$?
   . "${UC_LIB_PATH:-"$U_C/script"}/stdlog-uc.lib.sh" &&
   stdlog_uc_lib__load || return
-  stdlog_uc_lib_loaded=1
+  stdlog_uc_lib_load=0
   INIT_LOG=stderr_log
 
   # Make Uc-profile source all its parts
@@ -104,7 +104,6 @@ uc_log_init () # ~
   # Setup logger (but not LOG)
   { uc_fun uc_log || syslog_uc_init uc_log
     } &&
-
   true "${uc_log:=uc_log}"
   argv_uc__argc :log-init $#
 }
@@ -126,7 +125,7 @@ case "$0" in
 
     ;;
 
-  * ) ;;
+  * )
 esac
 
 #

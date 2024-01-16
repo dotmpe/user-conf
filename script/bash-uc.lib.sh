@@ -14,7 +14,7 @@ bash_uc_lib__init ()
   test -z "${bash_uc_lib_init-}" || return $_
   # FIXME: set std mode, track modes somewhere
   #sh-mode strict
-  set -euo pipefail || return
+  #set -euo pipefail || return
 
   ! ${SH_DEBUG:-${DEBUG:-false}} && {
     true
