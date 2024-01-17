@@ -2,7 +2,7 @@
 
 class_uc_lib__load ()
 {
-  lib_require os lib-uc std-uc || return
+  lib_require os sys lib-uc std-uc || return
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}Class\ ParameterizedClass
   typeset -gA Class__static_calls
   typeset -gA Class__static_type
@@ -13,16 +13,8 @@ class_uc_lib__load ()
 class_uc_lib__init ()
 {
   test -z "${class_uc_lib_init:-}" || return $_
-  create () { class_init "$@"; }
+  create () { class_new "$@"; }
   destroy () { class_del "$@"; }
-}
-
-class_uc_lib__old_init ()
-{
-  $LOG info :class.lib:init "Loading static class env"
-  class_load_all &&
-  class_define_all &&
-  $LOG debug :class.lib:init "Static class env OK"
 }
 
 
@@ -64,7 +56,7 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
     .__del__ )
         unset "Class__instance[$id]" ;;
 
-    .attr ) # ~ <Key> [<Class>] [<Default>]  # Get field value from class instance value
+    .attr ) # ~ <Key> [<Class-name>] [<Default>]  # Get field value from class instance value
         : "${1//:/__}"
         : "${2:-Class}__${_//-/_}[${id:?}]"
         ! "${stb_atr_req:-false}" "$_" && {
@@ -83,20 +75,29 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
         #  }
       ;;
     .defined ) test "(unset)" != "${Class__instance[$id]-"(unset)"}" ||
-      return ${_E_nsk:?} ;;
+        return ${_E_nsk:?} ;;
     .class ) echo "${SELF_NAME:?}" ;;
-    .class-resolve ) class_resolve "$SELF_NAME" ;;
+    .class-attributes ) class_loop class_attributes ;;
+    .class-debug )
+        $self.class-tree &&
+        $self.class-attributes &&
+        $self.class-methods
+      ;;
+    .class-methods ) class_loop class_methods ;;
+    .class-resolve ) class_resolve "${SELF_NAME:?}" ;;
     .class-tree )
-      class_loop class_info | {
-        typeset ind=0
-        while read -r line
-        do
-          printf "%${ind}s"
-          echo "$line"
-          ind=$(( ind + 3 ))
-        done
-      }
-    ;;
+        class_loop class_info | {
+          # XXX: turns it into a single indented branch
+          typeset ind=0
+          while read -r line
+          do
+            printf "%${ind}s"
+            echo "$line"
+            ind=$(( ind + 3 ))
+          done
+        }
+      ;;
+    .class-typeset ) class_loop class_typeset ;;
     .cparams|.class-params ) echo "${Class__instance[$id]}" ;;
     .id ) echo "$id" ;;
     .query-class ) class_query "$@" ;;
@@ -113,7 +114,7 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
     .default | \
     .info ) class_info ;;
 
-    ( * ) return ${_E_next:?} ;;
+    * ) return ${_E_next:?}
 
   esac && return ${_E_done:?}
 }
@@ -137,7 +138,7 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
 class_ParameterizedClass__load ()
 {
   Class__static_type[ParameterizedClass]=ParameterizedClass:Class
-  test -z "${ctx_pclass_params:-}" && return
+  test -z "${ctx_pclass_params-}" && return
   typeset p
   for p in $ctx_pclass_params
   do
@@ -198,7 +199,7 @@ class_ParameterizedClass_cparams () # (id,static-ctx) ~ <Class-params-var> <Mess
 {
   ! str_globmatch " ${!1:?} " "* ${2:?} *" && return ${_E_next:-196}
   test 3 -ge $# || return ${_E_GAE:-193}
-  typeset parkey="ParameterizedClass__params__${2:?}[$SELF_ID]"
+  typeset parkey="ParameterizedClass__params__${2:?}[$OBJ_ID]"
   test 3 -eq $# && {
     typeset -g "$parkey=$3" || return
   } || {
@@ -214,21 +215,33 @@ class_ParameterizedClass_mparams () # (id) ~ <Class-params-var> <Message> ...
 {
   ! str_globmatch " ${!1:?} " "* ${2:?} *" && return ${_E_next:-196}
   test 3 -ge $# || return ${_E_GAE:-193}
-  typeset parkey="ParameterizedClass__params__${2:?}[$SELF_ID]"
+  typeset parkey="ParameterizedClass__params__${2:?}[$OBJ_ID]"
   test 3 -eq $# && {
     typeset -g "$parkey=$3" || return
   } || {
     "${parkey_exists:-true}" &&
-      echo "${!parkey:?Missing param field $2 on instance #$SELF_ID}" ||
+      echo "${!parkey:?Missing param field $2 on instance #$OBJ_ID}" ||
       echo "${!parkey:-}"
   }
 }
 
 
-class_bases () # ~
+class_attributes () # (self) ~
+{
+  : ${CLASS_NAME:?}__
+  typeset attr attrs=() c=${#_}
+  if_ok "$(compgen -A variable ${CLASS_NAME:?}__)" &&
+  <<< "$_" mapfile -t attrs &&
+  for attr in "${attrs[@]}"
+  do
+    echo "$CLASS_NAME ${attr:$c}"
+  done
+}
+
+class_bases () # ~ <Class-names...>
 {
   typeset class subclass
-  for class in "$@"
+  for class in "${@:?class-bases: Class names expected}"
   do
     : "Class__static_type[$class]"
     test -n "${!_:-}" || return
@@ -243,53 +256,26 @@ class_bases () # ~
   done
 }
 
-class_compile_mro () # ~ <Class>
+class_compile_mro () # ~ <Class-name>
 {
-  : "Class__type[${1:?}]"
+  : "Class__type[${1:?class-compile-mro: Class name expected}]"
   test -n "${!_:-}" || {
     if_ok "$(class_static_mro "${1:?}" | tac | remove_dupes | tac )" || return
     typeset -g "Class__type[${1:?}]=${1:?}${_:+:}${_//$'\n'/:}"
   }
 }
 
-class_define_all ()
+class_define () # ~ <Class-name> # Generate function to call 'class methods'
 {
-  test 0 -lt $# || set -- ${ctx_class_types:?}
-
-  # Skip if already defined
-  set -- $(filter_args "not class_defined" "$@")
-  test 0 -eq $# && return
-
-  typeset class bases def
-  # XXX: unused, but allows class_<Type>_bases callback (iso. class load hook
-  # with Class:static-type declaration).
-  for class in "$@"
-  do
-    def="Class__static_type[$class]"
-    test -n "${!def-}" || {
-      ! sh_fun class_${class}__bases && bases=$class:Class || {
-        bases=$($_) || return
-      }
-      typeset -g "$def=$bases" || return
-    }
-  done
-
-  for class in "$@"
-  do
-    class_compile_mro "$class" || return
-  done
-
-  for class in "$@"
-  do
-    sh_fun class.$class || {
-      : "
+  declare class=${1:?class-define: Class name expected}
+  : "
 class.$class () {
   test $class = \"\${1:?}\" && {
     # Start new call resolution.
 
-    typeset SELF_NAME=$class SELF_ID=\${2:?} call=\${3:-.toString} self id \
+    typeset SELF_NAME=$class OBJ_ID=\${2:?} call=\${3:-.toString} self id \
       CLASS_{IDX,TYPERES,TYPEC}
-    id=\$SELF_ID
+    id=\$OBJ_ID
     self=\"class.$class $class \$id \"
 
     test 2 -lt \$# && shift 3 || shift 2
@@ -318,126 +304,138 @@ class.$class () {
   }
 }
 "
-      eval "$_"
+  eval "$_"
+}
+
+class_define_all () # ~ <Class-names...>
+{
+  test 0 -lt $# || set -- ${ctx_class_types:?}
+  : "${@:?class-define-all: Class names expected}"
+
+  # Skip if already defined
+  set -- $(filter_args "not class_defined" "$@")
+  test 0 -eq $# && return
+
+  typeset class bases def
+  # XXX: unused, but allows class_<Type>_bases callback (iso. class load hook
+  # with Class:static-type declaration).
+  for class in "$@"
+  do
+    def="Class__static_type[$class]"
+    test -n "${!def-}" || {
+      ! sh_fun class_${class}__bases && bases=$class:Class || {
+        bases=$($_) || return
+      }
+      typeset -g "$def=$bases" || return
     }
+  done
+
+  for class in "$@"
+  do
+    class_compile_mro "$class" || return
+  done
+
+  for class in "$@"
+  do
+    sh_fun class.$class || class_define "$class" || return
   done
 }
 
-class_defined ()
+class_defined () # ~ <Name>
 {
-  sh_fun class.${1:?}
+  : "${1:?class-defined: Class name expected}"
+  sh_fun class.$_
 }
 
 # Destructor for previously initialized class instance variables
 class_del () # ~ <Var-name>
 {
+  : "${1:?class-del: Variable name expected}"
   #if_ok "$(${!1}.instance)" &&
-  ${!1}.__del__ &&
+  ${!_:?class-del: Instance reference expected}.__del__ &&
   unset $1
 }
 
-class_exists () # ~ <Class>
+class_exists () # ~ <Class-name>
 {
-  test -n "${Class__static_type[${1:?}]:-}"
+  test -n "${Class__static_type[${1:?class-exists: Class name expected}]:-}"
 }
 
 # Helper for class functions
-class_instance () # (name,id) ~ # Print human readable Id info for current class context
+class_info () # (name,id) ~ # Print human readable Id info for current class context
 {
   #: "${Class__instance[$id]:?Expected class instance #$id}"
-  echo "class.$SELF_NAME $SELF_ID"
+  echo "class.${CLASS_NAME:?} ${OBJ_ID:?}"
 }
 
-class_info ()
+class_init () # ~ <Class-names...>
 {
-  echo "class.$CLASS_NAME $SELF_ID"
+  $LOG info :class.lib:init "Loading static class env" "$#:$*"
+  class_load "${@:?class-init: Class names expected}" &&
+  declare -a bases &&
+  if_ok "$(for class in "$@"
+    do class_static_mro "$class" || return
+    done | awk '!a[$0]++')" &&
+  <<< "$_" mapfile -t bases &&
+  class_define_all "$@" "${bases[@]}" &&
+  $LOG debug :class.lib:init "Prepared class env OK" "$#:$*"
 }
 
-# The 'new' handler. Initialize a new instance of Type, the lib-init hook
-# defines 'create' to defer to this.
-class_init () # ~ <Var-name> [<Type>] [<Constructor-Args...>]
-{
-  typeset var=${1:?} type=${2:-Class}
-  test $# -gt 1 && shift 2 || shift
-
-  sh_fun class.${type:?} || {
-    : "type=$type;var=$var"
-    $LOG error :class-init "Failed initializing class" "$_" 1 || return
-  }
-
-  # Find new ID for instance
-  typeset new_prefix="class.${type:?} $type $RANDOM "
-  while $new_prefix.defined
-  do
-    new_prefix="class.$type $type $RANDOM "
-  done
-
-  # Call constructor(s) and store concrete type and optional params for Id
-  $new_prefix.__init__ "${type:?}" "$@" &&
-    $LOG debug :class-init "Complete" "$new_prefix.__init__:$*" ||
-    $LOG error :class-init "Running constructors" "E$?:$new_prefix.__init__:$*" $? || return
-
-  # Keep ref key for new class instance at given variable name
-  case "$var" in
-    local:* ) eval "${var:6}=\"$new_prefix\"" ;;
-    * ) typeset -g $var="$new_prefix" ;;
-  esac
-  # NOTE: above global declaration would not work for typeset vars, and Bash<=5.0
-  # cannot tell wether $var already is declared typeset in an outter function
-  # scope. Even more typeset or set are/seem useless, so its eval to the rescue.
-}
-
-# Run load handler for every class to typeset global vars of each
-class_load ()
+# Load classes (source scripts and run load hooks) and prerequisite libs.
+class_load () # ~ [<Class-names...>]
 {
   test 0 -lt $# || set -- ${ctx_class_types:?}
   typeset class
 
-  $LOG debug :class:load "Start loading class definitions" "$#:$*"
-  for class in "$@"
+  # Source scripts and run class 'load' hooks
+  for class in "${@:?class-load: Class names expected}"
   do
-    { class_loaded "$class" || class_exists "$class"; } && continue
+    class_loaded "$class" ||
+    class_load_def "$class" || return
+    class_exists "$class" || {
+      sh_fun class_${class}__load ||
+        $LOG alert :uc:class-load "Expected class 'load' hook" "$class" 1 || return
+      $_ ||
+        $LOG error :uc:class-load "During class load" "E$?:$class" $? || return
 
-    # XXX: old method of loading?
-    # If class corresponds to lib or other group, require that to be initialized
-    lib_uc_islib "${class,,}-class" && {
-      lib_require "$_" && lib_init "$_" ||
-        $LOG alert :class-load "Failed loading class context" "E$?:$class:$_" $? ||
-          return
-    } || {
-      # New method: from .class.sh files
-      # (with two optional load hooks, but no init hook)
-      lib_uc_kin=_class lib_uc_ext=.class.sh \
-        lib_uc_islib "${class,,}" || return 127
-      lib_uc_kin=_class lib_uc_ext=.class.sh \
-        lib_require "$_" || return
-      ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}$class
+      $LOG debug :uc:class:load "Done loading" "$class"
     }
   done
 
-  $LOG debug :class:load "Continuing with class 'load' hooks" "$#:$*"
-  for class in "$@"
-  do
-    class_exists "$class" && continue
-    sh_fun class_${class}__load &&
-    $_ ||
-      $LOG error :class-load "During class load" "E$?:$class" $? || return
-  done
+  # Load prerequisite libs
+  class_load_libs "$@" || return
 
-  set -- $(for class in "$@"
-      do
-        class_static_mro "$class"
-      done | awk '!a[$0]++')
-  test 0 -eq $# && return
-
-  class_load "$@" &&
-  $LOG info :class:load "Done loading" "$#:$*"
+  # Recurse for base classes
+  typeset -a bases
+  <<< "${Class__static_type[${1:?}]//:/$'\n'}" mapfile -t bases &&
+  unset "bases[0]" && {
+    test 0 -eq ${#bases[@]} || class_load "${bases[@]}"
+  }
 }
 
-class_load_all ()
+class_load_def () # ~ <Class-name>
 {
-  test 0 -lt $# || set -- ${ctx_class_types:?}
-  class_load "$@" &&
+  : "${1:?class-load-def: Class name expected}"
+  # XXX: old method of loading?
+  # If class corresponds to lib or other group, require that to be initialized
+  lib_uc_islib "${1,,}-class" && {
+    lib_require "$_" && lib_init "$_" ||
+      $LOG alert :uc:class:load-def "Failed loading class context" \
+        "E$?:${1:?}:$_" $? || return
+  } || {
+    # New method: from .class.sh files
+    # (with two optional load hooks, but no init hook)
+    lib_uc_kin=_class lib_uc_ext=.class.sh \
+      lib_uc_islib "${class,,}" || return 127
+    lib_uc_kin=_class lib_uc_ext=.class.sh \
+      lib_require "$_" || return
+    ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}${1:?}
+  }
+}
+
+class_load_libs () # ~ <Class-names...>
+{
+  test 0 -lt $# || return ${_E_MA:?}
   set -- $(for class in "$@"
       do : "Class__libs[$class]"
         test -n "${!_-}" || continue
@@ -445,20 +443,22 @@ class_load_all ()
         echo "${_// /$'\n'}"
       done | awk '!a[$0]++')
   test 0 -eq $# && return
-  $LOG info :class:load-all "Including sh lib deps" "$#:$*"
+  $LOG info :uc:class:load-libs "Including sh lib deps" "$#:$*"
   lib_require "$@"
 }
 
-class_loaded ()
+class_loaded () # ~ <Class-name>
 {
+  : "${1:?class-loaded: Class name expected}"
   sh_fun class_${1:?}_
 }
 
 class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
 {
-  typeset name type super
+  typeset name type super resolved
   typeset -a CLASS_TYPERES #=( "$SELF_NAME" )
 
+  # TODO: cleanup, see class-resolve
   if_ok "$(class_resolve "$SELF_NAME")" &&
   while read -r name type
   do
@@ -475,20 +475,62 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
       super="class.${SUPER_NAME:?} ${SELF_NAME:?} "
     } || SUPER_NAME= super=
 
-    "${1:?}" "${@:2}" || {
+    "${1:?class-loop: Item handler expected}" "${@:2}" && resolved=true || {
       test ${_E_done:?} -eq $? && return
       test ${_E_next:?} -eq $_ && continue
       return $_
     }
   done
+
+  "${resolved:-false}" || return ${_E_not_found:?}
 }
 
-# Return zero status when Type matches Class:instance[id], and else update
+class_methods () # (name) ~
+{
+  typeset method methods=() mre='^ *\K[A-Za-z0-9_\.\|\ -]*(?=\)$)'
+  : "$(typeset -f class_${CLASS_NAME:?}_ | grep -Po "$mre")"
+  <<< "$_" mapfile -t methods &&
+  for method in "${methods[@]}"
+  do
+    echo "$CLASS_NAME $method"
+  done
+}
+
+# The 'new' handler. Initialize a new instance of Type, the lib-init hook
+# defines 'create' to defer to this.
+class_new () # ~ <Var-name> [<Class-name>] [<Constructor-Args...>]
+{
+  typeset var type=${2:-Class}
+  var=${1:?class-new: Variable name expected}
+  test $# -gt 1 && shift 2 || shift
+
+  sh_fun class.${type:?} || {
+    : "type=$type;var=$var"
+    $LOG error :class-init "No such class defined" "$_" 1 || return
+  }
+
+  # Find new ID for instance
+  typeset new_prefix="class.${type:?} $type $RANDOM "
+  while $new_prefix.defined
+  do
+    new_prefix="class.$type $type $RANDOM "
+  done
+
+  # Call constructor(s) and store concrete type and optional params for Id
+  $new_prefix.__init__ "${type:?}" "$@" &&
+    $LOG debug :class-new "Complete" "$new_prefix.__init__:$*" ||
+    $LOG error :class-new "Running constructors" "E$?:$new_prefix.__init__:$*" $? || return
+
+  # Keep ref key for new class instance at given variable name
+  var_set "$var" "$new_prefix"
+}
+
+# Return zero status when Class matches Class:instance[id], and else update
 # setting and return E:done status.
-class_query () # (id) ~ <Type>
+class_query () # (id) ~ <Class-name>
 {
   typeset type=${Class__instance[$id]}
-  test "${1:?}" = "$type" || {
+  test "${1:?class-query: Class name expected}" = "$type" || {
     test -n "${Class__type[$1]-}" &&
     stderr echo $type=${Class__type[$1]} &&
     $LOG info "" "Changing class" "$id:$type->$1" &&
@@ -499,11 +541,12 @@ class_query () # (id) ~ <Type>
     $LOG alert "" "Query failed" "id=$id:type=$1:E$?" $?
 }
 
-class_resolve () # ~ <name>
+# XXX: cleanup, class-loop only needs sequence, no pairs
+class_resolve () # ~ <Class-name>
 {
   typeset i n class
   typeset -a rc
-  rc=( ${Class__type[${1:?}]//:/ } )
+  rc=( ${Class__type[${1:?class-resolve: Class name expected}]//:/ } )
   n=$(( ${#rc[@]} - 1 ))
   for i in "${!rc[@]}"
   do
@@ -514,13 +557,14 @@ class_resolve () # ~ <name>
   done
 }
 
-class_run_call ()
+class_run_call () # (id,self,super,call) ~ <Args...>
 {
   class_${CLASS_NAME:?}_ "$@"
 }
 
-class_static_mro () # ~ <name>
+class_static_mro () # ~ <Class-name>
 {
+  test 1 -eq $# || return ${_E_GAE:?}
   typeset type
   set -- ${Class__static_type[${1:?}]//:/ }
   shift
@@ -539,7 +583,7 @@ class_static_mro () # ~ <name>
 class_super_optional_call () # (id,self,super,call) ~ <Args...>
 {
   test -z "$super" || $super$call "$@" || {
-    typeset r=$? lk=":${CLASS_NAME:?}$call:$SELF_ID"
+    typeset r=$? lk=":${CLASS_NAME:?}$call:$OBJ_ID"
     test ${_E_done:?} -eq $r && {
       $LOG debug "$lk" "Superclass call done" \
           "E$r:${SELF_NAME:?}::${CLASS_TYPERES[*]}"
@@ -558,9 +602,9 @@ class_super_optional_call () # (id,self,super,call) ~ <Args...>
 
 # Refresh reference to current class (after Class:instance was changed) or reset
 # to given type.
-class_switch () # (id) ~ <Var-name> [<Type>]
+class_switch () # (id) ~ <Var-name> [<Class-name>]
 {
-  typeset var=${1:?} type
+  typeset var=${1:?class-switch: Variable name expected} type
   case "$var" in
     local:* ) var="${var:6}" ;
   esac
@@ -574,7 +618,12 @@ class_switch () # (id) ~ <Var-name> [<Type>]
     local:* ) eval "$var=\"$_\"" ;;
     * ) typeset -g $var="$_"
   esac
-  $LOG info :class-switch "Class reference updated" "$_"
+  $LOG info :class-switch "Class reference updated" "$_" $?
+}
+
+class_typeset () # (name) ~
+{
+  typeset -f class_${CLASS_NAME:?}_
 }
 
 #
