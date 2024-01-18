@@ -1,5 +1,12 @@
 # Created: 2020-09-16
 
+## Foundation for class-like behavior and data instances of composite types
+
+#  Class-like behavior for Bash uses global arrays and random, numerical Ids to
+#  store types and other attributes of new 'objects', and class_<Class-name>_
+#  handler functions to define methods (or other calls) to be performed on
+#  such objects.
+
 class_uc_lib__load ()
 {
   lib_require os sys lib-uc std-uc || return
@@ -21,8 +28,6 @@ class_uc_lib__init ()
 
 
 # The abstract base class with some helpers.
-# This keeps the concrete type and constructor params in a global array, the
-# instance Id being used as index key.
 
 class_Class__load ()
 {
@@ -229,6 +234,8 @@ class_ParameterizedClass_mparams () # (id) ~ <Class-params-var> <Message> ...
 }
 
 
+# Helper for class-attributes that lists all variables for current class
+# context.
 class_attributes () # (self) ~
 {
   : ${CLASS_NAME:?}__
@@ -241,6 +248,7 @@ class_attributes () # (self) ~
   done
 }
 
+# XXX: unused, cleanup
 class_bases () # ~ <Class-names...>
 {
   typeset class subclass
@@ -259,6 +267,8 @@ class_bases () # ~ <Class-names...>
   done
 }
 
+# Helper for class-loop that lists all accepted calls for current class context.
+# See also class-methods and class-attributes.
 class_calls () # (name) ~
 {
   typeset call calls=() re
@@ -384,6 +394,10 @@ class_info () # (name,id) ~ # Print human readable Id info for current class con
   echo "class.${CLASS_NAME:?} ${OBJ_ID:?}"
 }
 
+#    Prepare everything for given classes to create new instances using
+#    class-new. This includes:
+#      - class-load
+#      - class-define-all, for given classes and all base types
 class_init () # ~ <Class-names...>
 {
   $LOG info :class.lib:init "Loading static class env" "$#:$*"
@@ -431,6 +445,7 @@ class_load () # ~ [<Class-names...>]
   }
 }
 
+#    Try to find sh lib or class.sh file and source that (uses lib-uc.lib).
 class_load_def () # ~ <Class-name>
 {
   : "${1:?class-load-def: Class name expected}"
@@ -451,6 +466,8 @@ class_load_def () # ~ <Class-name>
   }
 }
 
+#    Accumulate all Class:libs[<Class>] values and run lib-require with those
+#    as arguments, if any.
 class_load_libs () # ~ <Class-names...>
 {
   test 0 -lt $# || return ${_E_MA:?}
@@ -471,6 +488,7 @@ class_loaded () # ~ <Class-name>
   sh_fun class_${1:?}_
 }
 
+#    This is main function used for all class-like call handler behavior.
 class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
 {
   typeset name type super resolved
@@ -544,7 +562,6 @@ class_query () # (id) ~ <Class-name>
   typeset type=${Class__instance[$id]}
   test "${1:?class-query: Class name expected}" = "$type" || {
     test -n "${Class__type[$1]-}" &&
-    stderr echo $type=${Class__type[$1]} &&
     $LOG info "" "Changing class" "$id:$type->$1" &&
     type=$1 &&
     typeset -g "Class__instance[$id]=$type" &&
@@ -613,7 +630,7 @@ class_super_optional_call () # (id,self,super,call) ~ <Args...>
 }
 
 # Refresh reference to current class (after Class:instance was changed) or reset
-# to given type.
+# to given type. This wraps class-query
 class_switch () # (id) ~ <Var-name> [<Class-name>]
 {
   typeset var=${1:?class-switch: Variable name expected} type
