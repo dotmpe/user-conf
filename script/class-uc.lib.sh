@@ -3,6 +3,8 @@
 class_uc_lib__load ()
 {
   lib_require os sys lib-uc std-uc || return
+  class_uc_cch='_.-+='
+  class_uc_cchre='_\.\-\+\*\!&\$\^%#='
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}Class\ ParameterizedClass
   typeset -gA Class__static_calls
   typeset -gA Class__static_type
@@ -78,10 +80,11 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
         return ${_E_nsk:?} ;;
     .class ) echo "${SELF_NAME:?}" ;;
     .class-attributes ) class_loop class_attributes ;;
+    .class-calls ) class_loop class_calls ;;
     .class-debug )
         $self.class-tree &&
         $self.class-attributes &&
-        $self.class-methods
+        $self.class-calls
       ;;
     .class-methods ) class_loop class_methods ;;
     .class-resolve ) class_resolve "${SELF_NAME:?}" ;;
@@ -230,7 +233,7 @@ class_attributes () # (self) ~
 {
   : ${CLASS_NAME:?}__
   typeset attr attrs=() c=${#_}
-  if_ok "$(compgen -A variable ${CLASS_NAME:?}__)" &&
+  if_ok "$(compgen -A variable ${CLASS_NAME:?}__)" || return 0
   <<< "$_" mapfile -t attrs &&
   for attr in "${attrs[@]}"
   do
@@ -253,6 +256,19 @@ class_bases () # ~ <Class-names...>
       done)" || return
 
     class_bases $_ || return
+  done
+}
+
+class_calls () # (name) ~
+{
+  typeset call calls=() re
+  re=${class_cre:-"^ *\K[A-Za-z0-9\|\ $class_uc_cchre]*(?=\)$)"}
+  if_ok "$(typeset -f class_${CLASS_NAME:?}_ | grep -Po "$re")" &&
+  test -n "$_" || return ${_E_next:?}
+  <<< "$_" mapfile -t calls &&
+  for call in "${calls[@]}"
+  do
+    echo "$CLASS_NAME $call"
   done
 }
 
@@ -385,20 +401,22 @@ class_init () # ~ <Class-names...>
 class_load () # ~ [<Class-names...>]
 {
   test 0 -lt $# || set -- ${ctx_class_types:?}
+  typeset lk=${lk:-:}${lk:+:}uc:class-load
   typeset class
 
   # Source scripts and run class 'load' hooks
-  for class in "${@:?class-load: Class names expected}"
+  for class in "${@:?$lk: Class names expected}"
   do
     class_loaded "$class" ||
-    class_load_def "$class" || return
+    class_load_def "$class" ||
+      $LOG alert "$lk" "Finding definitions" "E$?:$class" $? || return
     class_exists "$class" || {
       sh_fun class_${class}__load ||
-        $LOG alert :uc:class-load "Expected class 'load' hook" "$class" 1 || return
+        $LOG alert "$lk" "Expected class 'load' hook" "$class" 1 || return
       $_ ||
-        $LOG error :uc:class-load "During class load" "E$?:$class" $? || return
+        $LOG error "$lk" "During class load" "E$?:$class" $? || return
 
-      $LOG debug :uc:class:load "Done loading" "$class"
+      $LOG debug "$lk" "Done loading" "$class"
     }
   done
 
@@ -487,13 +505,7 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
 
 class_methods () # (name) ~
 {
-  typeset method methods=() mre='^ *\K[A-Za-z0-9_\.\|\ -]*(?=\)$)'
-  : "$(typeset -f class_${CLASS_NAME:?}_ | grep -Po "$mre")"
-  <<< "$_" mapfile -t methods &&
-  for method in "${methods[@]}"
-  do
-    echo "$CLASS_NAME $method"
-  done
+  class_cre='^ *\K[A-Za-z0-9\|\ _\.-]*(?=\)$)' class_calls
 }
 
 # The 'new' handler. Initialize a new instance of Type, the lib-init hook
