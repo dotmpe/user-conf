@@ -85,16 +85,20 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
         return ${_E_nsk:?} ;;
     .class ) echo "${SELF_NAME:?}" ;;
     .class-attributes ) class_loop class_attributes ;;
+    .class-call-info ) class_call_info ;;
     .class-calls ) class_loop class_calls ;;
     .class-debug )
+        class_call_info &&
         $self.class-tree &&
         $self.class-attributes &&
         $self.class-calls
       ;;
+    .class-info ) class_info ;;
     .class-methods ) class_loop class_methods ;;
+    .class-names ) class_names ;;
     .class-resolve ) class_resolve "${SELF_NAME:?}" ;;
     .class-tree )
-        class_loop class_info | {
+        class_loop class_names | {
           # XXX: turns it into a single indented branch
           typeset ind=0
           while read -r line
@@ -109,7 +113,13 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
     .cparams|.class-params ) echo "${Class__instance[$id]}" ;;
     .id ) echo "$id" ;;
     .query-class ) class_query "$@" ;;
-    .switch-class ) class_switch "$@" ;;
+    .switch-class )
+        test 2 -le $# || return ${_E_GAE:?}
+        test 1 -eq $# || {
+          class_defined "${2:?}" || class_init "$_" || return
+        }
+        class_switch "$@"
+      ;;
     .set-attr )
         test $# -ge 2 -a $# -le 3 || return ${_E_MA:?}
         : "${1:?}"
@@ -120,7 +130,7 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
       ;;
     .toString | \
     .default | \
-    .info ) class_info ;;
+    .info ) class_call_info ;;
 
     * ) return ${_E_next:?}
 
@@ -180,6 +190,10 @@ class_ParameterizedClass_ () # ~ <Instance-Id> .<Message-name> <Args...>
         class_super_optional_call "$@"
       ;;
 
+    ( .class-params )
+        compgen -A variable ${CLASS_NAME:?}__params__
+      ;;
+
     # Get/set'er access for ParameterizedClass params.
     ( .setp )
         typeset -g "ParameterizedClass__params__${1:?}[$id]=$2"
@@ -197,7 +211,7 @@ class_ParameterizedClass_ () # ~ <Instance-Id> .<Message-name> <Args...>
         echo "ParameterizedClass__params__${1:?}[$id]"
       ;;
 
-    ( * ) return ${_E_next:?} ;;
+      * ) return ${_E_next:?}
 
   esac && return ${_E_done:?}
 }
@@ -265,6 +279,12 @@ class_bases () # ~ <Class-names...>
 
     class_bases $_ || return
   done
+}
+
+# Helper to print current call info, shows current class context.
+class_call_info () # (name,id) ~ # Print Id info for current class context
+{
+  echo "class.${CLASS_NAME:?} ${SELF_NAME:?} ${OBJ_ID:?} ${call:?}"
 }
 
 # Helper for class-loop that lists all accepted calls for current class context.
@@ -387,11 +407,9 @@ class_exists () # ~ <Class-name>
   test -n "${Class__static_type[${1:?class-exists: Class name expected}]:-}"
 }
 
-# Helper for class functions
-class_info () # (name,id) ~ # Print human readable Id info for current class context
+class_info () # (name,id) ~ # Print Id info for current class context
 {
-  #: "${Class__instance[$id]:?Expected class instance #$id}"
-  echo "class.${CLASS_NAME:?} ${OBJ_ID:?}"
+  echo "class.${CLASS_NAME:?} ${SELF_NAME:?} ${OBJ_ID:?}"
 }
 
 #    Prepare everything for given classes to create new instances using
@@ -448,21 +466,22 @@ class_load () # ~ [<Class-names...>]
 #    Try to find sh lib or class.sh file and source that (uses lib-uc.lib).
 class_load_def () # ~ <Class-name>
 {
+  typeset fn cn
   : "${1:?class-load-def: Class name expected}"
+  fn=${_//[^A-Za-z0-9-]/-} cn=${_//[^A-Za-z0-9_]/_}
   # XXX: old method of loading?
   # If class corresponds to lib or other group, require that to be initialized
-  lib_uc_islib "${1,,}-class" && {
+  lib_uc_islib "${fn,,}-class" && {
     lib_require "$_" && lib_init "$_" ||
       $LOG alert :uc:class:load-def "Failed loading class context" \
         "E$?:${1:?}:$_" $? || return
   } || {
     # New method: from .class.sh files
     # (with two optional load hooks, but no init hook)
-    lib_uc_kin=_class lib_uc_ext=.class.sh \
-      lib_uc_islib "${class,,}" || return 127
-    lib_uc_kin=_class lib_uc_ext=.class.sh \
-      lib_require "$_" || return
-    ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}${1:?}
+    declare lib_uc_kin=_class lib_uc_ext=.class.sh
+    lib_uc_islib "${fn,,}" || return 127
+    lib_require "$_" || return
+    ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}${cn:?}
   }
 }
 
@@ -526,6 +545,11 @@ class_methods () # (name) ~
   class_cre='^ *\K[A-Za-z0-9\|\ _\.-]*(?=\)$)' class_calls
 }
 
+class_names () # (name,id) ~ # Print names info for current class context
+{
+  echo "class.${CLASS_NAME:?} ${SELF_NAME:?}"
+}
+
 # The 'new' handler. Initialize a new instance of Type, the lib-init hook
 # defines 'create' to defer to this.
 class_new () # ~ <Var-name> [<Class-name>] [<Constructor-Args...>]
@@ -557,6 +581,7 @@ class_new () # ~ <Var-name> [<Class-name>] [<Constructor-Args...>]
 
 # Return zero status when Class matches Class:instance[id], and else update
 # setting and return E:done status.
+# XXX: work in progress
 class_query () # (id) ~ <Class-name>
 {
   typeset type=${Class__instance[$id]}
