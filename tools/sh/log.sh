@@ -55,7 +55,7 @@ uc_main_log () # ~ (env|[log] <log-args>)
   }
 
   # Check arguments, if libs are loaded
-  uc_fun argv_uc__argc && { argv_uc__argc :uc-main-log $# gt || return; }
+  uc_fun args_uc__argc && { args_uc__argc :uc-main-log $# gt || return; }
 
   # Check arguments, perform, exit.
   test "$1" = "log" && shift
@@ -81,8 +81,8 @@ uc_log_init () # ~
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
 
-  . "${UC_LIB_PATH:-"$U_C/script"}/argv-uc.lib.sh"
-  argv_uc_lib_load=$?
+  . "${UC_LIB_PATH:-"$U_C/script"}/args-uc.lib.sh"
+  args_uc_lib_load=$?
   . "${UC_LIB_PATH:-"$U_C/script"}/stdlog-uc.lib.sh" &&
   stdlog_uc_lib__load || return
   stdlog_uc_lib_load=0
@@ -105,7 +105,7 @@ uc_log_init () # ~
   { uc_fun uc_log || syslog_uc_init uc_log
     } &&
   true "${uc_log:=uc_log}"
-  argv_uc__argc :log-init $#
+  args_uc__argc :log-init $#
 }
 
 # Actual entry point for executable script

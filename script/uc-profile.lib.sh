@@ -1,4 +1,4 @@
-#shellcheck disable=SC2120 # Ignore, argv_uc__argc is doing some checks
+#shellcheck disable=SC2120 # Ignore, args_uc__argc is doing some checks
 
 # Helper to source libs only once
 uc_profile_load_lib ()
@@ -26,7 +26,7 @@ uc_profile_boot_parts ()
 
 uc_cmd ()
 {
-  argv_uc__argc :uc-cmd $# eq 1 || return
+  args_uc__argc :uc-cmd $# eq 1 || return
   test -x "$(command -v "$1")"
 }
 
@@ -40,7 +40,7 @@ uc_debug ()
 # TODO: replace these with sh_env either from shell-uc.lib or shell.lib
 uc_fun () # ~ <Function-name>
 {
-  # DEV: argv_uc__argc :uc-func $# eq 1 || return
+  # DEV: args_uc__argc :uc-func $# eq 1 || return
   #test "$(type -t "$1")" = "function"
   # Fasted for Bash
   declare -F "${1:?}" >/dev/null 2>&1
@@ -59,7 +59,7 @@ uc_import () # ~ [Source-Path]
 
 uc_mkid () # ~
 {
-  argv_uc__argc :env-keys $# || return
+  args_uc__argc :env-keys $# || return
   tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
 }
 
@@ -103,8 +103,8 @@ uc_profile_source_lib () # ~
   shell_uc_lib_init=0
   . "$UC_LIB_PATH"/str-uc.lib.sh &&
   str_uc_lib_load=0
-  . "$UC_LIB_PATH"/argv-uc.lib.sh
-  argv_uc_lib_load=0
+  . "$UC_LIB_PATH"/args-uc.lib.sh
+  args_uc_lib_load=0
   . "$UC_LIB_PATH"/stdlog-uc.lib.sh &&
   echo 4
   stdlog_uc_lib__load &&
@@ -132,7 +132,7 @@ uc_profile_init () # ~
 
   uc_profile_load_lib || return
 
-  argv_uc__argc :init $# eq 1 || return
+  args_uc__argc :init $# eq 1 || return
 
   set -- $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1"
   set -- $(printf '%s:' "$@")
@@ -177,7 +177,7 @@ uc_profile_init () # ~
 # Finalize init for shell session
 uc_profile_start () # ~
 {
-  argv_uc__argc :start $# || return
+  args_uc__argc :start $# || return
 
   # Be nice and switch logger back to exec script
   export LOG="${UC_PROFILE_SELF}"
@@ -210,7 +210,7 @@ uc_profile_start () # ~
 # Add parts to shell session
 uc_profile_load () # ~ NAME [TAG]
 {
-  argv_uc__argc :load $# gt || return
+  args_uc__argc :load $# gt || return
   ! "${DEBUG:-false}" ||
     $uc_log debug :load "Start loading part" "$#:$*"
 
@@ -306,7 +306,7 @@ uc_profile_cleanup_BASH ()
 # Record env keys only; assuming thats safe, no literal dump b/c of secrets
 uc_profile__record_env__keys ()
 {
-  argv_uc__argc_n :record-env:keys $# eq 1 || return
+  args_uc__argc_n :record-env:keys $# eq 1 || return
   test ! -e "$SD_SHELL_DIR/$UC_SH_ID:$1.sh" || {
     $uc_log "error" ":record-env:keys" "Keys already exist" "$1"
     return 1
@@ -316,7 +316,7 @@ uc_profile__record_env__keys ()
 
 uc_profile__record_env__ls ()
 {
-  argv_uc__argc_n :record-env-ls $# || return
+  args_uc__argc_n :record-env-ls $# || return
   for name in "$SD_SHELL_DIR/$UC_SH_ID"*
   do
     echo "$(ls -la "$name") $( count_lines "$name") keys"
@@ -398,7 +398,7 @@ uc_profile__record_env__diff_keys () # ~ FROM TO
 {
   test -n "${1-}" || set -- "$(ls "$SD_SHELL_DIR" | head -n 1)" "${2-}"
   test -n "${2-}" || set -- "$1" "$(ls "$SD_SHELL_DIR" | tail -n 1)"
-  argv_uc__argc_n :env-diff-keys $# eq 2 || return
+  args_uc__argc_n :env-diff-keys $# eq 2 || return
 
   comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
 }
@@ -439,7 +439,7 @@ uc_source () # ~ [Source-Path]
 
 uc_user_init ()
 {
-  argv_uc__argc :uc-user-init $# || return
+  args_uc__argc :uc-user-init $# || return
   local key= value=
   for key in ${UC_USER_EXPORT:-}
   do
@@ -451,7 +451,7 @@ uc_user_init ()
 
 uc_var ()
 {
-  argv_uc__argc :uc-var $# eq 1 || return
+  args_uc__argc :uc-var $# eq 1 || return
   local val upd
 
   # Force update or try existing value first
@@ -474,7 +474,7 @@ uc_var ()
 # function body
 uc_var_define ()
 {
-  argv_uc__argc :uc-var-define $# eq 1 || return
+  args_uc__argc :uc-var-define $# eq 1 || return
   local varname="${1:?}"
   eval "$(cat <<EOM
 
@@ -489,7 +489,7 @@ EOM
 
 uc_var_reset ()
 {
-  argv_uc__argc :uc-var-reset $# eq 1 || return
+  args_uc__argc :uc-var-reset $# eq 1 || return
   local def_key def_val
   def_key="DEFAULT_$(echo "$1" | tr '[:lower:]' '[:upper:]')"
   def_val="${!def_key?Cannot reset user env $1}"
@@ -499,7 +499,7 @@ uc_var_reset ()
 
 uc_var_update ()
 {
-  argv_uc__argc :uc-var-update $# eq 1 || return
+  args_uc__argc :uc-var-update $# eq 1 || return
   local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
   uc_fun var_${varname}_update && {
 
@@ -521,7 +521,7 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
 
 env_keys () # ~
 {
-  #argv_uc__argc :env-keys $# || return
+  #args_uc__argc :env-keys $# || return
   #printenv | grep '^[A-Za-z0-9_]*=' | sed 's/=.*$//' | grep -v '^_$' | sort -u
 
   # Ignore first line '_'

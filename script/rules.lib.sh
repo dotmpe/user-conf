@@ -240,13 +240,13 @@ rules_files_cached () # ~ [<Rules-Files-argv...>]
 
 rules_reader () # ~ [<Rules-Files-Cached-argv...>] -- <Selector>
 {
-  local more_argv='' more_argc lk=${lk:-:rules}:reader
-  argv_has_seq "$@" && {
-      argv_q=0 argv_more "$@" && shift ${more_argc:?}
+  local more_args='' more_argc lk=${lk:-:rules}:reader
+  args_has_seq "$@" && {
+      args_q=0 args_more "$@" && shift ${more_argc:?}
     }
-  argv_is_seq "$@" && shift
+  args_is_seq "$@" && shift
 
-  top=true rules_files_cached $more_argv | {
+  top=true rules_files_cached $more_args | {
     act="${1:-lines}"
     test $# -eq 0 || shift
     while ${read:-read -r} d b t

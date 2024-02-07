@@ -1,8 +1,3 @@
-# The 'commands' field holds a multiline string where each line is used
-# as argument ie. element of a command line. The other fields are
-# descriptors for this array. commands-time is the moment after the command
-# completed and stdout and status was captured. ttl allows a per-command key
-# time-to-live value.
 
 uc_cmdcache_lib__load ()
 {
@@ -39,7 +34,7 @@ uc_cache_validate () # [base] (field) ~ <Key>
   hook_require=true uc_field_hook "$field" "${1:?}"
 }
 
-# Helper to write command line and arguments as lines to uc-field
+# Helper to write command line and arguments as lines to uc-field value.
 uc_command () # ~ <Key> <Command-args...>
 {
   uc_field_update commands "${1:?}" "$(printf '%s\n' "${@:2}")"

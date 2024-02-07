@@ -17,6 +17,7 @@ class_uc_lib__load ()
   typeset -gA Class__static_type
   typeset -gA Class__type
   typeset -gA Class__libs
+  typeset -gA Class__rel_types
 }
 
 class_uc_lib__init ()
@@ -452,8 +453,9 @@ class_load () # ~ [<Class-names...>]
     }
   done
 
-  # Load prerequisite libs
-  class_load_libs "$@" || return
+  # Load prerequisites (libs and classes)
+  class_load_prereq "$@" || return
+  #$LOG debug "$lk" "Done loading additional prerequisits" "$*"
 
   # Recurse for base classes
   typeset -a bases
@@ -469,6 +471,7 @@ class_load_def () # ~ <Class-name>
   typeset fn cn
   : "${1:?class-load-def: Class name expected}"
   fn=${_//[^A-Za-z0-9-]/-} cn=${_//[^A-Za-z0-9_]/_}
+  $LOG debug : "Looking for definitions" "${fn,,}.lib $cn.class"
   # XXX: old method of loading?
   # If class corresponds to lib or other group, require that to be initialized
   lib_uc_islib "${fn,,}-class" && {
@@ -490,7 +493,7 @@ class_load_def () # ~ <Class-name>
 class_load_libs () # ~ <Class-names...>
 {
   test 0 -lt $# || return ${_E_MA:?}
-  set -- $(for class in "$@"
+  set -- $(for class
       do : "Class__libs[$class]"
         test -n "${!_-}" || continue
         : "${_//,/ }"
@@ -499,6 +502,29 @@ class_load_libs () # ~ <Class-names...>
   test 0 -eq $# && return
   $LOG info :uc:class:load-libs "Including sh lib deps" "$#:$*"
   lib_require "$@"
+}
+
+class_load_prereq ()
+{
+  class_load_libs "$@" &&
+  class_load_types "$@"
+}
+
+class_load_types ()
+{
+  test 0 -lt $# || return ${_E_MA:?}
+  set -- $(for class
+      do : "Class__rel_types[$class]"
+        test -n "${!_-}" || continue
+        : "${_//,/ }"
+        echo "${_// /$'\n'}"
+      done | awk '!a[$0]++')
+  test 0 -eq $# && return
+  typeset reltype
+  for reltype
+  do
+    class_load "$reltype" || return
+  done
 }
 
 class_loaded () # ~ <Class-name>
@@ -538,6 +564,11 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
   done
 
   "${resolved:-false}" || return ${_E_not_found:?}
+}
+
+class_loop_done () # ~ [<Status>]
+{
+  test ${_E_done:?} -eq ${1:-$?} || return $_
 }
 
 class_methods () # (name) ~
@@ -638,7 +669,7 @@ class_super_optional_call () # (id,self,super,call) ~ <Args...>
 {
   test -z "$super" || $super$call "$@" || {
     typeset r=$? lk=":${CLASS_NAME:?}$call:$OBJ_ID"
-    test ${_E_done:?} -eq $r && {
+    class_loop_done $r && {
       $LOG debug "$lk" "Superclass call done" \
           "E$r:${SELF_NAME:?}::${CLASS_TYPERES[*]}"
           #"E$r:${SELF_NAME:?}"

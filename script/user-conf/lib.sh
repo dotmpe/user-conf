@@ -568,7 +568,7 @@ d_INSTALL_BIN()
 # Lookup file anywhere in UCONF repo, based on its filename and location.
 uc__config () # ~ [NAME][.EXT] [--] [GROUP [GROUP...]]
 {
-  argv_uc__argc :uc:config $# ge 1 || return
+  args_uc__argc :uc:config $# ge 1 || return
   local name ext groups
   fnmatch "*.*" "$1" && {
     # EXT is the last '.'-separated part of the name

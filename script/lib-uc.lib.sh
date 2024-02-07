@@ -43,7 +43,7 @@ lib_uc_lib__init ()
 lib_uc__define ()
 {
   local ref from_key to_key
-  for ref in ${us_lib_api:-exists load loaded:loaded_all init initialized:initialized_all require}
+  for ref in ${us_lib_api:-assert:loaded_all exists load loaded:loaded_all init initialized:initialized_all require}
   do
     from_key=${ref#*:}
     to_key=${ref%:*}
@@ -55,7 +55,7 @@ lib_uc__define ()
 
 ## Base
 
-# Test lib exists on PATH and echo source path
+# Test lib exists
 lib_uc_exists () # ~ <Name>
 {
   test 1 -eq $# || return ${_E_GAE:-193}

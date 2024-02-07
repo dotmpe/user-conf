@@ -28,13 +28,13 @@ stdlog_uc_lib__load ()
 
 stdlog_uc_lib__init ()
 {
-  lib_require argv-uc || return
+  lib_require args-uc || return
 }
 
 
 stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
 {
-  argv_uc__argc_n :stdlog-init $# ge 2 || return
+  args_uc__argc_n :stdlog-init $# ge 2 || return
   local name="$1" logger="$2" filters
   shift 2
   while test $# -gt 0

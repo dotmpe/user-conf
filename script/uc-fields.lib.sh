@@ -1,19 +1,5 @@
-# Looking at a method to work with either dynamic or static metadata.
-# Only using variables for metadata, no other AST (currently).
 
-# This lib provides uc-fields-define to create global associative arrays with
-# name pattern {base}_{group}_{field} which normally corresponds to
-# uc_fields_{field_name} here.
-
-# Functions uc-field{,-{hook,update,varname,define}} are used to access/set
-# values and run hook routines for defined fields. In particular uc-field-update
-# checks for and invokes {base}_{group}_{field}_update.
-# XXX: hook_require is not set to true, could be required?
-
-# A variant on uc-field, uc-vfield adds validation to the value before it is
-# stored, but it cannot be used as getter like uc-field.
-
-# The initial function set was used as basis for uc-cmdcache.lib
+### Manage access to variable values and clusters
 
 
 uc_fields_lib__load ()
@@ -123,7 +109,7 @@ uc_fields_define () # [field-group] ~ <Base> <Braces-exprs...|Field-names...>
   done
 }
 
-uc_fields_group_define ()
+uc_fields_group_define () # ~ <Base> <Field-name-expression>
 {
   local base=${1:?} group=${field_group:-groups} field_name
   test $# -gt 1 || return ${_E_MA:?}

@@ -19,7 +19,7 @@ setup ()
 }
 
 @test "that sources .lib.sh files" {
-  run lib_uc_load argv-uc
+  run lib_uc_load args-uc
   test $v -le 5 && {
       test_ok_empty || stdfail 2.1.
     } ||
@@ -27,16 +27,16 @@ setup ()
 }
 
 @test "and tracks lib names, sources and status" {
-  lib_load argv-uc
-  test "$lib_loaded" = "argv-uc"
-  test "$argv_uc_lib_loaded" = "0"
+  lib_load args-uc
+  test "$lib_loaded" = "args-uc"
+  test "$args_uc_lib_loaded" = "0"
   # FIXME: why does above work but below not. Var name doesnt seem to matter
   # values seem to get set, but after lib-load suddenly its empty
   stderr declare -p ENV_LIB
   #test -n "$ENV_LIB"
 
   lib_load example-empty
-  test "$lib_loaded" = "argv-uc example-empty"
+  test "$lib_loaded" = "args-uc example-empty"
 }
 
 @test "that sources .lib.sh files (II)" {
@@ -49,10 +49,10 @@ setup ()
   sh_fun example_init_hook_lib__init
 
 
-  #! sh_fun argv_uc__argc || stdfail argv-uc.lib already loaded
-  lib_load argv-uc
-  #declare -f argv_uc__argc
-  #stderr declare -f argv_uc__argc
+  #! sh_fun args_uc__argc || stdfail args-uc.lib already loaded
+  lib_load args-uc
+  #declare -f args_uc__argc
+  #stderr declare -f args_uc__argc
 
   #"and calls its 'load' hook" {
 }

@@ -63,7 +63,7 @@ UC_LOG_LEVEL=${verbosity:=${v:-4}}
 export verbosity UC_LOG_LEVEL
 
 # Load and init all lib parts
-. "$UC_LIB_PATH"/argv-uc.lib.sh
+. "$UC_LIB_PATH"/args-uc.lib.sh
 . "$UC_LIB_PATH"/std-uc.lib.sh
 . "$UC_LIB_PATH"/str-uc.lib.sh
 . "$UC_LIB_PATH"/src-uc.lib.sh
