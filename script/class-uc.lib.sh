@@ -7,12 +7,17 @@
 #  handler functions to define methods (or other calls) to be performed on
 #  such objects.
 
+# See uc-class for util. This lib itself may move to us-class or similar in
+# +U-S later.
+
 class_uc_lib__load ()
 {
+  : about "Foundation for class-like behavior and data instances of composite types"
   lib_require os sys lib-uc std-uc || return
   class_uc_cch='_.-+='
   class_uc_cchre='_\.\-\+\*\!&\$\^%#='
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}Class\ ParameterizedClass
+  #class_Class_ -field static_{calls,type} type libs rel_types
   typeset -gA Class__static_calls
   typeset -gA Class__static_type
   typeset -gA Class__type
@@ -25,6 +30,8 @@ class_uc_lib__init ()
   test -z "${class_uc_lib_init:-}" || return $_
   create () { class_new "$@"; }
   destroy () { class_del "$@"; }
+  declare -g class_{ref,word,sid}
+  declare -gA class_declare_hooks
 }
 
 
@@ -34,8 +41,16 @@ class_Class__load ()
 {
   Class__static_type[Class]=Class
   #Class__static_calls[Class]=exists,hasattr
-  # Assoc-array to store 'params': arguments passed into Class constructor
-  typeset -g -A Class__instance=()
+
+  # Want to use static hook in Class but none of helpers is declared yet,
+  # XXX: see uc-class.lib
+  class_static=Class call=--hooks \
+    class_Class_ fields hooks libs rel-types type ||
+    class_loop_done || return
+
+  # Assoc-array to store concrete type and additional 'params' passed at Class
+  # construction
+  typeset -gA Class__instance=()
 }
 
 class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
@@ -133,6 +148,39 @@ class_Class_ () # ~ <Instance-Id> .<Message-name> <Args...>
     .default | \
     .info ) class_call_info ;;
 
+    --libs )
+        if_ok "$(str_join , "$@")" &&
+        Class__libs[${class_static:?}]="$_"
+      ;;
+
+    --fields )
+        set -- $(str_words "$@") &&
+        typeset fn &&
+        for fn
+        do
+          typeset -gA "${class_static:?}__${fn:?}=()"
+        done
+      ;;
+
+    --hooks )
+        typeset hn &&
+        for hn
+        do class_declare_hooks[$hn]=${class_static:?}
+        done
+      ;;
+
+    --rel-types )
+        if_ok "$(str_join , "$@")" &&
+        Class__rel_types[${class_static:?}]="$_"
+      ;;
+
+    --type )
+        set -- $(str_words "$@") &&
+        typeset cn=${1:?} && shift || return
+        test 0 -lt $# && bt=$(str_join : "$@") || bt=Class
+        Class__static_type[${cn:?}]=$cn:${bt:?}
+      ;;
+
     * ) return ${_E_next:?}
 
   esac && return ${_E_done:?}
@@ -188,6 +236,8 @@ class_ParameterizedClass_ () # ~ <Instance-Id> .<Message-name> <Args...>
           } || argv+=( "$1" )
           shift
         done
+        set -- "${argv[@]}"
+        unset argv
         class_super_optional_call "$@"
       ;;
 
@@ -318,7 +368,7 @@ class_define () # ~ <Class-name> # Generate function to call 'class methods'
   : "
 class.$class () {
   test $class = \"\${1:?}\" && {
-    # Start new call resolution.
+    # Start new call resolution
 
     typeset SELF_NAME=$class OBJ_ID=\${2:?} call=\${3:-.toString} self id \
       CLASS_{IDX,TYPERES,TYPEC}
@@ -331,22 +381,31 @@ class.$class () {
     return
 
   } || {
-    # Make call to this class' methods for other types
 
-    CLASS_IDX=\$(( CLASS_IDX + 1 ))
-    test $class = \"\${CLASS_TYPERES[\$CLASS_IDX]}\" || {
-      $LOG alert : Mismatch \"\$CLASS_IDX:$class!=\$_:\$*\"
-      return 1
+    # Allow static call based on select prefix characters
+    str_globmatch \"\${1:0:1}\" \"[:-]\" && {
+      typeset call=\$1
+      shift
+
+    } || {
+      # Make call for this object at super types
+
+      CLASS_IDX=\$(( CLASS_IDX + 1 ))
+      test $class = \"\${CLASS_TYPERES[\$CLASS_IDX]}\" || {
+        $LOG alert : Mismatch \"\$CLASS_IDX:$class!=\$_:\$*\"
+        return 1
+      }
+      CLASS_NAME=$class
+      CLASS_TYPEC=\$(( CLASS_TYPEC - 1 ))
+      test \$CLASS_TYPEC -gt 0 && {
+        SUPER_NAME=\${CLASS_TYPERES[\$(( CLASS_IDX + 1 ))]}
+        super=\"class.\${SUPER_NAME:?} \${SELF_NAME:?} \"
+      } || SUPER_NAME= super=
+
+      typeset call=\${2:-.toString}
+      shift 2
     }
-    CLASS_NAME=$class
-    CLASS_TYPEC=\$(( CLASS_TYPEC - 1 ))
-    test \$CLASS_TYPEC -gt 0 && {
-      SUPER_NAME=\${CLASS_TYPERES[\$(( CLASS_IDX + 1 ))]}
-      super=\"class.\${SUPER_NAME:?} \${SELF_NAME:?} \"
-    } || SUPER_NAME= super=
 
-    typeset call=\${2:-.toString}
-    shift 2
     class_${class}_ \"\$@\"
   }
 }
@@ -420,7 +479,9 @@ class_info () # (name,id) ~ # Print Id info for current class context
 class_init () # ~ <Class-names...>
 {
   $LOG info :class.lib:init "Loading static class env" "$#:$*"
-  class_load "${@:?class-init: Class names expected}" &&
+  class_load_everything "${@:?class-init: Class names expected}" &&
+  # Now that call classes are loaded, makes sure all on MRO and related are
+  # fully defined.
   declare -a bases &&
   if_ok "$(for class in "$@"
     do class_static_mro "$class" || return
@@ -430,7 +491,7 @@ class_init () # ~ <Class-names...>
   $LOG debug :class.lib:init "Prepared class env OK" "$#:$*"
 }
 
-# Load classes (source scripts and run load hooks) and prerequisite libs.
+# Load classes (source scripts and run load hooks)
 class_load () # ~ [<Class-names...>]
 {
   test 0 -lt $# || set -- ${ctx_class_types:?}
@@ -452,6 +513,12 @@ class_load () # ~ [<Class-names...>]
       $LOG debug "$lk" "Done loading" "$class"
     }
   done
+}
+
+# Load classs and prerequisite libs.
+class_load_everything ()
+{
+  class_load "$@" || return
 
   # Load prerequisites (libs and classes)
   class_load_prereq "$@" || return
@@ -461,20 +528,19 @@ class_load () # ~ [<Class-names...>]
   typeset -a bases
   <<< "${Class__static_type[${1:?}]//:/$'\n'}" mapfile -t bases &&
   unset "bases[0]" && {
-    test 0 -eq ${#bases[@]} || class_load "${bases[@]}"
+    test 0 -eq ${#bases[@]} || class_load_everything "${bases[@]}"
   }
 }
 
 #    Try to find sh lib or class.sh file and source that (uses lib-uc.lib).
-class_load_def () # ~ <Class-name>
+class_load_def () # (:ref) ~ [<Class-name>]
 {
-  typeset fn cn
-  : "${1:?class-load-def: Class name expected}"
-  fn=${_//[^A-Za-z0-9-]/-} cn=${_//[^A-Za-z0-9_]/_}
-  $LOG debug : "Looking for definitions" "${fn,,}.lib $cn.class"
+  typeset -n fn=class_sid cn=class_word
+  class_reference "$@" || return
+  $LOG debug : "Looking for definitions" "$fn-class.lib $cn.class"
   # XXX: old method of loading?
   # If class corresponds to lib or other group, require that to be initialized
-  lib_uc_islib "${fn,,}-class" && {
+  lib_uc_islib "$fn-class" && {
     lib_require "$_" && lib_init "$_" ||
       $LOG alert :uc:class:load-def "Failed loading class context" \
         "E$?:${1:?}:$_" $? || return
@@ -482,7 +548,7 @@ class_load_def () # ~ <Class-name>
     # New method: from .class.sh files
     # (with two optional load hooks, but no init hook)
     declare lib_uc_kin=_class lib_uc_ext=.class.sh
-    lib_uc_islib "${fn,,}" || return 127
+    lib_uc_islib "$fn" || return 127
     lib_require "$_" || return
     ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}${cn:?}
   }
@@ -615,15 +681,30 @@ class_new () # ~ <Var-name> [<Class-name>] [<Constructor-Args...>]
 # XXX: work in progress
 class_query () # (id) ~ <Class-name>
 {
-  typeset type=${Class__instance[$id]}
-  test "${1:?class-query: Class name expected}" = "$type" || {
+  : "${1:?class-query: Target class expected}"
+  typeset -n type=Class__instance[${id:?}]
+  : "${type:?class-query: Class type expected for #$id}"
+  test "$1" = "$type" || {
     test -n "${Class__type[$1]-}" &&
     $LOG info "" "Changing class" "$id:$type->$1" &&
     type=$1 &&
-    typeset -g "Class__instance[$id]=$type" &&
     return ${_E_done:?}
   } ||
     $LOG alert "" "Query failed" "id=$id:type=$1:E$?" $?
+}
+
+# Update class file and name from ref
+# XXX: for now, class-file is only used once and class-name otherwise.
+# may want to keep current inputs in env using this, to use original class id
+class_reference () # (:ref) ~ [<Class-name>]
+{
+  test -n "${class_ref-}" || : "${1:?class-reference: Class name expected}"
+  test -z "${1-}" || class_ref=$_
+  test "${class_word-}" = "${class_ref//[^A-Za-z0-9_]/_}" || {
+    class_word=$_
+    : "${class_word//_/-}"
+    class_sid=${_,,}
+  }
 }
 
 # XXX: cleanup, class-loop only needs sequence, no pairs

@@ -13,10 +13,10 @@ such objects.
 Abstract
 --------
 Class-like behaviour is simulated by generating routines that trigger lookups
-for method calls in per-type call handler routines. These routines have
-several variables made available including `$self` and `$super` to perform
-sub-calls, as well as special status codes that trigger different call
-handler lookup behavior.
+for method calls in per-type call handler routines. These routines have several
+variables made available including `$self` and `$super` to perform sub-calls,
+as well as special status codes for return to trigger different call handler
+lookup behavior.
 
 Definitions required for new types are one bases list and one call handler
 function. It is expected that there will be a great many different types, the
@@ -88,7 +88,8 @@ types and all their dependent types. These rely on lib-require and so no
 lib should use any of these routines from their lib 'load' or 'init' hooks.
 
 After the class 'load' hook for a type, the Class:static_type[<Type>] and
-optional Class:libs[<Type>] should be defined. The calls implemented by the
+other declarations should be done. E.g. the optional Class:libs[<Type>]
+and Class:rel-types[<Type> should be defined. The calls implemented by the
 type must be in function class_<Type>_.
 
 The function class-load-all can be used to do all of above based on the list
@@ -101,6 +102,9 @@ and dynamically defines a function routine called class.<Type>.
 
 XXX: cleanup above, but want some testing in place first
 
+TODO:
+class-declare
+
 Functions
 _________
 class-attributes
@@ -112,8 +116,8 @@ class-calls
   context. See also class-methods and class-attributes.
 
 class-compile-mro <Class-name>
-  Helper to call class-static-mro and store the entire value, prefixed by
-  the Class-name again at Class:type[<Class-name]
+  Helper to cache entire MRO (see class-static-mro) at Class:type[<Class-name>]
+  XXX: prefixed by the Class-name again
 
 class-define <Class-name>
   Generate class.<Class-name> wrapper function to work with instance aka
@@ -167,7 +171,8 @@ class-load-libs <Class-names...>
   as arguments, if any.
 
 class-loaded <Class-name>
-  Helper that checks if function class_<Class-name>_ has been defined.
+  Helper that checks if function class_<Class-name>_ has been defined. When
+  relying on class-load, this implies the class 'load' hook has been invoked.
 
 class-loop
   This is main function used for all class-like call handler behavior.
@@ -191,6 +196,9 @@ class-resolve
 class-run-call <Args...>
   Small helper for class-loop that relays invocation to class_<Type>_ for
   current context.
+
+class-static-mro <Class-name>
+  Retrieve entire MRO sequence from Class:static-type[<Class-name>].
 
 class-switch <Var-name> [<Class-name>]
   Changes type (calling class-query) and updates variable reference and

@@ -96,6 +96,7 @@ bash_uc_errexit ()
     while caller_info=( $(caller $frame) )
     do
       declare argv=()
+      declare argv_offset=0
       declare argc
       declare frame_argc
 
