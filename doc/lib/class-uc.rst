@@ -10,6 +10,9 @@ store types and other attributes of new 'objects', and ``class_<Class-name>_``
 handler functions to define methods (or other calls) to be performed on
 such objects.
 
+See uc-class for util. This lib itself may move to us-class or similar in
++U-S later.
+
 Abstract
 --------
 Class-like behaviour is simulated by generating routines that trigger lookups
@@ -103,7 +106,23 @@ and dynamically defines a function routine called class.<Type>.
 XXX: cleanup above, but want some testing in place first
 
 TODO:
-class-declare
+class-declare see uc-class.lib
+
+class loop context: TODO: adapt properly for static calls
+
+global variables:
+  SELF_NAME: value of ConcreteType ie. class-word symbol for concrete type
+  OBJ_ID: same as id
+  CLASS_{IDX,TYPERES,TYPEC}:
+  call: full name for current call
+  id: instance id of current class context
+  self: call-reference of class.<ConcreteType> <ConcreteType> <Id>
+
+per-invocation variables:
+
+  CLASS_NAME: name of currently called class
+  SUPER_NAME: name of super class of currently called
+  super: call-reference of class.<SuperName> <SelfName>
 
 Functions
 _________

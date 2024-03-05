@@ -34,7 +34,7 @@ uc_cmd ()
 # US_DEBUG and DEBUG. XXX: SHDEBUG
 uc_debug ()
 {
-  ${UC_DEBUG:-${DEBUG:-false}}
+  "${UC_DEBUG:-${DEBUG:-false}}"
 }
 
 # TODO: replace these with sh_env either from shell-uc.lib or shell.lib
@@ -74,7 +74,7 @@ uc_profile_source_lib () # ~
   UC_PROFILE_SRC_LIB=1
 
   : "${UC_LIB_PATH:=$U_C/script}"
-  . "$UC_LIB_PATH/lib-uc.lib.sh" &&
+  . "${UC_LIB_PATH:?}/lib-uc.lib.sh" &&
   lib_uc_lib__load &&
   lib_uc_lib__init || return
 
@@ -89,39 +89,6 @@ uc_profile_source_lib () # ~
   UC_PROFILE_SRC_LIB=$?
 
   return $UC_PROFILE_SRC_LIB
-
-  shopt -s extdebug
-
-  # This is not so nice but there's too many functions involved.
-  # XXX: Keep this file stable. Move essentials here, later probably?
-  # Should maybe mark some and keep (working) caches
-  #  Or mark these libs as 'global'
-  . "${UC_LIB_PATH:?}"/shell-uc.lib.sh &&
-  shell_uc_lib__load
-  shell_uc_lib_load=0
-  shell_uc_lib__init &&
-  shell_uc_lib_init=0
-  . "$UC_LIB_PATH"/str-uc.lib.sh &&
-  str_uc_lib_load=0
-  . "$UC_LIB_PATH"/args-uc.lib.sh
-  args_uc_lib_load=0
-  . "$UC_LIB_PATH"/stdlog-uc.lib.sh &&
-  echo 4
-  stdlog_uc_lib__load &&
-  stdlog_uc_lib_load=0
-  . "$UC_LIB_PATH"/ansi-uc.lib.sh &&
-  echo 5 &&
-  ansi_uc_lib__load &&
-  ansi_uc_lib_load=0
-  . "$UC_LIB_PATH"/syslog-uc.lib.sh &&
-  syslog_uc_lib__load &&
-  syslog_uc_lib_load=0
-
-  ansi_uc_lib__init &&
-  ansi_uc_lib_init=0
-
-  #stdlog_uc_lib__init &&
-  #syslog_uc_lib__init &&
 }
 
 # Set Id for shell session. This should be run first thing,
@@ -131,6 +98,8 @@ uc_profile_init () # ~
   INIT_LOG=$LOG
 
   uc_profile_load_lib || return
+
+  # XXX: uc_ctx HOST PWD 0 - USER
 
   args_uc__argc :init $# eq 1 || return
 
@@ -456,7 +425,7 @@ uc_var ()
 
   # Force update or try existing value first
   fnmatch "* $1 *" " $UC_VAR_PDNG " && {
-    uc_update "$1"
+    uc_var_update "$1"
     upd=1
   }
 
@@ -487,6 +456,7 @@ EOM
 )"
 }
 
+# TODO: deprecate DEFAULT_
 uc_var_reset ()
 {
   args_uc__argc :uc-var-reset $# eq 1 || return
@@ -497,7 +467,7 @@ uc_var_reset ()
   eval "$1=\"$def_val\""
 }
 
-uc_var_update ()
+uc_var_update () # ~ <Var>
 {
   args_uc__argc :uc-var-update $# eq 1 || return
   local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
@@ -506,6 +476,26 @@ uc_var_update ()
     var_${varname}_update || return
   }
   test -n "${!1-}" || uc_var_reset "$1"
+}
+
+# XXX: store current val of given,
+uc_ctx ()
+{
+  declare -gA UC_CTX
+  assoc_from_env UC_CTX "$@"
+}
+
+# 2024 feb: looking at improved envd setup
+uc_env_init ()
+{
+  # Bootstrap envd-type env if not already initialized
+  [[ "set" = "${ENV_TYPE[*]+set}" ]] || {
+
+    . "${UC_LIB_PATH:?}/uc-envd.lib.sh" &&
+    envd_lib_init || return
+  }
+
+  envd_require uc-host/hostenv uc-ssh/sshenv uc-xdg/deskenv
 }
 
 
@@ -519,13 +509,24 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
   esac
 }
 
+# Store variables (name and current value) at associative array
+assoc_from_env () # ~ <Array> <Vars...>
+{
+  # XXX: for some reason cannot set var to by-name-ref as well
+  declare -n arr=${1:?}
+  declare var
+  shift
+  for var
+  do
+    arr["${var}"]=${!var}
+  done
+}
+# Copy: sys.lib/assoc-from-env
+
 env_keys () # ~
 {
-  #args_uc__argc :env-keys $# || return
-  #printenv | grep '^[A-Za-z0-9_]*=' | sed 's/=.*$//' | grep -v '^_$' | sort -u
-
-  # Ignore first line '_'
-  compgen -A variable | sort -u | tail -n +2
+  # Ignore first line (for '_' value)
+  compgen -A variable | sort | tail -n +2
 }
 
 

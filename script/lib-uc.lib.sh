@@ -222,8 +222,7 @@ lib_uc_load () # <Names...>
         $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
       # XXX: not the same var.. UC_TOOLS_DEBUG?
       #test -z "${USER_CONF_DEBUG-}" ||
-      ! uc_debug ||
-        $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
+      ! uc_debug || $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
       . "$lib_path" ||
         $LOG error ":uc:lib-load" "Sourcing library" "E$?:$lib_name" $? ||
           return
@@ -231,16 +230,8 @@ lib_uc_load () # <Names...>
     }
     # Execute load hook if found, and (re)set status
     f_lib_load=${lib_varn}${lib_uc_kin:-_lib}__load
-    typeset -F $f_lib_load >/dev/null 2>&1 || {
-      f_lib_load=${lib_varn}${lib_uc_kin:-_lib}_load
-      ! typeset -F $f_lib_load >/dev/null 2>&1 || {
-        $LOG warn : "Deprecated lib core 'load' hook name" "$f_lib_load"
-      }
-    }
-    ! uc_debug ||
-      ! typeset -F "$f_lib_load" >/dev/null 2>&1 ||
-        $LOG debug : "Running lib 'load' hook" "$lib_name"
     ! typeset -F "$f_lib_load" >/dev/null 2>&1 || {
+      ! uc_debug || $LOG debug : "Running lib 'load' hook" "$lib_name"
       "$f_lib_load"
     }
     typeset -g ${lib_stat}=$?

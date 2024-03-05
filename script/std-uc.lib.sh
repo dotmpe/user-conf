@@ -95,8 +95,8 @@ std_uc_env_def ()
   : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules
   # E:continue 195: error, exception; but if in loop/batch keep going...
-  : "${_E_next:=196}"
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
+  : "${_E_next:=196}"
   # E:stop     197: break; OK, but if loop/batch then terminate, stop when first convenient
   # E:retry    198: pending; not 195/196 but can retry later this loop/batch
   # E:break    limit    199: limit; like 198 but some throttling was initiated as well

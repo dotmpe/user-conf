@@ -16,9 +16,9 @@ uc_class_lib__init ()
 
 uc_class_d () # ~
 {
-  typeset cn
-  cn=${class_declare_hooks[${1:2}]:?Hook declaration for $1 expected} &&
-  call=${1:?} class_${cn}_ "${@:2}" || class_loop_done
+  declare class_cur
+  class_cur=${Class__hook[${1:2}]:?"$(sys_exc uc:class:d "Hook declaration for '$1' expected")"} &&
+  call=${1:?} class_${class_cur}_ "${@:2}" || class_loop_done
 }
 
 # Helper for class load phase to declare all aspects for type; as these can
@@ -31,13 +31,16 @@ uc_class_d () # ~
 
 uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
 {
-  typeset baserefs=() bases=() && argv_hseq baserefs "${@:2}" &&
+  declare baserefs=() bases=() &&
+  argv_hseq baserefs "${@:2}" &&
   test 0 -eq "${#baserefs[@]}" || {
     sys_arr bases str_words "${baserefs[@]}" &&
     class_load "${bases[@]}" || return
   }
-  typeset class_static=$1 && str_vword class_static &&
-  sys_csp=uc_class_d sys_csa=argv_optseq sys_cmd_seq --type "$@"
+  declare class_static=$1 &&
+  str_vword class_static &&
+  argv_seq=argv_hseq sys_csp=uc_class_d sys_csa="argv_oseq 1" \
+  sys_cmd_seq --type "$@"
 }
 
 uc_import () # ~ [<module>.]<type> | <type> <module>

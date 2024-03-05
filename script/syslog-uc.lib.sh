@@ -210,7 +210,9 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   # XXX: trying to remove date from stdout
   #opts=$opts\ --rfc5424=notime # change format entirely
   #opts=$opts\ --rfc3164 # Adds host
-  logger $opts -p "$fac.$lvl" -t "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))" "$msg"
+  [[ $msg =~ ^- ]] && msg="\\$msg"
+  : "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))"
+  logger $opts -p "$fac.$lvl" -t "$_" "$msg"
 }
 
 #

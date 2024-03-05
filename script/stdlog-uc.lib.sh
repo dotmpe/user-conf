@@ -90,6 +90,47 @@ EOM
   # FIXME: && ${INIT_LOG:?} info ":uc:stdlog" "Initialized" "$name filters: $filters"
 }
 
+# Return level number as string for use with line-type or logger level, channel
+# Basicly these correspond to KERN_<Level-Name> in the Linux kernel.
+stdlog_level_name() # Level-Num
+{
+  case "$1" in
+
+      0 ) echo emerg ;;
+      1 ) echo alert ;;
+      2 ) echo crit ;;
+      3 ) echo err ;;
+      4 ) echo warn ;;
+      5 ) echo notice ;;
+      6 ) echo info ;;
+      7 ) echo debug ;;
+
+      * ) return 1 ;;
+  esac
+}
+
+stdlog_level_num() # Level-Name
+{
+  case "$1" in
+
+      emerg )           echo 0 ;;
+      alert )           echo 1 ;;
+      crit  )           echo 2 ;;
+      err   | error )   echo 3 ;;
+      warn  | warning ) echo 4 ;;
+      notice )          echo 5 ;;
+      info  )           echo 6 ;;
+      debug )           echo 7 ;;
+
+      * ) return 1 ;;
+  esac
+}
+
+stdlog_v ()
+{
+  : "${v:=${verbosity:-${STDLOG_UC_LEVEL:?}}}"
+}
+
 log_src_id_var()
 {
   test -n "${log_key-}" || {
@@ -122,6 +163,21 @@ log()
   printf -- "[$(log_src_id)] $1\n"
 }
 
+# XXX: simple handler for early during script sourcing, with INIT_LOG.
+# TODO: should INIT_LOG callers should use status int to indicate level, not header.
+# or just use the mappings from syslog-uc lib
+stderr_log () # ~ <...:ll>
+{
+  local level
+  level=$(stdlog_level_num "${1:?}") || return
+  ! stdlog_quiet "$level" && return
+  #&& test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
+
+  [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
+  log_key=$2 stderr_log_inner "$1" "$3${4:+ <$4>}" || return
+  test -z "${5:-}" || return $5
+}
+
 stderr_log_inner ()
 {
   case "${1,,}" in
@@ -130,34 +186,20 @@ stderr_log_inner ()
   esac
 }
 
-stdlog_v ()
-{
-  : "${v:=${verbosity:-${STDLOG_UC_LEVEL:?}}}"
-}
-
-# XXX: simple handler for early during script sourcing, with INIT_LOG.
-# TODO: should INIT_LOG callers should use status int to indicate level, not header.
-# or just use the mappings from syslog-uc lib
-stderr_log () # ~ <...:ll>
-{
-  stdlog_v && test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
-  [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
-  log_key=$2 stderr_log_inner "$1" "$3 <$4>" || return
-  test -z "${5:-}" || return $5
-}
-
 # std-v <level>
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
-std_v ()
+stdlog_quiet ()
 {
-  test -z "${verbosity:-}" || test ${verbosity:?} -ge ${1:?}
+  "${quiet:-false}" ||
+  test -n "${verbosity:-}" &&
+  test ${verbosity:?} -lt ${1:?"$(sys_exc_trc "stdlog-v: Argument expected:")"}
 }
 
 # same as std-V but also override verbosity from 'v' if set
-std_V ()
-{
-  test -z "${v-}" || verbosity=$v; std_v "$@"
-}
+#stdlog_V ()
+#{
+#  test -z "${v-}" || verbosity=$v; stdlog_v "$@"
+#}
 
 std_exit () # [exit-at-level]
 {
@@ -169,50 +211,50 @@ std_exit () # [exit-at-level]
 emerg()
 {
   test $# -le 2 || return 64
-  std_v 0 && stderr_log_inner "Emerg" "$1"
+  ! stdlog_quiet 0 && stderr_log_inner "Emerg" "$1"
   std_exit ${2-}
 }
 std_alert()
 {
   test $# -le 2 || return 64
-  std_v 1 && stderr_log_inner "Alert" "$1"
+  ! stdlog_quiet 1 && stderr_log_inner "Alert" "$1"
   std_exit ${2-}
 }
 crit()
 {
   test $# -le 2 || return 64
-  std_v 2 && stderr_log_inner "Crit" "$1"
+  ! stdlog_quiet 2 && stderr_log_inner "Crit" "$1"
   std_exit ${2-}
 }
 error()
 {
   test $# -le 2 || return 64
-  std_v 3 && stderr_log_inner "Error" "$1"
+  ! stdlog_quiet 3 && stderr_log_inner "Error" "$1"
   std_exit ${2-}
 }
 warn()
 {
   test $# -le 2 || return 64
-  std_v 4 && stderr_log_inner "Warning" "$1"
+  ! stdlog_quiet 4 && stderr_log_inner "Warning" "$1"
   std_exit ${2-}
 }
 note()
 {
   test $# -le 2 || return 64
-  std_v 5 && stderr_log_inner "Notice" "$1"
+  ! stdlog_quiet 5 && stderr_log_inner "Notice" "$1"
   std_exit ${2-}
 }
 notice() { note "$@"; }
 std_info()
 {
   test $# -le 2 || return 64
-  std_v 6 && stderr_log_inner "Info" "$1"
+  ! stdlog_quiet 6 && stderr_log_inner "Info" "$1"
   std_exit ${2-}
 }
 debug()
 {
   test $# -le 2 || return 64
-  std_v 7 && stderr_log_inner "Debug" "$1"
+  ! stdlog_quiet 7 && stderr_log_inner "Debug" "$1"
   std_exit ${2-}
 }
 
