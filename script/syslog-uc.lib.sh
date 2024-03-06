@@ -50,7 +50,7 @@ syslog_uc_lib__load ()
 
 syslog_uc_lib__init () # ~
 {
-  lib_require $( test "1" != "${COLORIZE:-1}" || echo ansi-uc ) stdlog-uc ||
+  lib_require $( [[ "1" != "${COLORIZE:-1}" ]] || echo ansi-uc ) stdlog-uc ||
     return
 }
 
@@ -160,11 +160,11 @@ syslog_facility_num()
 # For default tag(s) see UC_LOG_BASE. Multiple tags a are joined with ':'.
 uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=user [tags]]
 {
-  test $# -ge 2 || return 64
+  [[ $# -ge 2 ]] || return 64
   local lvl="$1" msg="$2"; shift 2
-  test -n "$lvl" || lvl=notice
+  [[ "$lvl" ]] || lvl=notice
   local fac="${1-}"; shift
-  test -n "$fac" || fac=user
+  [[ "$fac" ]] || fac=user
 
   # First determine if we are going to generate a serial or syslog event at all
   local opts= lvlnum
@@ -173,15 +173,12 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   }
 
   # ... and if so bail now
-  { { test ${UC_LOG_LEVEL:-6} -ge $lvlnum &&
-    test -t 2 -o "0" = "${UC_QUIET-1}"
-  } || {
-    test "0" = "${UC_SYSLOG_OFF:-0}" &&
-    test ${UC_SYSLOG_LEVEL:-3} -ge $lvlnum
-  }; } || return 0
+  [[ ${UC_LOG_LEVEL:-6} -ge $lvlnum && ( -t 2 || "0" = "${UC_QUIET-1}" ) ]] ||
+  [[ "0" = "${UC_SYSLOG_OFF:-0}" && ${UC_SYSLOG_LEVEL:-3} -ge $lvlnum ]] ||
+    return 0
 
   # Set tags. Prepend default tags if first argument ':'-prefixed.
-  test $# -eq 0 && {
+  [[ $# -eq 0 ]] && {
     set -- $UC_LOG_BASE || return
   } || { fnmatch ":*" "$1" && {
     local t1="$(echo "$1" | cut -c2-)"; shift
@@ -191,20 +188,18 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   # Chat on stdout as well if session is interactive (stderr is tty),
   # or if UC-Quiet mode is turned off (UC_QUIET=0).
   # But only at or above UC-Log-Level[=6].
-  { test ${UC_LOG_LEVEL:-6} -ge $lvlnum &&
-    test -t 2 -o "0" = "${UC_QUIET-1}"
-  } && opts=-s
+  [[ ${UC_LOG_LEVEL:-6} -ge $lvlnum && ( -t 2 || "0" = "${UC_QUIET-1}" ) ]] && opts=-s
 
   # Turn off syslog if requested or below level
   {
-    test "0" = "${UC_SYSLOG_OFF:-0}" &&
-    test ${UC_SYSLOG_LEVEL:-3} -ge $lvlnum
+    [[ "0" = "${UC_SYSLOG_OFF:-0}" ]] &&
+    [[ ${UC_SYSLOG_LEVEL:-3} -ge $lvlnum ]]
   } || {
     opts="$opts --no-act"
   }
 
   # Silence error if logger has been turned off delibarately
-  test -s /etc/log || opts="$opts --socket-errors=off"
+  [[ -s /etc/log ]] || opts="$opts --socket-errors=off"
 
   local tags="$(printf '%s:' "${@:-$UC_LOG_BASE}")"
   # XXX: trying to remove date from stdout

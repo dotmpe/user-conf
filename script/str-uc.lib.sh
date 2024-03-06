@@ -45,10 +45,10 @@ mkid () # ~ Str Extra-Chars Substitute-Char
   #test -n "$1" || error "mkid argument expected" 1
   local s="${2-}" c="${3-}"
   # Use empty c if given explicitly, else default
-  test $# -gt 2 || c='\.\\\/:_'
-  test -n "$s" || s=-
-  test -n "${upper-}" && {
-    test $upper -eq 1 && {
+  [[ $# -gt 2 ]] || c='\.\\\/:_'
+  [[ "$s" ]] || s=-
+  [[ "${upper-}" ]] && {
+    [[ $upper -eq 1 ]] && {
       id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:lower:]' '[:upper:]')
     } || {
       id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:upper:]' '[:lower:]')
@@ -62,7 +62,7 @@ mkid () # ~ Str Extra-Chars Substitute-Char
 # Normalize whitespace (replace newlines, tabs, subseq. spaces)
 normalize_ws()
 {
-  test -n "${1-}" || set -- '\n\t '
+  [[ "${1-}" ]] || set -- '\n\t '
   tr -s "$1" ' ' # | sed 's/\ *$//'
 }
 

@@ -64,3 +64,14 @@ sys_set () # ~ <Var-name> [<Value>] ...
   ref=$val
 }
 # copy: sys.lib/sys-set
+
+# XXX: new function: ignore last status if test succeeds, or return it
+sys_stat ()
+{
+  local stat=$?
+  while [[ $# -gt 0 ]]
+  do
+    test $stat "$1" "$2" || return $stat
+    shift 2
+  done
+}

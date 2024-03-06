@@ -188,6 +188,9 @@ stderr_log_inner ()
 
 # std-v <level>
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
+
+# stdlog-quite <level>
+# non-zero unless quiet, or verbosity level is lower than current threshold
 stdlog_quiet ()
 {
   "${quiet:-false}" ||

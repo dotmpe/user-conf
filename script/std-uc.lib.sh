@@ -46,13 +46,13 @@ std_uc_lib__load ()
 std_uc_lib__init ()
 {
   test -z "${std_uc_lib_init-}" || return $_
-  test -n "${INIT_LOG-}" || return 102
-  test -x "$(command -v readlink)" || error "readlink util required for stdio-type" 1
-  test -x "$(command -v file)" || error "file util required for stdio-type" 1
-  test -n "${LOG-}" && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
-  test -z "${v-}" || verbosity=$v
+  [[ "${INIT_LOG-}" ]] || return 102
+  [[ -x "$(command -v readlink)" ]] || error "readlink util required for stdio-type" 1
+  [[ -x "$(command -v file)" ]] || error "file util required for stdio-type" 1
+  [[ "${LOG-}" ]] && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
+  [[ -z "${v-}" ]] || verbosity=$v
 
-  test -n "${STD_INTERACTIVE-}" || {
+  [[ "${STD_INTERACTIVE-}" ]] || {
     eval "$std_interactive" && STD_INTERACTIVE=1 || STD_INTERACTIVE=0
   }
 
@@ -110,20 +110,20 @@ std_uc_env_def ()
 std_bool () # ~ <Cmd ...> # Print true or false, based on command status
 {
   "$@" && printf true || {
-    test 1 -eq $? || BOOL= : ${BOOL:?Boolean status expected: E$_: $*}
+    [[ 1 -eq $? ]] || BOOL= : ${BOOL:?Boolean status expected: E$_: $*}
     printf false
   }
 }
 # Test if all [given] stdio are at terminal.
 std_term () # ~ [0] [1] [2]...
 {
-  test $# -gt 0 || set -- 0 1 2
-  test -n "$*" || return ${_E_GAE}
+  [[ $# -gt 0 ]] || set -- 0 1 2
+  [[ "$*" ]] || return ${_E_GAE}
 
   local tty
-  while test $# -gt 0
+  while [[ $# -gt 0 ]]
   do
-    test -t $1 || tty=false
+    [[ -t $1 ]] || tty=false
     shift
   done
   ${tty:-true}
@@ -131,7 +131,7 @@ std_term () # ~ [0] [1] [2]...
 
 std_batch_mode () # (STD-BATCH-MODE) ~ <...>
 {
-  test ${STD_BATCH_MODE:-0} -eq 1 -o ${STD_INTERACTIVE:-0} -eq 0
+  [[ ${STD_BATCH_MODE:-0} -eq 1 || ${STD_INTERACTIVE:-0} -eq 0 ]]
 }
 
 # Boolean-bit: validate 0/1, or return NZ for other arguments. This uses
@@ -141,7 +141,7 @@ std_batch_mode () # (STD-BATCH-MODE) ~ <...>
 # should imply either 0 or 1, set the second parameter.
 std_bit () # ~ <Bit-value> [<If-empty=2>]
 {
-  test $# -eq 1 -a 2 -gt "${1:-${2:-2}}" || return ${_E_GAE:-193}
+  [[ $# -eq 1 && 2 -gt "${1:-${2:-2}}" ]] || return ${_E_GAE:-193}
   std_bool test 0 -eq "${1:?}"
 }
 
@@ -162,15 +162,18 @@ std_noout ()
   "$@" >/dev/null
 }
 
+# See also 'not'
+std_nz () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
+{
+  ! "$@"
+}
+
 std_quiet () # ~ <Cmd...> # Silence all output (std{out,err})
 {
   "$@" >/dev/null 2>&1
 }
 
-std_stat () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
-{
-  ! "$@"
-}
+# XXX: rename these or deprecate: std-v*
 
 std_v () # ~ <Message ...> # Print message
 {
@@ -205,7 +208,7 @@ stderr_exit () # ~ <Status=$?> <...> # Verbosely exit passing status code,
 # with status message on stderr. See also std-v-exit.
 {
   local stat=${1:-$?}
-  stderr echo "$(test 0 -eq $stat &&
+  stderr echo "$([[ 0 -eq $stat ]] &&
     printf 'Exiting\n' ||
     printf 'Exiting (status %i)\n' $stat)" "$stat"
   exit $stat
@@ -228,7 +231,7 @@ stderr_ ()
 {
   local stat=$?;
   stderr echo "$1" || return 3;
-  test -z "${2:-}" && test 0 -eq "$stat" || exit $_
+  [[ -z "${2:-}" && 0 -eq "$stat" ]] || exit $stat
 }
 
 # Show whats going on during sleep, print at start and end. Makes it easier to
@@ -240,9 +243,9 @@ stderr_sleep_int ()
   local last=$_
   : "${sleep_q:=$(bool not ${sleep_v:-true})}"
   ! ${sleep_v:-true} ||
-    printf "> sleep $*$(test -z "$last" || printf " because $last...")" >&2
+    printf "> sleep $*$([[ -z "$last" ]] || printf " because $last...")" >&2
   fun_wrap command sleep "$@" || {
-    test 130 -eq $? && {
+    [[ 130 -eq $? ]] && {
       "$sleep_q" ||
         echo " aborted (press again in ${sleep_itime:-1}s to exit)" >&2
       command sleep ${sleep_itime:-1} || return
@@ -257,7 +260,7 @@ stderr_stat ()
 {
   local last=$_ stat=${1:-$?} ref=${*:2}
   : "${ref:-$last}"
-  test 0 -eq $stat &&
+  [[ 0 -eq $stat ]] &&
     printf "OK '%s'\\n" "$ref" ||
     printf "Fail E%i: '%s'\\n" "$stat" "$ref"
   return $stat

@@ -6,21 +6,21 @@ ansi_uc_lib__load ()
   lib_require bash-uc || return
 
   # Ask terminal about possible colors if we can
-  test "${TERM:-dumb}" = "dumb" && true "${ncolors:=0}" || {
+  [[ "${TERM-dumb}" = "dumb" ]] && true "${ncolors:=0}" || {
     true ${ncolors:=$(tput colors </dev/tty)} || return
   }
 
   # Load term-part to set this to more sensible default
-  true "${COLORIZE:=$(test $ncolors -gt 0 && printf 1 || printf 0)}"
-  test "${COLORIZE:-0}" -eq 1 || ansi_uc_env_def
+  true "${COLORIZE:=$([[ $ncolors -gt 0 ]] && printf 1 || printf 0)}"
+  [[ "${COLORIZE:-0}" -eq 1 ]] || ansi_uc_env_def
 }
 
 ansi_uc_lib__init ()
 {
   test -z "${ansi_uc_lib_init-}" || return $_
-  test -n "${INIT_LOG-}" || return 102
+  [[ "${INIT_LOG-}" ]] || return 102
 
-  test ${COLORIZE:-1} -eq 1 || {
+  [[ ${COLORIZE:-1} -eq 1 ]] || {
     # Declare empty if required (if not found yet)
     declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def
     ${INIT_LOG:?} notice :uc:ansi.lib "Declared no colors"
@@ -62,7 +62,7 @@ ansi_uc_lib__init ()
       : "${_f5:=${CYAN:=$(tput ${tset}f 5)}}"
       : "${_f7:=${WHITE:=$(tput ${tset}f 7)}}"
 
-      test ${ncolors:-0} -eq 8 || {
+      [[ ${ncolors:-0} -eq 8 ]] || {
         : "${_b0:=${BG_BLACK:=$(tput ${tset}b 0)}}"
         : "${_b2:=${BG_GREEN:=$(tput ${tset}b 2)}}"
         : "${_b5:=${BG_CYAN:=$(tput ${tset}b 5)}}"
@@ -90,7 +90,7 @@ ansi_uc_lib__init ()
         : "${_f4:=${BLUE:=$(tput ${tset}f 4)}}"
         : "${_f6:=${MAGENTA:=$(tput ${tset}f 6)}}"
 
-        test ${ncolors:-0} -eq 8 || {
+        [[ ${ncolors:-0} -eq 8 ]] || {
           : "${_b1:=${BG_RED:=$(tput ${tset}b 1)}}"
           : "${_b3:=${BG_YELLOW:=$(tput ${tset}b 3)}}"
           : "${_b4:=${BG_BLUE:=$(tput ${tset}b 4)}}"
@@ -104,7 +104,7 @@ ansi_uc_lib__init ()
         : "${_f4:=${RED:=$(tput ${tset}f 4)}}"
         : "${_f6:=${YELLOW:=$(tput ${tset}f 6)}}"
 
-        test ${ncolors:-0} -eq 8 || {
+        [[ ${ncolors:-0} -eq 8 ]] || {
           : "${_b1:=${BG_BLUE:=$(tput ${tset}b 1)}}"
           : "${_b3:=${BG_MAGENTA:=$(tput ${tset}b 3)}}"
           : "${_b4:=${BG_RED:=$(tput ${tset}b 4)}}"
@@ -117,13 +117,13 @@ ansi_uc_lib__init ()
 
 ansi_uc_env_def ()
 {
-  test "${ansi_uc_env_def:-0}" -eq "1" && return
+  [[ "${ansi_uc_env_def:-0}" -eq "1" ]] && return
   ansi_uc_env_def=1
 
   # XXX: test a few... but problem is log.sh sources this and comments on every
   # case.
   local changed=false
-  test -z "${BLACK:-}" -a -z "${NORMAL:-}" -a -z "${BOLD:-}" || changed=true
+  [[ -z "${BLACK:-}" && -z "${NORMAL:-}" && -z "${BOLD:-}" ]] || changed=true
 
   #shellcheck disable=1007
   # XXX: not in dash declare -g \

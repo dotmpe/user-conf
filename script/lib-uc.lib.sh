@@ -20,7 +20,7 @@ lib_uc_lib__init ()
     typeset -a lib_uc_dyn=()
     lib_uc__define
   }
-  test -z "${SCRIPTPATH:-}" || {
+  [[ -z "${SCRIPTPATH-}" ]] || {
     local scrp
     for scrp in ${SCRIPTPATH//:/ }
     do
@@ -58,8 +58,8 @@ lib_uc__define ()
 # Test lib exists
 lib_uc_exists () # ~ <Name>
 {
-  test 1 -eq $# || return ${_E_GAE:-193}
-  test -z "${libpath_var-}" && {
+  [[ 1 -eq $# ]] || return ${_E_GAE:-193}
+  [[ -z "${libpath_var-}" ]] && {
     lib_uc_path "${1:?}" >/dev/null
     return
   }
@@ -81,7 +81,7 @@ lib_uc_hook () # ~ <Type> <Name-key-suffix> [<Names...>]
 
 lib_uc_ids () # ~ <Names...>
 {
-  test $# -gt 0 || set -- ${lib_loaded:?}
+  [[ $# -gt 0 ]] || set -- ${lib_loaded:?}
   local lib_name
   for lib_name in "${@:?}"
   do
@@ -94,32 +94,32 @@ lib_uc_ids () # ~ <Names...>
 # defaults to <lib-loaded>.
 lib_uc_init () # ~ [<Names...>]
 {
-  test -z "${lib_init:-}" || {
+  [[ -z "${lib_init-}" ]] || {
     $LOG alert :uc:lib-init "Recursion" "$*:lib_init=$lib_init" \
       ${_E_recursion:-111} ||
     return
   }
   local lib_init="$*" INIT_LOG=${INIT_LOG:-${LOG:?}}
-  test $# -gt 0 || set -- ${lib_loaded:?}
+  [[ $# -gt 0 ]] || set -- ${lib_loaded:?}
   local lib_name lib_varn lib_stat v_lib_init f_lib_init
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
-    test 0 -eq ${!lib_stat:--1} ||
+    [[ 0 -eq ${!lib_stat:--1} ]] ||
       $LOG error ":uc:lib-init" "Missing or failed to load" \
-        "E${!lib_stat:-unset}:$lib_name" $_ || return
+        "E${!lib_stat:-unset}:$lib_name" ${!lib_stat} || return
     f_lib_init=${lib_varn}${lib_uc_kin:-_lib}__init
     v_lib_init=${lib_varn}${lib_uc_kin:-_lib}_init
     ! typeset -F $f_lib_init >/dev/null 2>&1 || {
       $f_lib_init
     }
     typeset -g ${v_lib_init}=$?
-    test 0 -eq ${!v_lib_init} || {
-      test ${_E_retry:-198} -ne $_ || return $_
+    [[ 0 -eq ${!v_lib_init} ]] || {
+      [[ ${_E_retry:-198} -ne ${!v_lib_init} ]] || return ${!v_lib_init}
       #  $LOG crit :uc:lib-init "Not implemented: pending in lib-init" "" \
       #      ${_E_todo:-125} || return
-      $LOG error ":uc:lib-init" "Init hook failed" "E$_:$lib_name" $_
+      $LOG error ":uc:lib-init" "Init hook failed" "E$_:$lib_name" ${!v_lib_init}
       return
     }
   done
@@ -133,22 +133,22 @@ lib_uc_init_all () # ~ <Names...>
     $LOG error "$lk" "Failure loading libs" "E$?:$*" $? || return
   if_ok "$(filter_args lib_uc_has_init "$@")" &&
   set -- $_ &&
-  test 0 -eq $# && return
+  [[ 0 -eq $# ]] && return
   while true
   do
     if_ok "$(filters_args "not lib_uc_initialized" "$@")" &&
     set -- $_ || return
-    test 0 -lt $# || break
+    [[ 0 -lt $# ]] || break
     pending=$#
     INIT_LOG=$LOG lib_uc_init "$@" || {
-      test ${_E_retry:-198} -eq $? && {
+      sys_stat -eq ${_E_retry:-198} && {
         set -- $(filter_args "not lib_uc_initialized" "$@") &&
-        test $pending -gt $# || {
+        [[ $pending -gt $# ]] || {
           set -- "${@:2}" "$1"
         }
         continue
       } ||
-        $LOG error "$lk" "Failure initializing libs" "E$_:$lib_loaded" $_ ||
+        $LOG error "$lk" "Failure initializing libs" "E$?:$lib_loaded" $? ||
           return
     }
   done
@@ -156,29 +156,29 @@ lib_uc_init_all () # ~ <Names...>
 
 lib_uc_initialized () # ~ <Name>
 {
-  test $# -eq 1 || return ${_E_GAE:-193}
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
   : "${1//[^A-Za-z0-9_]/_}${lib_uc_kin:-_lib}_init"
-  test 0 -eq ${!_:--1}
+  [[ 0 -eq ${!_:--1} ]]
 }
 
 lib_uc_initialized_all () # ~ [<Names...>]
 {
-  test $# -gt 0 || {
-    test -n "${lib_loaded-}" && set -- $_ || return ${_E_MA:-194}
+  [[ $# -gt 0 ]] || {
+    [[ "${lib_loaded-}" ]] && set -- $lib_loaded || return ${_E_MA:-194}
   }
   local lib_name lib_varn lib_istat
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_istat=${lib_varn}${lib_uc_kin:-_lib}_init
-    test 0 -eq ${!lib_istat:--1} && { continue; }
-    return $_
+    [[ 0 -eq ${!lib_istat:--1} ]] && { continue; }
+    return ${!lib_istat:--1}
   done
 }
 
 lib_uc_islib () # ~ <Name>
 {
-  lib_uc_loaded "${1:?}" && return
+  lib_uc_loaded "${1:?"$(sys_exc lib-uc:islib@_1 "Libname expected")"}" && return
   lib_uc_exists "$_"
 }
 
@@ -194,14 +194,14 @@ lib_uc_islib () # ~ <Name>
 # directly after they are recorded.
 lib_uc_load () # <Names...>
 {
-  test -z "${lib_loading:-}" || {
+  [[ -z "${lib_loading-}" ]] || {
     $LOG alert :uc:lib-load "Recursion" "lib_loading=$lib_loading" \
       ${_E_recursion:-111} ||
     return
   }
   local lib_loading=1
-  test $# -gt 0 && {
-    test -n "${1-}" || return ${_E_GAE:-193}
+  [[ $# -gt 0 ]] && {
+    [[ "${1-}" ]] || return ${_E_GAE:-193}
   } || set -- ${default_sh_lib:?}
   ! uc_debug || $LOG info ":uc:lib-load" "Resolving lib(s)" "($#) $*"
 
@@ -210,13 +210,13 @@ lib_uc_load () # <Names...>
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
-    test 0 -ne "${!lib_stat:--1}" || {
-      ! uc_debug || $LOG debug :uc:lib-load "Skipping loaded" "$_:$lib_name"
+    [[ 0 -ne "${!lib_stat:--1}" ]] || {
+      ! uc_debug || $LOG debug :uc:lib-load "Skipping loaded" "$lib_name"
       continue
     }
     # Stored status means file already loaded
     # XXX: bats has some debug trap that spoils $_? test "$_" != "-1" || {
-    test "-1" != "${!lib_stat:--1}" || {
+    [[ "-1" != "${!lib_stat:--1}" ]] || {
       # Lookup path to lib
       lib_path=$(command -v "$lib_name${lib_uc_ext:-.lib.sh}") ||
         $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
@@ -236,34 +236,32 @@ lib_uc_load () # <Names...>
     }
     typeset -g ${lib_stat}=$?
     lib_loaded="${lib_loaded-}${lib_loaded:+ }$lib_name"
-    test 0 -eq ${!lib_stat} && continue
-    { test ${_E_next:-196} -eq $_ ||
-      test ${_E_retry:-198} -eq $_
-    } && retry=true || return $_
+    [[ 0 -eq ${!lib_stat} ]] && continue
+    [[ ${_E_next:-196} -eq ${!lib_stat} || ${_E_retry:-198} -eq ${!lib_stat} ]] && retry=true || return ${!lib_stat}
   done
-  ! ${retry:-false} || return ${_E_retry:-198}
+  ! "${retry:-false}" || return ${_E_retry:-198}
 }
 
 lib_uc_loaded () # ~ <Name>
 {
-  test $# -eq 1 || return ${_E_GAE:-193}
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
   : "${1//[^A-Za-z0-9_]/_}${lib_uc_kin:-_lib}_load"
-  test 0 -eq ${!_:--1}
+  [[ 0 -eq ${!_:--1} ]]
 }
 
 # Test if all given names loaded correctly
 lib_uc_loaded_all () # ~ [<Names...>]
 {
-  test $# -gt 0 || {
-    test -n "${lib_loaded-}" && set -- $_ || return ${_E_MA:-194}
+  [[ $# -gt 0 ]] || {
+    [[ "${lib_loaded-}" ]] && set -- $lib_loaded || return ${_E_MA:-194}
   }
   local lib_name lib_varn lib_stat
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
-    test 0 -eq ${!lib_stat:--1} && continue
-    return $_
+    [[ 0 -eq ${!lib_stat:--1} ]] && continue
+    return ${!lib_stat:--1}
   done
 }
 
@@ -276,8 +274,8 @@ lib_uc_loop () # ~ <Type> <Name-key-suffix> [<Names...>]
 {
   local hook_tp=${1:-fun} hook_suf=${2:?lib-uc-loop:2:Hook suffix argument}
   shift 2
-  test $# -gt 0 || {
-    test -n "${lib_loaded:-}" && set -- ${lib_loaded:?} || return ${_E_MA:-194}
+  [[ $# -gt 0 ]] || {
+    [[ "${lib_loaded-}" ]] && set -- $lib_loaded || return ${_E_MA:-194}
   }
   local lib_name lib_varn lib_hook
   for lib_name in "${@:?}"
@@ -317,30 +315,30 @@ lib_uc_path ()
 # until either all are loaded or an unexpected status occurs.
 lib_uc_require () # ~ <Names...>
 {
-  test $# -gt 0 || return ${_E_MA:-194}
+  [[ $# -gt 0 ]] || return ${_E_MA:-194}
 
-  test -z "${lib_load-}" || {
+  [[ -z "${lib_load-}" ]] || {
     # Already in load call; list unloaded libs and set as pending
     set -- $(filter_args "not lib_uc_loaded" "$@")
     # Add pending libs and return
     LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
-    test -z "$LIB_REQ" && return || return ${_E_retry:-198}
+    [[ -z "$LIB_REQ" ]] && return || return ${_E_retry:-198}
   }
 
   lib_loading= lib_load "$@" && return ||
-    test ${_E_retry:-198} -eq $? ||
-      $LOG error :uc:lib-require "During load" "E$_:$*" $_ || return
+    sys_stat -eq ${_E_retry:-198} ||
+      $LOG error :uc:lib-require "During load" "E$?:$*" $? || return
 
   : "${LIB_REQ:?"Expected LIB_REQ (after lib_load '$*')"}"
-  until test -z "${LIB_REQ-}"
+  until [[ -z "${LIB_REQ-}" ]]
   do
     $LOG info :uc:lib-require "Required:" "$LIB_REQ:for:$*"
     set -- $LIB_REQ "$@" ; unset LIB_REQ
     set -- $(filter_args "not lib_uc_loaded" "${@:?}" | awk '!a[$0]++')
-    test $# -eq 0 && return
+    [[ $# -eq 0 ]] && return
     $LOG info :uc:lib-require "Pending:" "$*"
     lib_loading= lib_load "$@" && return || {
-      test ${_E_retry:-198} -eq $? || return $_
+      sys_stat -eq ${_E_retry:-198} || return $?
       # Continue until LIB_REQ stays empty after lib-load...
     }
   done
@@ -356,7 +354,7 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
       $LOG error ":uc:script-load" "Not found" "$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_load
-    test 0 -eq ${!scr_st:--1} && {
+    [[ 0 -eq ${!scr_st:--1} ]] && {
       ! uc_debug ||
         $LOG debug :uc:script-load "Skipping sourced script" "$scr_name"
     } || {
@@ -365,7 +363,7 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
       . "$scr_path"
       eval ${scr_st}=$?
       ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
-      test 0 -eq ${!scr_st:?} || {
+      [[ 0 -eq ${!scr_st:?} ]] || {
         $LOG warn :uc:script-load "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
       }
     }

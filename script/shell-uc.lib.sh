@@ -28,10 +28,10 @@ shell_uc_lib__init ()
   # Get the path to executable of the current PID (ie. not the same as 'comm')
   PID_CMD=$(ps -q $$ -o command= | cut -d ' ' -f 1) || return
 
-  test -n "${SHELL:-}" || {
-    test -n "${ENV_CMD:-}" && {
-      test "$ENV_CMD" = "$PID_CMD" -a "$ENV_CMD" = "$0" && {
-          test "${ENV_CMD:0:1}" = "-" &&
+  [[ "${SHELL-}" ]] || {
+    [[ "${ENV_CMD-}" ]] && {
+      [[ "$ENV_CMD" = "$PID_CMD" && "$ENV_CMD" = "$0" ]] && {
+          [[ "${ENV_CMD:0:1}" = "-" ]] &&
             SHELL_NAME=${ENV_CMD:1} ||
             SHELL_NAME=$(basename -- "$ENV_CMD")
         } || true
@@ -53,36 +53,36 @@ shell_uc_lib__init ()
   }
 
   # XXX: Bash exports SHELL, dont like that. But its not easy to unset.
-  test "$SHELL_NAME" = "bash" && {
+  [[ "$SHELL_NAME" = "bash" ]] && {
     declare +x SHELL=$SHELL
     # when unexported, /bin/sh mode bash still manages to get this setting.
     # Unless we clear it like SHELL= /bin/sh, only then it stays empty as expected.
   }
 
-  test -x "$SHELL" || {
+  [[ -x "$SHELL" ]] || {
     $LOG warn "" "Expected executable for current shell" "$SHELL"
   }
 
   #shell_uc_init
-  test -z "${BASH_VERSION:-}" && IS_BASH=0 || IS_BASH=1
+  [[ -z "${BASH_VERSION:-}" ]] && IS_BASH=0 || IS_BASH=1
   shell_uc_def
 }
 
 shell_uc_init ()
 {
-  test "$SHELL_NAME" = "bash" && BA_SHELL=1 || BA_SHELL=0
-  test "$SHELL_NAME" = "zsh" && Z_SHELL=1 || Z_SHELL=0
-  test "$SHELL_NAME" = "ksh" && KORN_SHELL=1 || KORN_SHELL=0
-  test "$SHELL_NAME" = "dash" && D_A_SHELL=1 || D_A_SHELL=0
-  test "$SHELL_NAME" = "ash" && A_SHELL=1 || A_SHELL=0
-  test "$SHELL_NAME" = "sh" && B_SHELL=1 || B_SHELL=0
+  [[ "$SHELL_NAME" = "bash" ]] && BA_SHELL=1 || BA_SHELL=0
+  [[ "$SHELL_NAME" = "zsh" ]] && Z_SHELL=1 || Z_SHELL=0
+  [[ "$SHELL_NAME" = "ksh" ]] && KORN_SHELL=1 || KORN_SHELL=0
+  [[ "$SHELL_NAME" = "dash" ]] && D_A_SHELL=1 || D_A_SHELL=0
+  [[ "$SHELL_NAME" = "ash" ]] && A_SHELL=1 || A_SHELL=0
+  [[ "$SHELL_NAME" = "sh" ]] && B_SHELL=1 || B_SHELL=0
 
   IS_BASH_SH=0
   IS_DASH_SH=0
   IS_BB_SH=0 # 'Busybox'
   IS_HEIR_SH=0
 
-  test $B_SHELL = 1 && {
+  [[ $B_SHELL = 1 ]] && {
 
     shell_uc_detect_sh || {
       #${INIT_LOG:?} warn "" "Detect failed" ""
@@ -117,7 +117,7 @@ shell_uc_detect_sh ()
 
 shell_uc_def ()
 {
-  test $IS_BASH -eq 1 && {
+  [[ $IS_BASH -eq 1 ]] && {
 
     sh_arr ()
     {
@@ -130,7 +130,7 @@ shell_uc_def ()
 
     sh_env () # List all variable names, exported or not # sh:no-stat
     {
-      test $# -eq 0 && {
+      [[ $# -eq 0 ]] && {
         {
           set | grep '^[_A-Za-z][A-Za-z0-9_]*=.*$' && env
         } | awk '!a[$0]++'
@@ -147,12 +147,12 @@ shell_uc_def ()
 
     sh_fun () # Is name of shell funtion # sh:no-stat
     {
-      test "$(type -t "$1")" = "function"
+      [[ "$(type -t "$1")" = "function" ]]
     }
 
     sh_als () # Is name of shell alias # sh:no-stat
     {
-      test "$(type -t "$1")" = "alias"
+      [[ "$(type -t "$1")" = "alias" ]]
     }
 
     sh_als_cmd ()
@@ -167,23 +167,23 @@ shell_uc_def ()
 
     sh_bi()
     {
-      test "$(type -t "$1")" = "builtin"
+      [[ "$(type -t "$1")" = "builtin" ]]
     }
 
     sh_kw()
     {
-      test "$(type -t "$1")" = "keyword"
+      [[ "$(type -t "$1")" = "keyword" ]]
     }
 
     # Return false unless the given number is an understood exit-status code.
     sh_status ()
     {
-      test $1 -eq 1 \
-        -o $1 -eq 2 \
-        -o $1 -eq 126 \
-        -o $1 -eq 127 \
-        -o \( $1 -ge 128 -a $1 -le 192 \) \
-        -o $1 -eq 255
+      [[ $1 -eq 1 \
+        || $1 -eq 2 \
+        || $1 -eq 126 \
+        || $1 -eq 127 \
+        || ( $1 -ge 128 && $1 -le 192 ) \
+        || $1 -eq 255 ]]
     }
 
     # Print a short description for a given exit-status code.
@@ -193,20 +193,20 @@ shell_uc_def ()
     sh_state_name ()
     {
       # Generic not-okay status
-      test $1 -eq 1 && echo Failed
+      [[ $1 -eq 1 ]] && echo Failed
       # Incomplete statements, missing or illegal arguments (shell)
-      test $1 -eq 2 && echo Syntax Error
+      [[ $1 -eq 2 ]] && echo Syntax Error
       # Problem executing command-name (or no permissions)
-      test $1 -eq 126 && echo Not Executable
+      [[ $1 -eq 126 ]] && echo Not Executable
       # No such command name
-      test $1 -eq 127 && echo Not Found
+      [[ $1 -eq 127 ]] && echo Not Found
 
       # An entire block starting at 128 is used for when programs return because
       # of an (unhandled or servicable) signal.
       # On my Debian Linux 5.4 kernel, kill -l accepts 0-64 values. Making this
       # block end at 192. Although I doubt many of those will ever be seen as
       # an actual exit status code, some often are, like INT, KILL and PIPE.
-      test \( $1 -ge 128 -a $1 -le 192 \) && {
+      [[ $1 -ge 128 && $1 -le 192 ]] && {
         echo SIG:$(kill -l $(( $1 - 128 )))
       }
 
@@ -215,7 +215,7 @@ shell_uc_def ()
       # integers in shell scripts yields very strange results. Non-integers
       # will just make shell exit return 2.
       # Still, leaving this in here.
-      test $1 -eq 255 && echo Out of Range
+      [[ $1 -eq 255 ]] && echo Out of Range
     }
 
     sh_type () { type "$@"; }
@@ -278,7 +278,7 @@ shell_uc_def ()
 
   sh_exported() # List all exported env # sh:no-stat
   {
-    test $# -eq 0 && {
+    [[ $# -eq 0 ]] && {
       env
       return
     }
@@ -289,10 +289,10 @@ shell_uc_def ()
   sh_exe () # Is user callable
   {
     local type="$( type -t "$1" )";
-    test "$type" = "function" && return;
-    test "$type" = "file" -a -x "$(command -v "$1")" && return;
+    [[ "$type" = "function" ]] && return;
+    [[ "$type" = "file" && -x "$(command -v "$1")" ]] && return;
     {
-      test "$type" = "alias" && shopt -q expand_aliases &&
+      [[ "$type" = "alias" ]] && shopt -q expand_aliases &&
         eval "sh_cmd $(sh_quote=true sh_als_cmd "$1")"
     } && return
   }
