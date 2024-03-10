@@ -97,11 +97,12 @@ std_uc_env_def ()
   # E:continue 195: error, exception; but if in loop/batch keep going...
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
   : "${_E_next:=196}"
-  # E:stop     197: break; OK, but if loop/batch then terminate, stop when first convenient
+  # E:stop     197:
+  : "${_E_stop:=197}" # abort or fatal step
   # E:retry    198: pending; not 195/196 but can retry later this loop/batch
   # E:break    limit    199: limit; like 198 but some throttling was initiated as well
   : "${_E_done:=200}"
-  # E:done     200: changed?
+  # E:done     200: break; OK, but if loop/batch then terminate, stop when first convenient
   # E:more     201: more; partially completed ?
 }
 

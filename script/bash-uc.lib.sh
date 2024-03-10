@@ -58,8 +58,12 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
   #  echo "err-exit: script: $0; mode: $-; frame count: $(bash_frames); err: E$err"
   #  for frame in $(bash_frames); do
   #    echo "$frame. $(caller "$frame" || echo noframe): ${FUNCNAME[$frame]} (${BASH_ARGC[$frame]})"; done
-  #  stderr declare -p BASH_ARGV FUNCNAME
+  #  stderr declare -p BASH_ARG{C,V} BASH_COMMAND FUNCNAME
   #}
+  [[ "$1" ]] && {
+    head="$2 <id=$1>"
+  } ||
+    head=$BASH_COMMAND
 
   # Adding color makes things a mess, this is the best I will now for now
   : ${_1:=${RED-}}
@@ -112,7 +116,7 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
     #return 1
   }
 #
-  declare frame=${3:-0}
+  declare frame=${3:-1}
   declare bash_argv_offset=0
 
   [[ $frame -eq 0 ]] || {

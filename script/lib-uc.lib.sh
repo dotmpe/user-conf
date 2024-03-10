@@ -141,7 +141,7 @@ lib_uc_init_all () # ~ <Names...>
     [[ 0 -lt $# ]] || break
     pending=$#
     INIT_LOG=$LOG lib_uc_init "$@" || {
-      sys_stat -eq ${_E_retry:-198} && {
+      sys_astat -eq ${_E_retry:-198} && {
         set -- $(filter_args "not lib_uc_initialized" "$@") &&
         [[ $pending -gt $# ]] || {
           set -- "${@:2}" "$1"
@@ -326,7 +326,7 @@ lib_uc_require () # ~ <Names...>
   }
 
   lib_loading= lib_load "$@" && return ||
-    sys_stat -eq ${_E_retry:-198} ||
+    sys_astat -eq ${_E_retry:-198} ||
       $LOG error :uc:lib-require "During load" "E$?:$*" $? || return
 
   : "${LIB_REQ:?"Expected LIB_REQ (after lib_load '$*')"}"
@@ -338,7 +338,7 @@ lib_uc_require () # ~ <Names...>
     [[ $# -eq 0 ]] && return
     $LOG info :uc:lib-require "Pending:" "$*"
     lib_loading= lib_load "$@" && return || {
-      sys_stat -eq ${_E_retry:-198} || return $?
+      sys_astat -eq ${_E_retry:-198} || return $?
       # Continue until LIB_REQ stays empty after lib-load...
     }
   done

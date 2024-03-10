@@ -66,7 +66,7 @@ sys_set () # ~ <Var-name> [<Value>] ...
 # copy: sys.lib/sys-set
 
 # XXX: new function: ignore last status if test succeeds, or return it
-sys_stat ()
+sys_astat ()
 {
   local stat=$?
   while [[ $# -gt 0 ]]
