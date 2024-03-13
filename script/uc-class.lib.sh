@@ -1,7 +1,7 @@
 uc_class_lib__load ()
 {
   : about "Some stuff to help with declaration, to move into class.lib later"
-  lib_require str sys argv class-uc
+  lib_require str sys-cmd class-uc
 }
 
 uc_class_lib__init ()
@@ -32,14 +32,14 @@ uc_class_d () # ~
 uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
 {
   declare baserefs=() bases=() &&
-  argv_hseq baserefs "${@:2}" &&
+  args_hseq_arrv baserefs "${@:2}" &&
   test 0 -eq "${#baserefs[@]}" || {
     sys_arr bases str_words "${baserefs[@]}" &&
     class_load "${bases[@]}" || return
   }
   declare class_static=$1 &&
   str_vword class_static &&
-  argv_seq=args_hseq_arrv sys_csp=uc_class_d sys_csa="args_oseq_arrv 1" \
+  args_seq=args_hseq_arrv sys_csp=uc_class_d sys_csa="args_oseq_arrv 1" \
   sys_cmd_seq --type "$@"
 }
 

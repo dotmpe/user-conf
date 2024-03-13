@@ -27,7 +27,7 @@ class_StatDirTab_ () # :Class ~ <ID> .<METHOD> <ARGS...>
     .tabclass ) : "${Class__instances[$id]}" && echo "${_//* }" ;;
     .directories )
         # metadir_basedirs
-        user_lookup_path ~/.local/statusdir/index -- .meta/tabs .meta/stat/index .local/statusdir/index .statusdir/index
+        user_lookup_path ~/.local/statusdir/index -- .meta/tab .meta/stat/index .local/statusdir/index .statusdir/index
       ;;
     .names )
         local fp filepaths
