@@ -39,7 +39,7 @@ uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
   }
   declare class_static=$1 &&
   str_vword class_static &&
-  argv_seq=argv_hseq sys_csp=uc_class_d sys_csa="argv_oseq 1" \
+  argv_seq=args_hseq_arrv sys_csp=uc_class_d sys_csa="args_oseq_arrv 1" \
   sys_cmd_seq --type "$@"
 }
 

@@ -70,6 +70,8 @@ test_exists() # Local-Name [ Base-Dir ]
     test -e "$1/$2" && echo "$1/$2" || return 1
   }
 }
+# XXX: consolidate together with lookup-exists? os-islookup, assert,
+# os.lookup.verbose...
 
 assert_d () # ~ Path [Failure-Message]
 {

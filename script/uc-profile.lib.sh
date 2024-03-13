@@ -482,7 +482,7 @@ uc_var_update () # ~ <Var>
 uc_ctx ()
 {
   declare -gA UC_CTX
-  assoc_from_env UC_CTX "$@"
+  sys_aarrv UC_CTX "$@"
 }
 
 # 2024 feb: looking at improved envd setup
@@ -510,7 +510,7 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
 }
 
 # Store variables (name and current value) at associative array
-assoc_from_env () # ~ <Array> <Vars...>
+sys_aarrv () # ~ <Array> <Vars...>
 {
   # XXX: for some reason cannot set var to by-name-ref as well
   declare -n arr=${1:?}
@@ -521,7 +521,7 @@ assoc_from_env () # ~ <Array> <Vars...>
     arr["${var}"]=${!var}
   done
 }
-# Copy: sys.lib/assoc-from-env
+# Copy: sys.lib/system-assoc-array-from-variables
 
 env_keys () # ~
 {
