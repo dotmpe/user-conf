@@ -176,7 +176,7 @@ std_quiet () # ~ <Cmd...> # Silence all output (std{out,err})
 
 # XXX: rename these or deprecate: std-v*
 
-std_v () # ~ <Message ...> # Print message
+std_verbose () # ~ <Message ...> # Print message
 {
   stderr echo "$@" || return 3
 }

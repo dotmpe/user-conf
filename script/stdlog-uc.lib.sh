@@ -208,6 +208,7 @@ std_exit () # [exit-at-level]
 {
   test -n "${1-}" || return 0
   true ${std_exit:=exit}
+  #assert isnum "$1"
   $std_exit $1
 }
 
