@@ -347,24 +347,25 @@ lib_uc_require () # ~ <Names...>
 # XXX: Track <nameid>_script_loaded and set ENV_SRC
 uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 {
-  local scr_name scr_path scr_varn scr_st
+  local scr_name scr_path scr_varn scr_st lk=${lk-}:uc:script-load
   for scr_name in "${@:?}"
   do
     scr_path=$(command -v "$scr_name.${scr_ext:-sh}") ||
-      $LOG error ":uc:script-load" "Not found" "$scr_name" 127 || return
+      $LOG error "$lk" "Not found" "$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_load
     [[ 0 -eq ${!scr_st:--1} ]] && {
       ! uc_debug ||
-        $LOG debug :uc:script-load "Skipping sourced script" "$scr_name"
+        $LOG debug "$lk" "Skipping sourced script" "$scr_name"
     } || {
       ! uc_debug ||
-        $LOG info :uc:script-load "Sourcing script" "$scr_name"
+        $LOG info "$lk" "Sourcing script" "$scr_name"
+      lk=$lk:$scr_name \
       . "$scr_path"
       eval ${scr_st}=$?
       ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
       [[ 0 -eq ${!scr_st:?} ]] || {
-        $LOG warn :uc:script-load "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
+        $LOG warn "$lk" "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
       }
     }
   done

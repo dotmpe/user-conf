@@ -119,37 +119,6 @@ shell_uc_def ()
 {
   [[ $IS_BASH -eq 1 ]] && {
 
-    sh_arr ()
-    {
-      typeset var=${1:?}
-      # XXX: Can't make string-expression syntax work for dynamic variable names
-      #case "${!var[@]@A}" in ( -*[Aa]* ) true ;; ( * ) false ;; esac
-      if_ok "$(std_noerr declare -p $var)" &&
-      case "$_" in ( "declare -"*[Aa]*" "* ) true ;; ( * ) false ;; esac
-    }
-
-    sh_env () # List all variable names, exported or not # sh:no-stat
-    {
-      [[ $# -eq 0 ]] && {
-        {
-          set | grep '^[_A-Za-z][A-Za-z0-9_]*=.*$' && env
-        } | awk '!a[$0]++'
-        return
-      }
-
-      sh_env | grep ${grep_f:-"-E"} "^$1="
-    }
-
-    sh_isset() # Variable is set, even if empty # sh:no-stat
-    {
-      grep_f=-qE sh_env "$1"
-    }
-
-    sh_fun () # Is name of shell funtion # sh:no-stat
-    {
-      [[ "$(type -t "$1")" = "function" ]]
-    }
-
     sh_als () # Is name of shell alias # sh:no-stat
     {
       [[ "$(type -t "$1")" = "alias" ]]
@@ -165,9 +134,38 @@ shell_uc_def ()
       }
     }
 
+    sh_arr ()
+    {
+      sh_vfl "aA" "$1"
+    }
+
     sh_bi()
     {
       [[ "$(type -t "$1")" = "builtin" ]]
+    }
+
+    sh_env () # List all variable names, exported or not # sh:no-stat
+    {
+      [[ $# -eq 0 ]] && {
+        {
+          set | grep '^[_A-Za-z][A-Za-z0-9_]*=.*$' && env
+        } | awk '!a[$0]++'
+        return
+      }
+
+      sh_env | grep ${grep_f:-"-E"} "^$1="
+    }
+
+    sh_fun () # Is name of shell funtion # sh:no-stat
+    {
+      [[ "$(type -t "$1")" = "function" ]]
+    }
+
+    sh_isset() # Variable is declared (set or unset) # sh:no-stat
+    {
+      [[ "${!1+set}" ]]
+      #if_ok "$(declare -p "${1:?}")"
+      #grep_f=-qE sh_env "$1"
     }
 
     sh_kw()
@@ -219,6 +217,28 @@ shell_uc_def ()
     }
 
     sh_type () { type "$@"; }
+
+    sh_var ()
+    {
+      declare -p "${1:?}" >/dev/null 2>&1
+    }
+
+    # Shell/variable-flag-match matches if any of given flags is set
+    sh_vfl () # ~ <Flags> <Var>
+    {
+      : about 'Shell :variable-flags-match'
+      : group 'Shell'
+      : group 'core'
+
+      declare flags var
+      flags=${1:?"$(sys_exc compo.inc:sh-core:sh-vfl:flags Expected)"}
+      var=${2:?"$(sys_exc compo.inc:sh-core:sh-vfl:var Expected)"}
+      # XXX: Can't make string-expression syntax work for dynamic variable names,
+      #case "${!var[@]@A}" in ( -*[Aa]* ) true ;; ( * ) false ;; esac
+      # so need to use declare -p invocation instead
+      decl="$(declare -p $var 2>/dev/null)" &&
+      case "$decl" in ( "declare -"*["$flags"]*" "* ) ;; * ) false; esac
+    }
 
   } || {
 

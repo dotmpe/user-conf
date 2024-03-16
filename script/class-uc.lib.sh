@@ -167,6 +167,10 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         : "${_%=}"
         field_name=${_%%@*}
       ;;
+
+    #@* | -@* | --@* )
+    #  ;;
+
     # reference/alias
     .*@* )
         declare ref field_name var_name
@@ -189,7 +193,11 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         declare fn &&
         for fn
         do
-          declare -gA "${class_static:?}__${fn:?}=()"
+          # NOTE: declare as empty and not '()', so that ${var[*]+set} idiom
+          # works properly to detect declared but empty array-type variables.
+          # The [*] infix is required for associative arrays like these, but
+          # for regular indexed arrays it would not be needed.
+          declare -gA "${class_static:?}__${fn:?}="
         done
       ;;
 
@@ -829,21 +837,17 @@ class_super_optional_call () # (id,self,super,call) ~ <Args...>
 # to given type. This wraps class-query
 class_switch () # (id) ~ <Var-name> [<Class-name>]
 {
-  declare var=${1:?class-switch: Variable name expected} type
-  case "$var" in
-    local:* ) var="${var:6}" ;
-  esac
+  local lk=${lk-}:class.lib:switch
   [[ -z "${2-}" ]] ||
     class_query "$2" ||
     class_loop_done || return
-  type=${Class__instance[$id]}
+  declare var=${1:?"$(sys_exc "$lk" "Variable name expected")"}
+  declare -n obj=$var type="Class__instance[\"$id\"]"
   : "class.${type:?} $type $id "
-  test "${!var}" = "$_" && return
-  case "$1" in
-    local:* ) eval "$var=\"$_\"" ;;
-    * ) declare -g $var="$_"
-  esac
-  $LOG info :class-switch "Class reference updated" "$_" $?
+  test "$obj" = "$_" && return
+  obj="$_"
+  ! sys_debug ||
+    $LOG info "$lk" "Class reference updated" "$var=$obj"
 }
 
 class_typeset () # (name) ~
