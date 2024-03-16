@@ -226,9 +226,9 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         Class__static_type[${cn:?}]=$cn:${bt:?}
       ;;
 
-    * ) return ${_E_next:?}
+    * ) return ${_E_next:?"$(sys_exc class-uc.lib:@class-: "Expected")"}
 
-  esac && return ${_E_done:?}
+  esac && return ${_E_done:?"$(sys_exc class-uc.lib:@class-: "Expected")"}
 }
 
 
@@ -310,9 +310,9 @@ class_ParameterizedClass_ () # (call,id,self,super) ~ <Instance-Id> .<Message-na
         echo "ParameterizedClass__params__${1:?}[$id]"
       ;;
 
-      * ) return ${_E_next:?}
+    * ) return ${_E_next:?"$(sys_exc class-uc.lib:@parameterizedclass-: "Expected")"}
 
-  esac && return ${_E_done:?}
+  esac && return ${_E_done:?"$(sys_exc class-uc.lib:@parameterizedclass-: "Expected")"}
 }
 
 # Variant on mparams that takes default value from a static context
@@ -393,7 +393,8 @@ class_calls () # (name) ~
   declare call calls=() re
   re=${class_cre:-"^ *\K[A-Za-z0-9\|\ $class_uc_cchre]*(?=\)$)"}
   if_ok "$(declare -f class_${CLASS_NAME:?}_ | grep -Po "$re")" &&
-  test -n "$_" || return ${_E_next:?}
+  test -n "$_" ||
+    return ${_E_next:?"$(sys_exc class-uc.lib:-calls: "Expected")"}
   <<< "$_" mapfile -t calls &&
   for call in "${calls[@]}"
   do
@@ -416,10 +417,11 @@ class_define () # ~ <Class-name> # Generate function to call 'class methods'
   declare class=${1:?class-define: Class name expected}
   : "
 class.$class () {
-  [[ $class = \${1:?} ]] && {
+  [[ $class = \${1:?\"\$(sys_exc class-uc.lib/@$class: \"Expected\")\"} ]] && {
     # Start new call resolution
 
-    declare SELF_NAME=$class OBJ_ID=\${2:?} call=\${3:-.toString} self id \
+    : \${2:?\"\$(sys_exc class-uc.lib/@$class: \"Id Expected\")\"}
+    declare SELF_NAME=$class OBJ_ID=\$2 call=\${3:-.toString} self id \
       CLASS_{IDX,TYPERES,TYPEC}
     id=\$OBJ_ID
     self=\"class.$class $class \$id \"
@@ -465,7 +467,7 @@ class.$class () {
 class_define_all () # ~ <Class-names...>
 {
   [[ 0 -lt $# ]] || set -- ${ctx_class_types:?}
-  : "${@:?class-define-all: Class names expected}"
+  : "${@:?"$(sys_exc class-uc.lib:-define-all: "Class names expected")"}"
 
   # Skip if already defined
   set -- $(filter_args "not class_defined" "$@")
@@ -500,22 +502,23 @@ class_define_all () # ~ <Class-names...>
 
 class_defined () # ~ <Name>
 {
-  : "${1:?class-defined: Class name expected}"
+  : "${1:?"$(sys_exc class-uc.lib:-defined "Class name expected")"}"
   sh_fun class.$_
 }
 
 # Destructor for previously initialized class instance variables
 class_del () # ~ <Var-name>
 {
-  : "${1:?class-del: Variable name expected}"
+  : "${1:?"$(sys_exc class-uc.lib:-del "Variable name expected")"}"
   #if_ok "$(${!1}.instance)" &&
-  ${!_:?class-del: Instance reference expected}.__del__ &&
+  ${!_:?"$(sys_exc class.lib:-del: "Instance reference expected")"}.__del__ &&
   unset $1
 }
 
 class_exists () # ~ <Class-name>
 {
-  [[ "${Class__static_type[${1:?class-exists: Class name expected}]:-}" ]]
+  : "${1:?"$(sys_exc class-uc.lib:-exists "Class name expected")"}"
+  [[ "${Class__static_type[$_]:-}" ]]
 }
 
 class_info () # (name,id) ~ # Print Id info for current class context
@@ -588,8 +591,10 @@ class_load_everything ()
 class_load_def () # (:ref) ~ [<Class-name>]
 {
   declare -n fn=class_sid cn=class_word
+
   class_reference "$@" || return
-  $LOG debug : "Looking for definitions" "$fn-class.lib $cn.class"
+
+  $LOG debug "${lk-:}" "Looking for definitions" "$fn-class.lib $cn.class"
   # XXX: old method of loading?
   # If class corresponds to lib or other group, require that to be initialized
   lib_uc_islib "$fn-class" && {
@@ -612,9 +617,9 @@ class_load_libs () # ~ <Class-names...>
 {
   [[ 0 -lt $# ]] || return ${_E_MA:?}
   set -- $(for class
-      do : "Class__libs[$class]"
-        [[ -n "${!_-}" ]] || continue
-        : "${_//,/ }"
+      do vn="Class__libs[$class]"
+        [[ "${!vn+set}" ]] || continue
+        : "${!vn//,/ }"
         echo "${_// /$'\n'}"
       done | awk '!a[$0]++')
   [[ 0 -eq $# ]] && return
@@ -632,9 +637,9 @@ class_init_prereq ()
 {
   [[ 0 -lt $# ]] || return ${_E_MA:?}
   set -- $(for class
-      do vr="Class__rel_types[$class]"
-        [[ "${!vr-}" ]] || continue
-        : "${!vr//,/ }"
+      do vn="Class__rel_types[$class]"
+        [[ "${!vn-}" ]] || continue
+        : "${!vn//,/ }"
         echo "${_// /$'\n'}"
       done | awk '!a[$0]++')
   [[ 0 -eq $# ]] && return
@@ -646,9 +651,9 @@ class_load_types ()
   [[ 0 -lt $# ]] || return ${_E_MA:?}
   local x=$*
   set -- $(for class
-      do : "Class__rel_types[$class]"
-        [[ "${!_-}" ]] || continue
-        : "${_//,/ }"
+      do vn="Class__rel_types[$class]"
+        [[ "${!vn-}" ]] || continue
+        : "${!vn//,/ }"
         echo "${_// /$'\n'}"
       done | awk '!a[$0]++')
   [[ 0 -eq $# ]] && return
@@ -764,7 +769,10 @@ class_reference () # (:ref) ~ [<Class-name>]
 {
   [[ "${class_ref-}" ]] ||
     : "${1:?"$(sys_exc class:reference "Class name reference expected")"}"
-  [[ -z "${1-}" ]] || class_ref=$1
+  [[ "${1+set}" ]] && class_ref=$1
+  ! sys_debug assert ||
+    assert rematch "$class_ref" '^[A-Za-z0-9\.+-]+$' \
+    "Illegal class ref" || return
   local new_class_word=${class_ref//[^A-Za-z0-9_]/_}
   [[ "${class_word-}" = "$new_class_word" ]] || {
     class_word=$new_class_word

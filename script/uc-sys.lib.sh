@@ -5,6 +5,13 @@ uc_sys_lib__load()
 
 uc_sys_lib__init ()
 {
+  throw ()  # Id Msg Ctx
+  {
+    local lk=${1:?}:sys.lib/throw ctx
+    ctx="${3-}${3+:$'\n'}$(sys_exc "$1" "$2")"
+    $LOG error "$lk" "${2-Exception}" "$ctx" ${_E_script:-2}
+  }
+
   envd_dtype uc/sys.lib lib &&
   envd_fun source_all var_{assert,set}
 }
@@ -50,13 +57,19 @@ sys_debug ()
 
 sys_debug_mode ()
 {
-  case "${1:1}" in
-    ( exceptions ) "${QUIET:-false}" ;;
-    ( diag ) "${DIAGNOSTIC:-${INIT:-false}}" ;;
-    ( init ) "${INIT:-false}" ;;
-    ( debug ) "${DEBUG:-false}" ;;
+  local lk=${lk-}:uc/sys.lib:debug-mode
 
-    ( * ) $LOG alert "${lk-:sys.lib:debug}" "No such mode" "$1" ${_E_script:?}
+  case "${1:1}" in
+    ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
+    ( debug ) "${DEBUG:-${DEV:-false}}" ;;
+    ( dev ) "${DEV:-false}" ;;
+    ( diag ) "${DIAG:-${INIT:-${DEBUG:-false}}}" ;;
+    ( exceptions ) "${VERBOSE:-false}" || "${DIAG:-true}" || ! "${QUIET:-false}" ;;
+    ( init ) "${INIT:-false}" ;;
+    # XXX: verbose: msg priv-lvl >= sess out-level
+    ( verbose ) "${VERBOSE:-false}" ;;
+
+    ( * ) $LOG alert "$lk" "No such mode" "$1" ${_E_script:?"$(sys_exc "$lk")"}
   esac
 }
 
