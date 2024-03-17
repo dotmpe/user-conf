@@ -34,11 +34,9 @@ uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
   declare baserefs=() bases=() &&
   args_hseq_arrv baserefs "${@:2}" &&
   test 0 -eq "${#baserefs[@]}" || {
-    sys_arr bases str_words "${baserefs[@]}" &&
-    class_load "${bases[@]}" || return
+    class_load "${baserefs[@]}" || return
   }
   declare class_static=$1 &&
-  str_vword class_static &&
   args_seq=args_hseq_arrv sys_csp=uc_class_d sys_csa="args_oseq_arrv 1" \
   sys_cmd_seq --type "$@"
 }
