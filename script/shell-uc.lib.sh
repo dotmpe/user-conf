@@ -134,6 +134,11 @@ shell_uc_def ()
       }
     }
 
+    sh_aarr ()
+    {
+      sh_vfl "A" "$1"
+    }
+
     sh_arr ()
     {
       sh_vfl "aA" "$1"
@@ -159,6 +164,11 @@ shell_uc_def ()
     sh_fun () # Is name of shell funtion # sh:no-stat
     {
       [[ "$(type -t "$1")" = "function" ]]
+    }
+
+    sh_iarr ()
+    {
+      sh_vfl "a" "$1"
     }
 
     sh_isset() # Variable is declared (set or unset) # sh:no-stat
