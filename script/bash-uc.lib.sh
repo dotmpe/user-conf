@@ -60,7 +60,7 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
   #    echo "$frame. $(caller "$frame" || echo noframe): ${FUNCNAME[$frame]} (${BASH_ARGC[$frame]})"; done
   #  stderr declare -p BASH_ARG{C,V} BASH_COMMAND FUNCNAME
   #}
-  [[ "$1" ]] && {
+  [[ "${1-}" ]] && {
     head="$2 <id=$1>"
   } ||
     head=$BASH_COMMAND
