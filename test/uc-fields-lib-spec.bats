@@ -15,7 +15,7 @@ lib_require std-uc uc-fields
   uc_fields_define foo {bar,baz-{a,b}}
   for suf in bar baz-{a,b} 
   do
-    std_quiet declare -p foo_fields_${suf//-/_}
+    std_silent declare -p foo_fields_${suf//-/_}
   done
 }
 
