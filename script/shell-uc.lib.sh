@@ -186,8 +186,7 @@ shell_uc_def ()
     # Return false unless the given number is an understood exit-status code.
     sh_status ()
     {
-      [[ $1 -eq 1 \
-        || $1 -eq 2 \
+      [[ $1 -gt 0 && $1 -le 3 \
         || $1 -eq 126 \
         || $1 -eq 127 \
         || ( $1 -ge 128 && $1 -le 192 ) \
@@ -195,18 +194,23 @@ shell_uc_def ()
     }
 
     # Print a short description for a given exit-status code.
-    # Obviously this is not a standard but mostly shell (Bash) specific.
-    # E.g. many programs will use 2 with
-    # other meanings than 'illegal argument/syntax error'.
+    # XXX: should tie this to some context, ie. this is mostly Bash and shell
+    # specific. E.g. grep has other status meanings, and so do other programs
+    # for status 2, etc.
     sh_state_name ()
     {
-      # Generic not-okay status
+      # E:fail Generic failed (ie. status for FALSE), or any error if further
+      # unspecified
       [[ $1 -eq 1 ]] && echo Failed
-      # Incomplete statements, missing or illegal arguments (shell)
-      [[ $1 -eq 2 ]] && echo Syntax Error
-      # Problem executing command-name (or no permissions)
+      # E:script Incomplete statements, missing or illegal arguments (shell)
+      [[ $1 -eq 2 ]] && echo Script Error
+      # E:user Unexpected or incorrect environment, user data or script
+      # parameters (usage)
+      [[ $1 -eq 3 ]] && echo User Error
+
+      # E:exec: Problem executing command-name (or no permissions)
       [[ $1 -eq 126 ]] && echo Not Executable
-      # No such command name
+      # E:nsf: No such file or command name
       [[ $1 -eq 127 ]] && echo Not Found
 
       # An entire block starting at 128 is used for when programs return because
