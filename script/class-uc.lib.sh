@@ -13,7 +13,7 @@
 class_uc_lib__load ()
 {
   : about "Foundation for class-like behavior and data instances of composite types"
-  lib_require os sys lib-uc std-uc || return
+  lib_require os sys assert lib-uc std-uc || return
   # Reserved characters for calls (for entire call name)
   class_uc_cch='_.-+='
   class_uc_cchre='_\.\-\+\*\!&\$\^%#='
