@@ -281,7 +281,7 @@ uc_commit_report ()
 # Use index argument to select single line to execute
 uc_exec_dirs () # Action Directive-Index read-args..
 {
-  test $# -ge 3 || return 98
+  test $# -ge 3 || return ${_E_GAE:-193}
   local action=$1 func_name arguments diridx=0 idx=${2-} idxs
   test -z "$idx" || {
     note "Requested selective execution of directives '$idx'"

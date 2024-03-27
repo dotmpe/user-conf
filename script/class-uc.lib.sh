@@ -128,12 +128,15 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
     .cparams|.class-params ) echo "${Class__instance[$id]}" ;;
     .id ) echo "$id" ;;
     .query-class ) class_query "$@" ;;
-    .switch-class )
+    .switch-class ) # ~ <Var-name> [<Class-name>]
         [[ 2 -le $# ]] || return ${_E_GAE:?}
         ! sys_debug diag || class_assert_ref "$2" || return
         [[ 1 -eq $# ]] || {
-          class_defined "${2:?}" || class_init "$_" || return
+          class_defined "${2:?}" || class_init "$_" ||
+          $LOG debug "$lk" "Cannot switch to missing class" "E$?:$#:$*" $? ||
+          return
         }
+        $LOG debug "$lk" "Switching class" "$#:$*"
         class_switch "$@"
       ;;
     .set-attr )
@@ -535,6 +538,21 @@ class_exists () # ~ <Class-name>
   [[ "${Class__static_type[$_]:-}" ]]
 }
 
+class_find () # ~ <Class-names...>
+{
+  local class
+  for class
+  do
+    class_load_def "$class" ||
+      sys_astat -eq ${_E_not_found:-127} && {
+        ! sys_debug || $LOG debug "${lk-}" "No such class" "$class"
+        continue
+      } || return $?
+    class_load "$class" ||
+      $LOG error "${lk-}" "Exception loading class" "E$?:$class:$(sys_callers)" $?
+  done
+}
+
 class_info () # (name,id) ~ # Print Id info for current class context
 {
   echo "class.${CLASS_NAME:?} ${SELF_NAME:?} ${OBJ_ID:?}"
@@ -579,7 +597,7 @@ class_load () # ~ [<Class-names...>]
     class_name=$(str_word "$class")
     class_loaded "$class_name" ||
     class_load_def "$class" ||
-      $LOG alert "$lk" "Finding definitions" "E$?:$class" $? || return
+      $LOG alert "$lk" "Cannot find such definition" "E$?:$class" $? || return
     class_exists "$class" || {
       sh_fun class_${class_name}__load ||
         $LOG alert "$lk" "Expected class 'load' hook" "$class:$class_name" 1 || return
@@ -691,6 +709,7 @@ class_load_types ()
 class_loaded () # ~ <Class-name>
 {
   : "${1:?class-loaded: Class name expected}"
+  # XXX: replace with assert class-name
   class_assert_name "$1" &&
   sh_fun class_${1:?}_
 }
@@ -859,7 +878,8 @@ class_switch () # (id) ~ <Var-name> [<Class-name>]
   local lk=${lk-}:class-uc.lib:-switch
   [[ -z "${2-}" ]] ||
     class_query "$2" ||
-    class_loop_done || return
+    class_loop_done ||
+      $LOG "$lk" error "No such" "E$?" $? || return
   declare var=${1:?"$(sys_exc "$lk" "Variable name expected")"}
   declare -n obj=$var type="Class__instance[\"$id\"]"
   : "class.${type:?} $type $id "
