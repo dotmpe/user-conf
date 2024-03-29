@@ -32,10 +32,12 @@ uc_class_d () # ~
 uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
 {
   declare baserefs=() bases=() &&
+  # Load prerequisite types first
   args_hseq_arrv baserefs "${@:2}" &&
   test 0 -eq "${#baserefs[@]}" || {
     class_load "${baserefs[@]}" || return
   }
+  # Finish declaring type
   declare class_static=$1 &&
   args_seq=args_hseq_arrv sys_csp=uc_class_d sys_csa="args_oseq_arrv 1" \
   sys_cmd_seq --type "$@"

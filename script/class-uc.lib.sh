@@ -16,7 +16,7 @@ class_uc_lib__load ()
   lib_require os sys assert lib-uc std-uc || return
   # Reserved characters for calls (for entire call name)
   class_uc_cch='_.-+='
-  class_uc_cchre='_\.\-\+\*\!&\$\^%#='
+  class_uc_cchre='_\.\-\+\*\!&\$\^%#=/'
   # Reserved characters for static call names (initial character)
   class_uc_scch='-@'
   # Add to class-types for auto initialization on class-init default
@@ -153,58 +153,58 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
 
     # XXX: field patterns
     # path
-    .*.* )
-        : "${call:1}"
-        field_name=${_%%.*}
-        Class__field[${SELF_NAME:?}.${field_name:?}]
-      ;;
+    #.*.* )
+    #    : "${call:1}"
+    #    field_name=${_%%.*}
+    #    Class__field[${SELF_NAME:?}.${field_name:?}]
+    #  ;;
     # assigment
-    = )
-      ;;
-    .*+= )
-        : "${call:1}"
-        : "${_%+=}"
-      ;;
-    .*= )
-        : "${call:1}"
-        : "${_%=}"
-        field_name=${_%%@*}
-      ;;
+    #= )
+    #  ;;
+    #.*+= )
+    #    : "${call:1}"
+    #    : "${_%+=}"
+    #  ;;
+    #.*= )
+    #    : "${call:1}"
+    #    : "${_%=}"
+    #    field_name=${_%%@*}
+    #  ;;
 
     #@* | -@* | --@* )
     #  ;;
 
-    # reference/alias
-    .*@* )
-        declare ref field_name var_name
-        : "${call:1}"
-        field_name=${_%%@*}
-        ref="Class__field[${SELF_NAME:?}.${field_name:?}]"
-        var_name=${call#*@}
-        [[ -z "$var_name" ]] && echo "$ref" || declare -n "$var_name=$ref"
-      ;;
+    # XXX: see Xcontext.*@*: reference/alias
+    #.*@* )
+    #    declare ref field_name var_name
+    #    : "${call:1}"
+    #    field_name=${_%%@*}
+    #    ref="Class__field[${SELF_NAME:?}.${field_name:?}]"
+    #    var_name=${call#*@}
+    #    [[ -z "$var_name" ]] && echo "$ref" || declare -n "$var_name=$ref"
+    #  ;;
 
     # XXX: static helpers for during declaration
 
-    --libs )
-        if_ok "$(str_join , "$@")" &&
-        Class__libs["${class_static:?}"]="$_"
-      ;;
-
-    --fields )
+    --fields ) # ~ ~ <Field-names...>
+        : about 'Register attribute field name for current static class'
+        declare class_word=${class_static:?} &&
+        str_vword class_word &&
         set -- $(str_words "$@") &&
         declare fn &&
         for fn
         do
           # NOTE: declare as empty and not '()', so that ${var[*]+set} idiom
           # works properly to detect declared but empty array-type variables.
-          # The [*] infix is required for associative arrays like these, but
-          # for regular indexed arrays it would not be needed.
-          declare -gA "${class_static//[^A-Za-z0-9_]/_}__${fn:?}="
+          # The downside is that there is always a null-string key in the array.
+          # ALSO: The [*] infix is required for associative arrays like these,
+          # but for regular indexed arrays it would not be needed.
+          declare -gA "${class_word}__${fn:?}="
         done
       ;;
 
-    --hooks )
+    --hooks ) # ~ ~ <Hook-names...>
+        : about 'Register global class declaration hooks to current static class'
         declare -n hooks=Class__hook &&
         declare hn &&
         for hn
@@ -212,17 +212,35 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         done
       ;;
 
-    --relate )
-        Class__field[${1:?}]
-        uc_class_d --rel-types "${2:?}"
+    --libs ) # ~ ~ <Lib-names...>
+        : about 'Register prerequisite libraries for instances of class'
+        if_ok "$(str_join , "$@")" &&
+        Class__libs["${class_static:?}"]="$_"
       ;;
 
-    --rel-types )
+    --ref ) # ~ ~ <Object-id>
+        : about 'Static helper to get reference to object'
+        local id=${1:?} type
+        local -n cparam="Class__instance[\"$id\"]"
+        type=${cparam// *}
+        : "class.${type:?} $type $id "
+        echo "$_"
+      ;;
+
+    --rel-types ) # ~ ~ <Rel-types...>
+        : about 'Register related types for static class'
         if_ok "$(str_join , "$@")" &&
         Class__rel_types["${class_static:?}"]="$_"
       ;;
 
-    --type )
+    --relate )
+        # XXX:
+        Class__field[${1:?}]
+        uc_class_d --rel-types "${2:?}"
+      ;;
+
+    --type ) # ~ ~ <Class-name> <Base-types...>
+        : about 'Register class-name as type with base-types'
         declare cn=${1:?} bt
         [[ 1 -lt $# ]] && bt=$(str_join : "${@:2}") || bt=Class
         Class__static_type["${cn:?}"]=$cn:${bt:?}
@@ -363,9 +381,10 @@ class_assert_name ()
 # context.
 class_attributes () # (self) ~
 {
-  : ${CLASS_NAME:?}__
-  declare attr attrs=() c=${#_}
-  if_ok "$(compgen -A variable ${CLASS_NAME:?}__)" || return 0
+  declare attr attrs=() c ns
+  ns=$(str_word "${CLASS_NAME:?}")__
+  c=${#ns}
+  if_ok "$(compgen -A variable ${ns:?})" || return 0
   <<< "$_" mapfile -t attrs &&
   for attr in "${attrs[@]}"
   do
@@ -402,9 +421,10 @@ class_call_info () # (name,id) ~ # Print Id info for current class context
 # See also class-methods and class-attributes.
 class_calls () # (name) ~
 {
-  declare call calls=() re
+  declare call calls=() re class_word
   re=${class_cre:-"^ *\K[A-Za-z0-9\|\ $class_uc_cchre]*(?=\)$)"}
-  if_ok "$(declare -f class_${CLASS_NAME:?}_ | grep -Po "$re")" &&
+  class_word=$(str_word "${CLASS_NAME:?}")
+  if_ok "$(declare -f class_${class_word}_ | grep -Po "$re")" &&
   test -n "$_" ||
     return ${_E_next:?"$(sys_exc class-uc.lib:-calls: "Expected")"}
   <<< "$_" mapfile -t calls &&
@@ -432,7 +452,7 @@ class_define () # ~ <Class-name> # Generate function to call 'class methods'
   : "
 class.$class ()
 {
-  local lk=\${lk-}:class.$class
+  local lk=\${lk-}:class.$class super
 
   [[ $class = \${1:?\"\$(sys_exc class-uc.lib/@$class: \"Expected\")\"} ]] && {
     # Start new call resolution
@@ -582,6 +602,16 @@ class_init () # ~ <Class-names...>
   <<< "$_" mapfile -t bases &&
   class_define_all "$@" "${bases[@]}" &&
   $LOG debug "$lk" "Prepared class env OK" "$#:$*"
+}
+
+class_instance () # ~ <Ref> # Check for valid object reference
+{
+  local obj_id type ref=${1:?}
+  ref=${ref#* }; type=${ref%% *}; ref=${ref#* }; obj_id=${ref%% *}
+
+  class_exists "$type" &&
+  : "${Class__instance[$obj_id]-}" &&
+  [[ "$type" = "${_:0:${#type}}" ]]
 }
 
 # Load classes (source scripts and run load hooks)
