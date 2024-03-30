@@ -452,13 +452,13 @@ class_define () # ~ <Class-name> # Generate function to call 'class methods'
   : "
 class.$class ()
 {
-  local lk=\${lk-}:class.$class super
+  local lk=\${lk-}:class.$class
 
   [[ $class = \${1:?\"\$(sys_exc class-uc.lib/@$class: \"Expected\")\"} ]] && {
     # Start new call resolution
 
     : \${2:?\"\$(sys_exc class-uc.lib/@$class: \"Id Expected\")\"}
-    declare SELF_NAME=$class OBJ_ID=\$2 call=\${3:-.toString} self id \
+    declare SELF_NAME=$class OBJ_ID=\$2 call=\${3:-.toString} self id super \
       CLASS_{NAME,IDX,TYPERES,TYPEC}
     id=\$OBJ_ID
     self=\"class.$class $class \$id \"
@@ -470,31 +470,20 @@ class.$class ()
 
   } || {
 
-    # Allow static call based on select prefix characters
+    # XXX: Allow static call based on select prefix characters?
     str_globmatch \"\${1:0:1}\" \"[:-]\" && {
       declare call=\$1
       shift
+      class_${class//[^A-Za-z0-9_]/_}_ \"\$@\"
+      return
 
     } || {
-      # Make call for this object at super types
 
-      CLASS_IDX=\$(( CLASS_IDX + 1 ))
-      [[ $class = \"\${CLASS_TYPERES[\$CLASS_IDX]}\" ]] || {
-        $LOG alert "\$lk" Mismatch \"\$CLASS_IDX:$class!=\${CLASS_TYPERES[\$CLASS_IDX]}:\$*\"
-        return 1
-      }
-      CLASS_NAME=$class
-      CLASS_TYPEC=\$(( CLASS_TYPEC - 1 ))
-      [[ \$CLASS_TYPEC -gt 0 ]] && {
-        SUPER_NAME=\${CLASS_TYPERES[\$(( CLASS_IDX + 1 ))]}
-        super=\"class.\${SUPER_NAME:?} \${SELF_NAME:?} \"
-      } || SUPER_NAME= super=
-
-      declare call=\${2:-.toString}
-      shift 2
+      # Do invocation at super type, for existing class env
+      declare super_type=\${1:?} call=\${2:?} super &&
+      shift 2 &&
+      class_loop_continue class_run_call \"\$@\"
     }
-
-    class_${class//[^A-Za-z0-9_]/_}_ \"\$@\"
   }
 }
 "
@@ -747,11 +736,11 @@ class_loaded () # ~ <Class-name>
 #    This is main function used for all class-like call handler behavior.
 class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
 {
-  declare name type super resolved
   declare -a CLASS_TYPERES
-
   : "${Class__type["${SELF_NAME:?}"]//:/ }"
   CLASS_TYPERES=( $_ )
+
+  declare super resolved
 
   for (( CLASS_TYPEC=${#CLASS_TYPERES[@]}, CLASS_TYPEC--, CLASS_IDX=0;
     CLASS_TYPEC >= 0;
@@ -772,6 +761,30 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
   done
 
   "${resolved:-false}" || return ${_E_not_found:?}
+}
+
+class_loop_continue ()
+{
+  local CLASS_TYPEC=${CLASS_TYPEC:?} CLASS_IDX=${CLASS_IDX:?}
+
+  while [[ $CLASS_TYPEC -gt 0 ]]
+  do
+    CLASS_IDX=$(( CLASS_IDX + 1 ))
+    CLASS_NAME="${CLASS_TYPERES[$CLASS_IDX]}"
+    CLASS_TYPEC=$(( CLASS_TYPEC - 1 ))
+    [[ $CLASS_TYPEC -gt 0 ]] && {
+      SUPER_NAME=${CLASS_TYPERES[$(( CLASS_IDX + 1 ))]}
+      super="class.${SUPER_NAME:?} ${SELF_NAME:?} "
+    } || SUPER_NAME= super=
+
+    #"${1:?class-loop: Item handler expected}" "${@:2}" && resolved=true || {
+    "${1:?class-loop: Item handler expected}" "${@:2}" || {
+      local r=$?
+      [[ ${_E_done:?} -eq $r ]] && return
+      [[ ${_E_next:?} -eq $r ]] && continue
+      return $r
+    }
+  done
 }
 
 class_loop_done () # ~ [<Status>]

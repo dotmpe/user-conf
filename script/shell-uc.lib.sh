@@ -141,7 +141,7 @@ shell_uc_def ()
 
     sh_arr ()
     {
-      sh_vfl "aA" "$1"
+      sh_vfl "a" "$1" || sh_vfl "A" "$1"
     }
 
     sh_bi()
@@ -251,7 +251,16 @@ shell_uc_def ()
       #case "${!var[@]@A}" in ( -*[Aa]* ) true ;; ( * ) false ;; esac
       # so need to use declare -p invocation instead
       decl="$(declare -p $var 2>/dev/null)" &&
-      case "$decl" in ( "declare -"*["$flags"]*" "* ) ;; * ) false; esac
+      case "$decl" in ( "declare -$flags $var"* ) ;; * ) false; esac
+    }
+
+    sh_vfls ()
+    {
+      var=${1:?"$(sys_exc compo.inc:sh-core:sh-vfls:var Expected)"}
+      if_ok "$(declare -p $var 2>/dev/null)" &&
+      : "${_#declare -}" &&
+      : "${_% $var*}" &&
+      echo "$_"
     }
 
   } || {
