@@ -146,4 +146,72 @@ req_profile() # Name Vars...
   }
 }
 
+sys_debug ()
+{
+  test $# -gt 0 || set -- debug
+  while test $# -gt 0
+  do
+    # Default to doing IF-OR
+    case "$1" in [A-Za-z]* ) set -- "?$1" "${@:2}"; esac
+
+    # Check IF ON/OFF condition
+    case "$1" in
+      "?"* ) sys_debug_mode "${1:1}" ;;
+      "!"* ) sys_not sys_debug_mode "${1:1}" ;;
+    esac ||
+      return
+
+    # XXX: Check SET ON/OFF mode
+    case "$1" in [+-]* )
+    esac
+
+    shift
+  done
+}
+
+sys_debug_mode ()
+{
+  local lk=${lk-}:us:sys.lib:debug-mode
+  case "$1" in
+    ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
+    ( debug ) "${DEBUG:-${DEV:-false}}" ;;
+    ( dev ) "${DEV:-false}" ;;
+    ( diag ) "${DIAG:-${INIT:-${DEBUG:-false}}}" ;;
+    ( exceptions ) "${VERBOSE:-false}" || "${DIAG:-true}" || ! "${QUIET:-false}" ;;
+    ( init ) "${INIT:-false}" ;;
+    ( verbose ) "${VERBOSE:-false}" ;;
+
+    ( * ) $LOG alert "$lk" "No such mode" "$1" ${_E_script:?"$(sys_exc "$lk")"}
+  esac
+}
+
+# XXX: hook to test for envd/uc and defer, returning cur bool value for setting
+sys_debug_ () # ~ [<...>]
+{
+  sys_debug "$@" && echo true || echo false
+}
+
+# A helper for inside ${var?...} expressions
+sys_exc () # ~ <Head>: <Label> # Format exception-id and message
+{
+  ! "${DEBUG:-$(sys_debug_ exceptions)}" && echo "$1: ${2-Expected}" ||
+    # TODO: use localenv for params
+    "${sys_on_exc:-sys_exc_trc}" "$1" "${2-Expected}" 3 "${@:3}"
+}
+
+# system-exception-trace: Helper to format callers list including custom head.
+sys_exc_trc () # ~ [<Head>] [<Msg>] [<Offset=2>] ...
+{
+  echo "${1:-us:sys: E$? source trace:}${2+ }${2}"
+  std_findent "  - " sys_callers "${3-2}"
+}
+
+# Test for fail/false status exactly, or return status. Ie. do not mask all
+# non-zero statusses, but one specifically. See also sys-astat.
+sys_not ()
+{
+  "$@"
+  [[ $? -eq ${_E_fail:-1} ]]
+}
+
 
