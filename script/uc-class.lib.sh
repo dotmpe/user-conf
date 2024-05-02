@@ -16,9 +16,12 @@ uc_class_lib__init ()
 
 uc_class_d () # ~
 {
-  declare class_cur lk=${lk-}:uc/class.lib:-d
-  class_cur=${Class__hook[${1:2}]:?"$(sys_exc "$lk" "Hook declaration for '$1' expected")"} &&
-  call=${1:?"$(sys_exc "$lk")"} class_${class_cur}_ "${@:2}" || class_loop_done
+  declare uc_class_{cur,word} call lk=${lk-}:uc/class.lib:-d
+  call=${1:?"$(sys_exc "$lk")"}
+  uc_class_cur="${Class__hook[${1:2}]:?"$(sys_exc "$lk" \
+      "Hook declaration for '$1' expected")"}"
+  uc_class_word=$(str_word "$uc_class_cur")
+  class_${uc_class_word}_ "${@:2}" || class_loop_done
 }
 
 # Helper for class load phase to declare all aspects for type; as these can

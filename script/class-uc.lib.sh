@@ -22,7 +22,7 @@ class_uc_lib__load ()
   # Add to class-types for auto initialization on class-init default
   ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}Class\ ParameterizedClass
   # basic static global env required during loading
-  declare -gA Class__{field,hook,libs,rel_types,static_{calls,type},type}
+  declare -gA Class__{attrmap,attrs,field,hook,libs,rel_types,static_{calls,type},type}
 }
 
 class_uc_lib__init ()
@@ -45,7 +45,7 @@ class_Class__load ()
   # Want to use static hook in Class but none of helpers is declared yet,
   # XXX: see uc-class.lib
   class_static=Class call=--hooks \
-    class_Class_ fields hooks libs rel-types type ||
+  class_Class_ fields hooks libs rel-types type ||
     class_loop_done || return
 
   # Assoc-array to store concrete type and additional 'params' passed at Class
@@ -97,11 +97,37 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         #    $LOG warn :"$self" "No such attribute" "${2-}:$1" ${_E_nsk:?} || return
         #  }
       ;;
+    .attr-refs ) # ~ ~ [<Names>]
+        : about "Build list of variable references"
+        : about "Assuming that attributes are all unique names"
+        local attr class_word
+        # XXX: may want to cache attr list per type in Class:attrs, but see
+        # about performance difference before that later.
+        $self.attr-tab &&
+        for attr
+        do
+          test -n "${Class__attrmap["$attr"]-}" ||
+            $LOG error "$lk$call" "No such attribute" "$attr" ${_E_script:?} || return
+          class_word=$(str_word "$_") || return
+          printf ' %s=%s__%s["%s"]' \
+            "${attr:?}" "${class_word:?}" "${attr:?}" "$OBJ_ID"
+        done
+      ;;
+    .attr-tab ) # ~ ~ [<Array-name>]
+        : about "Fill table with class-attribute pairs for current type"
+        local -n ATTRMAP=${1:-"Class__attrmap"}
+        if_ok "$(class_loop class_attributes)" &&
+        while read -r class attr
+        do
+          ATTRMAP["${attr:?}"]=${class:?}
+        done <<< "$_"
+      ;;
     .defined ) [[ "set" = "${Class__instance[$id]+"set"}" ]] ||
         return ${_E_nsk:?} ;;
     .class ) echo "${SELF_NAME:?}" ;;
-    .class-attributes ) class_loop class_attributes ;;
+    .class-attributes | .attr@pairs ) class_loop class_attributes ;;
     .class-call-info ) class_call_info ;;
+    .class-type ) class_loop class_type ;;
     .class-calls ) class_loop class_calls ;;
     .class-debug )
         class_call_info &&
@@ -151,7 +177,7 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
     .default | \
     .info ) class_call_info ;;
 
-    # XXX: field patterns
+    # XXX: field patterns, special calls, see class.XContext
     # path
     #.*.* )
     #    : "${call:1}"
@@ -171,10 +197,6 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
     #    field_name=${_%%@*}
     #  ;;
 
-    #@* | -@* | --@* )
-    #  ;;
-
-    # XXX: see Xcontext.*@*: reference/alias
     #.*@* )
     #    declare ref field_name var_name
     #    : "${call:1}"
@@ -184,22 +206,27 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
     #    [[ -z "$var_name" ]] && echo "$ref" || declare -n "$var_name=$ref"
     #  ;;
 
-    # XXX: static helpers for during declaration
+
+    # Static helpers, for during declaration & other non-object envs
+    # Some of these requite static-class env, see uc-class-d
 
     --fields ) # ~ ~ <Field-names...>
         : about 'Register attribute field name for current static class'
+        :
         declare class_word=${class_static:?} &&
         str_vword class_word &&
         set -- $(str_words "$@") &&
         declare fn &&
         for fn
         do
-          # NOTE: declare as empty and not '()', so that ${var[*]+set} idiom
-          # works properly to detect declared but empty array-type variables.
-          # The downside is that there is always a null-string key in the array.
+          # FIXME: compgen will not list declared but uninitialized. On the
+          # other hand, arrays initialized to empty and not '()' makes that
+          # ${var[*]+set} idiom works properly to detect declared but empty
+          # array-type variables. The downside is that there is always a
+          # null-string key in the array.
           # ALSO: The [*] infix is required for associative arrays like these,
           # but for regular indexed arrays it would not be needed.
-          declare -gA "${class_word}__${fn:?}="
+          declare -gA "${class_word}__${fn:?}=()"
         done
       ;;
 
@@ -233,7 +260,7 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         Class__rel_types["${class_static:?}"]="$_"
       ;;
 
-    --relate )
+    --relate ) # ~ <Attr> <Type> <args...>
         # XXX:
         Class__field[${1:?}]
         uc_class_d --rel-types "${2:?}"
@@ -381,10 +408,10 @@ class_assert_name ()
 # context.
 class_attributes () # (self) ~
 {
-  declare attr attrs=() c ns
-  ns=$(str_word "${CLASS_NAME:?}")__
-  c=${#ns}
-  if_ok "$(compgen -A variable ${ns:?})" || return 0
+  declare attr attrs=() c npref
+  npref=$(str_word "${CLASS_NAME:?}")__
+  c=${#npref}
+  if_ok "$(compgen -A variable ${npref:?})" || return 0
   <<< "$_" mapfile -t attrs &&
   for attr in "${attrs[@]}"
   do
@@ -412,21 +439,23 @@ class_bases () # ~ <Class-names...>
 }
 
 # Helper to print current call info, shows current class context.
-class_call_info () # (name,id) ~ # Print Id info for current class context
+class_call_info () # (name,id) ~ ... # Print Id info for current class context
 {
   echo "class.${CLASS_NAME:?} ${SELF_NAME:?} ${OBJ_ID:?} ${call:?}"
 }
 
 # Helper for class-loop that lists all accepted calls for current class context.
 # See also class-methods and class-attributes.
-class_calls () # (name) ~
+class_calls () # (name) ~ ...
 {
   declare call calls=() re class_word
+  # Retrieve case-items by grep on typeset
   re=${class_cre:-"^ *\K[A-Za-z0-9\|\ $class_uc_cchre]*(?=\)$)"}
   class_word=$(str_word "${CLASS_NAME:?}")
   if_ok "$(declare -f class_${class_word}_ | grep -Po "$re")" &&
   test -n "$_" ||
     return ${_E_next:?"$(sys_exc class-uc.lib:-calls: "Expected")"}
+  # Read result into array and output line-by-line together with class
   <<< "$_" mapfile -t calls &&
   for call in "${calls[@]}"
   do
@@ -434,7 +463,7 @@ class_calls () # (name) ~
   done
 }
 
-class_compile_mro () # ~ <Class-name>
+class_cache_mro () # ~ <Class-name> # Concat static-type for type and basetypes
 {
   : "${1:?"$(sys_exc class-uc.lib:compile-mro "Class name expected")"}"
   : "Class__type[$_]"
@@ -444,7 +473,16 @@ class_compile_mro () # ~ <Class-name>
   }
 }
 
-class_define () # ~ <Class-name> # Generate function to call 'class methods'
+class_type () # ~
+{
+  echo "${CLASS_NAME:?}"
+}
+
+# XXX: calls are invocations of methods (looked up on MRO) for object instances,
+# static calls, and a helper to run calls on super from a current object
+# instance.
+# FIXME: invoke methods in static class context
+class_define () # ~ <Class-name> # Generate function to wrap class calls
 {
   declare class=${1:?class-define: Class name expected}
   ! sys_debug diag || class_assert_ref "$class" || return
@@ -490,7 +528,7 @@ class.$class ()
   eval "$_"
 }
 
-class_define_all () # ~ <Class-names...>
+class_define_all () # ~ [<Class-names...>]
 {
   [[ 0 -lt $# ]] || set -- ${ctx_class_types:?}
   : "${@:?"$(sys_exc class-uc.lib:-define-all: "Class names expected")"}"
@@ -517,7 +555,7 @@ class_define_all () # ~ <Class-names...>
 
   for class
   do
-    class_compile_mro "$class" || return
+    class_cache_mro "$class" || return
   done
 
   for class
@@ -526,6 +564,7 @@ class_define_all () # ~ <Class-names...>
   done
 }
 
+# FIXME: would rather test assoc-array than look for function
 class_defined () # ~ <Name>
 {
   : "${1:?"$(sys_exc class-uc.lib:-defined "Class name expected")"}"
@@ -742,9 +781,11 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
 
   declare super resolved
 
-  for (( CLASS_TYPEC=${#CLASS_TYPERES[@]}, CLASS_TYPEC--, CLASS_IDX=0;
+  for ((
+    CLASS_TYPEC=${#CLASS_TYPERES[@]}, CLASS_TYPEC--, CLASS_IDX=0;
     CLASS_TYPEC >= 0;
-    CLASS_IDX++, CLASS_TYPEC-- ))
+    CLASS_IDX++, CLASS_TYPEC--
+  ))
   do
     CLASS_NAME=${CLASS_TYPERES[$CLASS_IDX]:?}
     [[ $CLASS_TYPEC -gt 0 ]] && {

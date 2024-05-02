@@ -5,9 +5,14 @@ Class (UC lib)
 :Created: 2020-09-16
 :Updated: 2024-01-18
 
+Beyond simple types, there are complex types that combine several datums in a
+single, logical type. Structures and classes are two forms of complex types.
+Although more fundamental, the current approach steps over ``struct``\ 's and
+provides a naive approach to write `classes` and define `class inheritance`.
+
 Class-like behavior for Bash uses global arrays and random, numerical Ids to
-store types and other attributes of new 'objects', and ``class_<Class-name>_``
-handler functions to define methods (or other calls) to be performed on
+store attribute values new 'objects', and ``class_<Class-name>_``
+handler functions to define `methods` (or other calls) to be performed on
 such objects.
 
 See uc-class for util. This lib itself may move to us-class or similar in
@@ -21,14 +26,15 @@ variables made available including `$self` and `$super` to perform sub-calls,
 as well as special status codes for return to trigger different call handler
 lookup behavior.
 
-Definitions required for new types are one bases list and one call handler
-function. It is expected that there will be a great many different types, the
-implementation does not even restrict to single type inheritance or even
-static inheritance. Giving almost component like possibilities (interface
-querying, adapters, etc.). So instead of relying on lib-uc.lib a more
-compact, terse way to provide new types is preferable. Also because a lot of
+Definitions currently required for new types are a. one bases list, and b. one
+call handler function. It is expected that there will be a great many different
+types, the implementation does not even restrict to single type inheritance or
+even static inheritance. Giving almost component like possibilities (interface
+querying, adapters, etc.). So instead of relying on lib-uc.lib a more compact,
+terse way to provide new types is preferable. Also because a lot of
 initialization is added to scripts this way, it is important to initialize
-strictly only what is needed and not everything that has been loaded.
+strictly only what is needed and not necessarily everything that has been
+loaded.
 
 Therefor the class 'load' hook is introduced instead of lib 'load' hook to
 initialize the global variables that the type relies upon. This is also a
@@ -36,16 +42,23 @@ convenient place to indicate lib dependencies and the base types as well.
 The filename pattern ``<typeid>.class.sh`` is introduced to hold one single
 type (and even any number of hidden or private types).
 
+Note that while the class 'load' hook is invoked by a parameterized lib-load,
+its env parameters will need to be adjusted back again to load regular libs
+from that same class 'load' hook.
+
 Background
 ----------
-In programming languages the concept of class refers to a certain abstraction
-of data types. Regular data types are meant to understand bits and bytes at a
-certain memory location, whereas class data types are just sets of functions
-and variable types that can be used to operate on data provided in a dynamic
-context called `object oriented programming`. Ofcourse definitions on the
-topic vary. However in principle this is based on single or multiple
-inheritance concepts and also overloading, for functions as well as variables
-tied to the 'object' type, and perhaps other more specialized concepts.
+In programming languages the concept of class refers to a certain specific
+abstractions of data types, the details of which each arrives at their own
+implementation.
+
+Regular data types are meant to understand bits and bytes at a certain memory
+location, whereas class data types are only sets of functions and variable
+types that can be used to operate on data provided in a dynamic context called
+`object oriented programming`. Ofcourse definitions on the topic vary. However
+in principle this is based on single or multiple inheritance concepts and also
+overloading, for functions as well as variables tied to the 'object' type, and
+perhaps other more specialized concepts.
 
 Each class extends an existing set of classes (methods and properties). And
 depending on the class' requirements, any number of different instances can
@@ -56,12 +69,10 @@ essentially similar routines but for many different contexts.
 
 Shell script classes
 ____________________
-Shells by their very nature hardly had any data types. There is just strings
-that make up commands and arguments, or user data read from terminal or other
-places, and there is numbers: for return status codes, kernel signals and
-such.
+Shells by their very nature hardly had any data type. There is just strings of
+maybe characters, and integers smaller than intmax_t.
 
-However modern shells can do some limited array-type variable handling. There
+Modern shells can do some limited array-type variable handling. There
 is no nesting. And of course shell command evaluation does not get any faster.
 But it is there. And it is a cleaner way to store large amounts of indexed
 data than using dynamic variable names.
@@ -227,5 +238,29 @@ class-switch <Var-name> [<Class-name>]
 class-typeset
   Helper for class-loop that dumps each class_<Type>_ declaration on
   inheritance chain.
+
+Classes
+-------
+class.Class
+  .class-attributes
+    List type-attribute pairs of current type, retrieved from compgen.
+
+  .class-refs
+    Create by-name declarations, for given attributes or all attributes of
+    class.
+
+  --fields
+    Fields are tracked per static class, but defined per concrete class so
+    while each NRO should probably use a unique set of names, it is not
+    impossible to have identical names on different classes ending up in the
+    same MRO.
+
+    Finding these names is trivial using compgen prefix expansion, so they are
+    currently not tracked otherwise. See class-attributes.
+
+    Array lookups are generally faster than any other sort of invocation,
+    however when left undefined (unset) then detecting their existance incurs
+    some overhead.
+
 
 ..
