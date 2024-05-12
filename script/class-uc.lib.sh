@@ -296,6 +296,7 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
 
 class_ParameterizedClass__load ()
 {
+  lib_require uc-class &&
   uc_class_declare ParameterizedClass Class &&
   #--params
   #  $ctx_pclass_params
