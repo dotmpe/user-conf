@@ -108,7 +108,7 @@ lib_uc_init () # ~ [<Names...>]
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
     [[ 0 -eq ${!lib_stat:--1} ]] ||
       $LOG error ":uc:lib-init" "Missing or failed to load" \
-        "E${!lib_stat:-unset}:$lib_name" ${!lib_stat} || return
+        "E${!lib_stat:-unset}:$lib_name" ${!lib_stat:-1} || return
     f_lib_init=${lib_varn}${lib_uc_kin:-_lib}__init
     v_lib_init=${lib_varn}${lib_uc_kin:-_lib}_init
     ! typeset -F $f_lib_init >/dev/null 2>&1 || {

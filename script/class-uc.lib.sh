@@ -150,6 +150,9 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
           done
         }
       ;;
+    .class-types )
+        class_loop class_names
+      ;;
     .class-typeset ) class_loop class_typeset ;;
     .cparams|.class-params ) echo "${Class__instance[$id]}" ;;
     .id ) echo "$id" ;;
