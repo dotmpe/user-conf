@@ -77,8 +77,7 @@ $name () # ~ [Line-Type] [Header] Msg [Ctx] [Exit]
     : "\${UC_QUIET:=0}"
     slog=$logger stdlog_to_syslog "\$@"
 
-    } $(test -z "${filters-}" ||
-      echo "2>&1 | $filters 1>&2 ")
+  } $(test -z "${filters-}" && echo "1>&2" || echo "| $filters 1>&2 ")
 
   test -z "\${r-}" || return \$r
   # XXX: test \${STDLOG_UC_EXITS:-1} -eq 0 -o -z "\${5-}" || exit \$5
@@ -264,14 +263,12 @@ debug()
 
 stdlog_to_syslog () # {slog,r} ~ [Line-Type] [Header] Msg [Ctx] [Exit]
 {
-  local lt
-  lt="$1" || return 64
-  test -n "$lt" || lt=notice
+  local lt lt="${1:-notice}"
 
   test -z "${4-}" && {
-    $slog "$lt" "${3-}" "" ${2-} || r=$?
+    $slog "$lt" "${3-}" "" "$2" || r=$?
   } || {
-    $slog "$lt" "$3 <$4>" "" ${2-} || r=$?
+    $slog "$lt" "$3 <$4>" "" "$2" || r=$?
   }
 }
 
@@ -313,7 +310,7 @@ stdlog_uc__syslog_colorize ()
     # Assign detail color for log-line based on severity-level
     local slvlc
     case "$slvl" in
-      0 ) slvlc="${b}${w}$BG_${r}" ;; # emerg
+      0 ) slvlc="${b}${w}${B}${r}" ;; # emerg
       1 ) slvlc="${b}${r}" ;; # alert
       2 ) slvlc="${b}${y}" ;; # crit
       3 ) slvlc="${r}" ;; # error

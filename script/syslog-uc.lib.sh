@@ -161,10 +161,10 @@ syslog_facility_num()
 uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=user [tags]]
 {
   [[ $# -ge 2 ]] || return 64
-  local lvl="$1" msg="$2"; shift 2
-  [[ "$lvl" ]] || lvl=notice
-  local fac="${1-}"; shift
-  [[ "$fac" ]] || fac=user
+  local lvl="${1:-notice}" msg="${2:?}"
+  shift 2
+  local fac="${1:-user}"
+  [[ $# -eq 0 ]] || shift
 
   # First determine if we are going to generate a serial or syslog event at all
   local opts= lvlnum
@@ -178,14 +178,16 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
     return 0
 
   # Set tags. Prepend default tags if first argument ':'-prefixed.
-  [[ $# -eq 0 ]] && {
-    set -- $UC_LOG_BASE || return
-  } || { fnmatch ":*" "$1" && {
-    local t1="$(echo "$1" | cut -c2-)"; shift
-    set -- $UC_LOG_BASE "$t1" "$@" || return; unset t1
-  }; }
+  [[ $# -eq 0 ]] || {
+    [[ -n "$1" ]] || shift
+  }
+  [[ $# -eq 0 ]] && set -- "${UC_LOG_BASE:?}" || {
+    fnmatch ":*" "$1" && {
+      set -- "${UC_LOG_BASE:?}" "${1:1}" "${@:2}"
+    }
+  }
 
-  # Chat on stdout as well if session is interactive (stderr is tty),
+  # Chat on stderr as well if session is interactive (stderr is tty),
   # or if UC-Quiet mode is turned off (UC_QUIET=0).
   # But only at or above UC-Log-Level[=6].
   [[ ${UC_LOG_LEVEL:-6} -ge $lvlnum && ( -t 2 || "0" = "${UC_QUIET-1}" ) ]] && opts=-s
@@ -201,13 +203,15 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   # Silence error if logger has been turned off delibarately
   [[ -s /etc/log ]] || opts="$opts --socket-errors=off"
 
-  local tags="$(printf '%s:' "${@:-$UC_LOG_BASE}")"
-  # XXX: trying to remove date from stdout
+  local tags="$(printf '%s:' "$@")"
+  # NOTE: redirect to stdout so filters work, and stderr debug during log
+  # handling stays safe.
+  # XXX: trying to remove date from stdout, for now using filter
   #opts=$opts\ --rfc5424=notime # change format entirely
   #opts=$opts\ --rfc3164 # Adds host
   [[ $msg =~ ^- ]] && msg="\\$msg"
-  : "$(echo "$tags" | cut -c1-$(( ${#tags} - 1 )))"
-  logger $opts -p "$fac.$lvl" -t "$_" "$msg"
+  : "${tags:0:$(( ${#tags} - 1 ))}"
+  logger $opts -p "$fac.$lvl" -t "$_" "$msg" 2>&1
 }
 
 #
