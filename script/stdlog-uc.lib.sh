@@ -169,7 +169,7 @@ stderr_log () # ~ <...:ll>
 {
   local level
   level=$(stdlog_level_num "${1:?}") || return
-  ! stdlog_quiet "$level" && return
+  stdlog_quiet "$level" && return
   #&& test $v -lt ${5:-${STDLOG_DEFAULT_LEVEL:?}} && return
 
   [[ $2 =~ ^: ]] && set -- "$1" "${UC_LOG_BASE:-}$2" "$3" "${4:-}"
