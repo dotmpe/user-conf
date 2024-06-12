@@ -87,8 +87,9 @@ filter_dir_paths ()
   local path len; while read -r path
   do
     len="$(( ${#path} - 1 ))"
+    stderr echo "${path:$len}" = /
     test "${path:$len}" = / || continue
-    echo "${path:0:$len}"
+    echo "${path:1:$len}"
   done
 }
 
