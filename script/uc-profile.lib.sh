@@ -32,10 +32,27 @@ uc_cmd ()
 
 # Use UC_DEBUG to get more logs about what uc-profile is doing, see also
 # US_DEBUG and DEBUG. XXX: SHDEBUG
-uc_debug ()
+uc_debug () # ~ [ <Cmd...> ] # Test for or execute command if env debug is on
 {
-  "${UC_DEBUG:-${DEBUG:-false}}"
+  [[ 0 -ne $# ]] && {
+    uc_debug || return ${_E_next:?}
+    "$@"
+    return
+  } ||
+    "${UC_DEBUG:-${DEBUG:-false}}"
 }
+
+# An exception helper, e.g. for inside ${var?...} expressions
+uc_exc () # ~ <Head>: <Label> # Format exception-id and message
+{
+  local \
+    uc_sys_exc_id=${1:-uc:exc:$0:${*// /:}} \
+    uc_sys_exc_msg=${2-Expected}
+  ! "${DEBUG:-false}" &&
+  echo "$uc_sys_exc_id${uc_sys_exc_msg:+: $uc_sys_exc_msg}" ||
+    "${uc_sys_on_exc:-uc_sys_source_trace}" "$uc_sys_exc_id" "$uc_sys_exc_msg" 3 "${@:3}"
+}
+# Derive: sys-exc
 
 # TODO: replace these with sh_env either from shell-uc.lib or shell.lib
 uc_fun () # ~ <Function-name>
@@ -47,17 +64,20 @@ uc_fun () # ~ <Function-name>
 }
 
 # Same as uc-source but also take snapshot of env vars name-list
-uc_import () # ~ [Source-Path]
+uc_profile_import () # ~ [Source-Path]
 {
-  uc_source "$@" || return
-  uc_profile__record_env__keys $(echo "$1" | tr '/' '-' | uc_mkid)
+  uc_source "${1:?"$(uc_exc uc:profile-import)"}" &&
+  if_ok "$(<<< "${1//\//-}" uc_profile_mkid)" &&
+  uc_profile__record_env__keys "${_:?}" ||
+    $uc_log error ":import" "Loading shell file" "E$?:$1" $? ||
+    return
 
   # TODO: record ENV-SRC snapshot as well.
   test -z "${USER_CONF_DEBUG-}" ||
     $uc_log warn ":import" "New env loaded, keys stored" "$1"
 }
 
-uc_mkid () # ~
+uc_profile_mkid () # ~
 {
   args_uc__argc :env-keys $# || return
   tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
@@ -103,8 +123,7 @@ uc_profile_init () # ~
 
   args_uc__argc :init $# eq 1 || return
 
-  set -- $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1"
-  set -- $(printf '%s:' "$@")
+  set -- $(printf '%s:' $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1")
   export UC_SH_ID="${1:0:-1}"
 
   # Comply with dynamic init of non-interactive shell, but be more cautious
@@ -173,7 +192,9 @@ uc_profile_start () # ~
 
   ctx="${ENV:-}${ENV:+::}$ctx"
 
-  $uc_log "notice" ":start" "Session ready" "$ctx"
+  typeset bootsec=$(( $(date +%s) - uc_profile_start ))
+  [[ $bootsec -le 2 ]] && : "" || : " after ${bootsec}s"
+  $uc_log "notice" ":start" "Session ready$_" "$ctx"
 }
 
 # Add parts to shell session
@@ -297,6 +318,7 @@ uc_profile__record_env__ls ()
 # return an error.
 uc_profile_boot () # TAB [types...]
 {
+  : "${uc_profile_start:=$(date +%s)}"
   test -n "${1-}" || set -- "${UC_TAB:?}" "${@:2}"
   test -s "${1-}" || {
     $uc_log "crit" ":boot" "Missing or empty profile table" "${1-}"
@@ -405,6 +427,31 @@ uc_source () # ~ [Source-Path]
   }
   return $rs
 }
+
+# system-source-trace: Helper to format callers list including custom head.
+sys_uc_source_trace () # ~ [<Head>] [<Msg>] [<Offset=2>] [ <var-names...> ]
+{
+  ! "${US_SRC_TRC:-true}" && {
+    echo "${1:-us:source-trace: E$? source trace (disabled):}${2+ ${2-}}"
+  } || {
+    echo "${1:-us:source-trace: E$? source trace:}${2+ ${2-}}" &&
+    local i
+    for (( i=${1-0}; 1; i++ ))
+    do caller $i || break
+    done | sed 's/^/  - /'
+  }
+  [[ 3 -ge $# ]] && return
+  echo "Variable context:"
+  local -n var &&
+  for var in "${@:4}"
+  do
+    if_ok "$(declare -p ${!var})" &&
+    fnmatch "declare -n *" "$_" && {
+      printf '- %s\n  %s\n' "$_" "${!var}: ${var@Q}"
+    } || echo "$_"
+  done | sed 's/^/  /'
+}
+# Derive sys
 
 uc_user_init ()
 {
@@ -529,5 +576,9 @@ env_keys () # ~
   compgen -A variable | sort | tail -n +2
 }
 
+if_ok ()
+{
+  return $?
+}
 
 # Id: User-Conf:uc-profile.lib

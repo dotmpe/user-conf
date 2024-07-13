@@ -1,7 +1,5 @@
 #!/bin/sh
-uname=$(uname | tr 'A-Z' 'a-z')
-
-case "$uname" in
+case "${OS_UNAME,,}" in
 
   darwin ) # BSD echo
       esc=`echo -e '\033'`
@@ -18,7 +16,7 @@ case "$uname" in
       esac
     ;;
 
-  * ) $LOG error "" "No ansi-escape -type for $uname" ; return 1 ;;
+  * ) $LOG error "" "No ansi-escape -type for $OS_UNAME" ; return 1 ;;
 esac
 
 normal=$esc'[0m'

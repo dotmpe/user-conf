@@ -87,6 +87,12 @@ std_uc_env_def ()
   : "${_E_not_found:=127}" # NSFC no-such-file-or-command
   # XXX: 128 is free?
 
+  : "${_E_sighup:=129}" # 1:
+  : "${_E_sigint:=130}" # 2: response to ctrl-c
+  : "${_E_sigquit:=131}" # 3:
+  : "${_E_sigill:=132}" # 4: illegal instruction?
+  : "${_E_sigtrap:=133}" # 5: trace/breakpoint trap
+
   # 128+(1--64) is mapped for signals (see trap -l), ie. `kill -1 $PID` produces
   # exit status 129, inserting Ctrl-C in a shell terminal produces exit 131,
   # etc. On debian linux last mapped number is 192: RTMAX (ie. 128+64).
@@ -94,7 +100,8 @@ std_uc_env_def ()
   : "${_E_GAE:=193}" # Generic Argument Error.
   : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
   # See rules
-  # E:continue 195: error, exception; but if in loop/batch keep going...
+  # E:continue 195: unfinished; in loop or batch sequence keep going until break
+  # or done.
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
   : "${_E_next:=196}"
   # E:stop     197:

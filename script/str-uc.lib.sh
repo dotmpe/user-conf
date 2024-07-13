@@ -1,5 +1,39 @@
 #!/usr/bin/env bash
 
+str_uc_lib__load ()
+{
+  : "${str_uc_fun:=str_indent str_globmatch str_suffix}"
+  : "${str_htd_fun:=}"
+}
+
+str_uc_lib__init ()
+{
+  test -z "${str_uc_lib_init-}" || return $_
+}
+
+
+# see also fnmatch and wordmatch
+str_globmatch () # ~ <String> <Glob-patterns...>
+{
+  [[ 2 -le $# ]] || return ${_E_GAE:-193}
+  declare str=${1:?"$(sys_exc str-globmatch:str@_1 "String expected")"}
+  shift
+  while [[ $# -gt 0 ]]
+  do
+    case "$str" in ( ${1:?} ) return ;; * ) ${any:-true} || return 1 ;; esac
+    shift
+  done
+  return 1
+}
+
+str_suffix () # (s) ~ <Suffix-str>
+{
+  local str prefix=${1:?"$(sys_exc str-suffix:str@_1 "Suffix string expected")"}
+  while read -r str
+  do echo "${str}${suffix}"
+  done
+}
+
 
 # Remove ANSI as best as possible in a single sed-regex
 ansi_clean ()
@@ -40,23 +74,15 @@ fnmatch () # ~ PATTERN STRING
 # Derive: str_globmatch
 
 # mkid STR '-' '\.\\\/:_'
-mkid () # ~ Str Extra-Chars Substitute-Char
+
+str_uc_mkid () # ~ <Var> [<Input>]
 {
-  #test -n "$1" || error "mkid argument expected" 1
-  local s="${2-}" c="${3-}"
-  # Use empty c if given explicitly, else default
-  [[ $# -gt 2 ]] || c='\.\\\/:_'
-  [[ "$s" ]] || s=-
-  [[ "${upper-}" ]] && {
-    [[ $upper -eq 1 ]] && {
-      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:lower:]' '[:upper:]')
-    } || {
-      id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" | tr '[:upper:]' '[:lower:]')
-    }
-  } || {
-    id=$(printf -- "%s" "$1" | tr -sc '[:alnum:]'"$c$s" "$s" )
-  }
+  local -n __str_uc_mkid_1=${1:?} &&
+  __str_uc_mkid_1=$(<<< "${__str_uc_mkid_1:-${2-}}" \
+    tr -sc 'A-Za-z0-9\/:_,.-' '-' )
+  # XXX: upper/lower
 }
+
 # Sync-Sh: BIN:str-htd.lib.sh
 
 # Normalize whitespace (replace newlines, tabs, subseq. spaces)
@@ -91,6 +117,8 @@ remove_dupes () # <line> ... ~
   awk '!a[$0]++'
 }
 
+# Output INPUT, concatenated as many times as needed with two the PADding
+# strings to reach LENgth.
 str_padd () # ~ LEN [PAD [INPUT [PAD]]]
 {
   local padding="${3-}" p1="${2-" "}" p2="${4-""}"
@@ -201,5 +229,32 @@ unique_words () # <words> ... ~
   awk 'BEGIN { RS = " "; ORS = " " } !a[$0]++'
 }
 
+# [2024-07-05] new style str id funs for uc use
+
+uc_id () # ~ <Value> <Extra> <Subst>
+{
+  <<< "${1:?}" uc_sid "${2-}" "${3-}"
+}
+
+uc_sid () # (s) ~ [<Extra>] [<Subst>]
+{
+  if_ok "$(</dev/stdin tr -sc 'A-Za-z0-9'"${1:-"\/:_,.-"}" "${2:-"-"}")" &&
+  "${upper:-false}" "$_" &&
+  echo "${_^^}" || {
+    "${lower:-false}" "$_" && echo "${_,,}" || echo "$_"
+  }
+}
+
+uc_mkid () # ~ <Value> <Extra> <Subst>
+{
+  id=$(uc_id "$@")
+}
+
+# mkvid: see str-vword vid <string>
+
+uc_wordid ()
+{
+  uc_id "$1" "${2-}" "_"
+}
 
 # Derive: U-S:src/sh/lib/str.lib.sh

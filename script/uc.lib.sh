@@ -262,7 +262,7 @@ uc_commit_report ()
   }
   $uctab.fetch ucstat "$tag" || return
 
-  uc_report || return
+  uc_profile_report || return
   local ctime utime
   utime="$(filemtime "$uc_cache")" || return
 
@@ -452,7 +452,7 @@ uc_prefix_var_tag_ ()
 }
 
 # Load last results
-uc_report ()
+uc_profile_report ()
 {
   test -n "${uc_cache-}" || uc_reset_report
   test -e "$uc_cache" || {

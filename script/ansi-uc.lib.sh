@@ -115,9 +115,7 @@ ansi_uc_lib__init ()
         }
       ;;
   esac
-  ! "${DEBUG:-false}" &&
-  ! "${DEV:-false}" &&
-  ! "${INIT:-false}" ||
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
   ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM=$TERM:colors=$ncolors"
 }
 
@@ -150,7 +148,7 @@ ansi_uc_env_def ()
 #shellcheck disable=SC2034 # I wont export local session vars
 ansi_uc_esc ()
 {
-  case "${uname:?}" in
+  case "${OS_UNAME:?}" in
 
     Darwin ) # BSD echo
       esc=$(echo -e '\033')
@@ -170,7 +168,7 @@ ansi_uc_esc ()
         esac
       ;;
 
-    * ) $LOG error "" "No ansi-escape -type for $uname" ; return 1 ;;
+    * ) $LOG error "" "No ansi-escape -type for $OS_UNAME" ; return 1 ;;
   esac
 }
 

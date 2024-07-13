@@ -3,7 +3,7 @@ uc_qname () # ~ <URI>
   false
 }
 
-uc_import () # ~ <Name> [<From>] [<As>]
+uc_qname_import () # ~ <Name> [<From>] [<As>]
 {
   # user_ns_group_rdf
   # user_ns_group_xml

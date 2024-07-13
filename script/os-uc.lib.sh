@@ -4,22 +4,10 @@
 
 os_uc_lib__load()
 {
-  true "${uname:="$(uname -s)"}"
-  true "${hostname:="$(hostname -s)"}"
-  true "${os:="$(uname -s)"}"
-
-  test -n "${gsed-}" || case "$uname" in
-      Linux ) gsed=sed ;; * ) gsed=gsed ;;
-  esac
-  test -n "${ggrep-}" || case "$uname" in
-      Linux ) ggrep=grep ;; * ) ggrep=ggrep ;;
-  esac
-  test -n "${gdate-}" || case "$uname" in
-      Linux ) gdate=date ;; * ) gdate=gdate ;;
-  esac
-  test -n "${gstat-}" || case "$uname" in
-      Linux ) gstat=stat ;; * ) gstat=gstat ;;
-  esac
+  : "${OS_HOST:="$(hostname -f)"}"
+  : "${OS_HOSTNAME:="$(hostname -s)"}"
+  : "${OS_NAME:="$(uname -o)"}"
+  : "${OS_UNAME:="$(uname -s)"}"
 }
 
 
@@ -43,14 +31,14 @@ filesize() # File
 {
   while test $# -gt 0
   do
-    case "$uname" in
+    case "${OS_UNAME:?}" in
       Darwin )
           stat -L -f '%z' "$1" || return 1
         ;;
       Linux | CYGWIN_NT-6.1 )
           stat -L -c '%s' "$1" || return 1
         ;;
-      * ) $LOG error ":os-uc.lib" "filesize: $uname?" "" 1 ;;
+      * ) $LOG error ":os-uc.lib" "filesize: $OS_UNAME?" "" 1 ;;
     esac; shift
   done
 }
@@ -61,7 +49,7 @@ filemtime() # File
   local flags=- ; file_stat_flags
   while test $# -gt 0
   do
-    case "$uname" in
+    case "${OS_UNAME:?}" in
       Darwin )
           trueish "${file_names-}" && pat='%N %m' || pat='%m'
           stat -f "$pat" $flags "$1" || return 1
@@ -70,7 +58,7 @@ filemtime() # File
           trueish "${file_names-}" && pat='%N %Y' || pat='%Y'
           stat -c "$pat" $flags "$1" || return 1
         ;;
-      * ) $LOG error ":os-uc.lib" "filemtime: $uname?" "" 1 ;;
+      * ) $LOG error ":os-uc.lib" "filemtime: $OS_UNAME?" "" 1 ;;
     esac; shift
   done
 }

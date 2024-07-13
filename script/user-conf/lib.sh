@@ -320,7 +320,7 @@ uc___paths ()
 # Report on last result
 uc__report ()
 {
-  uc_conf_req && uc_report || return
+  uc_conf_req && uc_profile_report || return
 
   test $human_out -eq 1 && {
     local verbosity=6
@@ -352,7 +352,7 @@ uc__stat ()
 uc__status ()
 {
   local conf ret=0
-  uc_conf_req && uc_report || return
+  uc_conf_req && uc_profile_report || return
 
   note "Reading cached status"
   test $verbosity -ge 5 && {
@@ -396,7 +396,7 @@ uc__test ()
 {
   test -n "${uc_cache-}" || uc_reset_report
   test -e "$uc_cache" && newer_than "$uc_cache" $uc_cache_ttl || return
-  uc_report
+  uc_profile_report
   test $failed -eq 0 -a $passed -gt 0
 }
 

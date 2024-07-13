@@ -7,9 +7,8 @@ sys_uc_lib__load ()
   lib_require os || return
 
   : "${LOG:?"No LOG env"}"
-  if_ok "${uname:=$(uname -s)}" &&
-  if_ok "${HOST:=$(hostname -s)}" || return
-  : "${hostname:=${HOST,,}}"
+  if_ok "${OS_UNAME:=$(uname -s)}" &&
+  if_ok "${OS_HOSTNAME:=$(hostname -s)}" || return
 }
 
 uc_fun "${func_exists:-func_exists}" || {
@@ -61,7 +60,7 @@ add_env_path() # <Prepend-Value> <Append-Value>
     }
   }
   # XXX: to export or not to launchctl
-  #test "$uname" != "Darwin" || {
+  #test "$OS_UNAME" != "Darwin" || {
   #  launchctl setenv "$1" "$(eval echo "\$$1")" ||
   #    echo "Darwin setenv '$1' failed ($?)" >&2
   #}

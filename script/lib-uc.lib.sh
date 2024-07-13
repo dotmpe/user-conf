@@ -12,6 +12,8 @@ lib_uc_lib__load ()
   true "${lib_loaded:=}"
   true "${lib_uc_ext:=.lib.sh}"
   true "${lib_uc_kin:=_lib}" # key infix: <libid><kin>_{loaded,init,_load}
+
+  lib_uc_fun=$(echo lib_uc_{exists,has_init,hook,ids,init,init_all,initialized,initialized_all,islib,load,loaded,loaded_all,loop,path,require} uc_script_load)
 }
 
 lib_uc_lib__init ()
@@ -32,6 +34,7 @@ lib_uc_lib__init ()
 
 
 #lib_uc__exports="core base extra"
+#lib_uc_core__fun=
 #
 #lib_uc__typeset ()
 #{
@@ -344,7 +347,8 @@ lib_uc_require () # ~ <Names...>
   done
 }
 
-# XXX: Track <nameid>_script_loaded and set ENV_SRC
+# Same as lib files, but track <nameid>_script_load and ENV_SRC.
+# And no hooks. See user-script:load
 uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 {
   local scr_name scr_path scr_varn scr_st lk=${lk-}:uc:script-load

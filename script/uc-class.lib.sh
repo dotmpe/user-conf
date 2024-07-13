@@ -46,7 +46,7 @@ uc_class_declare () # ~ <Class> <Types...> [ -- <declare-hooks..> ]
   sys_cmd_seq --type "$@"
 }
 
-uc_import () # ~ [<module>.]<type> | <type> <module>
+uc_class_import () # ~ [<module>.]<type> | <type> <module>
 {
   false
 }

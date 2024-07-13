@@ -41,6 +41,8 @@ case "${uc_init_act:-}" in
       #$LOG notice : "Loading" "UC_LIB_PATH=${UC_LIB_PATH:-}"
       true "${UC_LIB_PATH:="$UCONF/script"}"
 
+      stderr echo "${sh_assert_func:-uc_fun} ${lib_load:=lib_uc_load}"
+
       ${sh_assert_func:-uc_fun} ${lib_load:=lib_uc_load} || {
 
         test -e $UC_LIB_PATH/lib-uc.lib.sh && {
