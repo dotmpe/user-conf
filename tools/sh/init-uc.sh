@@ -41,9 +41,7 @@ case "${uc_init_act:-}" in
       #$LOG notice : "Loading" "UC_LIB_PATH=${UC_LIB_PATH:-}"
       true "${UC_LIB_PATH:="$UCONF/script"}"
 
-      stderr echo "${sh_assert_func:-uc_fun} ${lib_load:=lib_uc_load}"
-
-      ${sh_assert_func:-uc_fun} ${lib_load:=lib_uc_load} || {
+      uc_fun lib_uc_load || {
 
         test -e $UC_LIB_PATH/lib-uc.lib.sh && {
           . $UC_LIB_PATH/lib-uc.lib.sh || {
@@ -55,10 +53,8 @@ case "${uc_init_act:-}" in
         }
       }
 
-      ${lib_load:?} $default_sh_lib || {
-        $LOG error ":u-c:init" "Error loading script libs" "E$?:$default_sh_lib" "$?"
-	return $?
-      }
+      ${lib_load:?} $default_sh_lib ||
+        $LOG error ":u-c:init" "Error loading script libs" "E$?:$default_sh_lib" $? || return
     ;;
 
   '' ) ;;

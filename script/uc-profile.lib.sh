@@ -62,6 +62,7 @@ uc_fun () # ~ <Function-name>
   # Fasted for Bash
   declare -F "${1:?}" >/dev/null 2>&1
 }
+# sh_fun () { declare -F "${1:?}" > /dev/null; }
 
 # Same as uc-source but also take snapshot of env vars name-list
 uc_profile_import () # ~ [Source-Path]
