@@ -115,6 +115,8 @@ lib_uc_init () # ~ [<Names...>]
     f_lib_init=${lib_varn}${lib_uc_kin:-_lib}__init
     v_lib_init=${lib_varn}${lib_uc_kin:-_lib}_init
     ! typeset -F $f_lib_init >/dev/null 2>&1 || {
+      ! uc_debug ||
+        $LOG debug : "Running lib 'init' hook" "$lib_name"
       $f_lib_init
     }
     typeset -g ${v_lib_init}=$?
@@ -234,7 +236,8 @@ lib_uc_load () # <Names...>
     # Execute load hook if found, and (re)set status
     f_lib_load=${lib_varn}${lib_uc_kin:-_lib}__load
     ! typeset -F "$f_lib_load" >/dev/null 2>&1 || {
-      ! uc_debug || $LOG debug : "Running lib 'load' hook" "$lib_name"
+      ! uc_debug ||
+        $LOG debug : "Running lib 'load' hook" "$lib_name"
       "$f_lib_load"
     }
     typeset -g ${lib_stat}=$?
