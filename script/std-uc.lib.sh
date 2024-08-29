@@ -194,20 +194,33 @@ std_verbose () # ~ <Message ...> # Print message
   stderr echo "$@" || return 3
 }
 
+std_v1c () # ~ <Cmd ...> # Wrapper that echoes both command and status
+{
+  : param "<Cmd ...>"
+  : note "Strictly for debugging of script branches (or DEBUG, DIAG mode etc)"
+  stderr echo "Running command: $*"
+  "$@"
+  stderr_stat $? "$@"
+}
+
 std_v_exit () # ~ <Cmd ...> # Wrapper to command that exits verbosely
 {
+  : param "<Cmd ...>"
   "$@"
   stderr_exit $?
 }
 
 std_v_stat ()
 {
+  : param "<Cmd ...>"
   "$@"
   stderr_stat $? "$@"
 }
 
-std_vs () # ~ <Message ...> # Print message, but pass previous status code.
+std_vs () # ~ <Message ...> # Print message, but pass previous status code
 {
+  : about "Print message, but pass previous status code"
+  : param "<Message ...>"
   local stat=$?
   stderr echo "$@" || return 3
   return $stat
@@ -270,7 +283,7 @@ stderr_sleep_int ()
     echo " ok, continue run" >&2
 }
 
-stderr_stat ()
+stderr_stat () # ~ <Status> <Label-str ..>
 {
   local last=$_ stat=${1:-$?} ref=${*:2}
   : "${ref:-$last}"
