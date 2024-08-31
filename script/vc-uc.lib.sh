@@ -10,6 +10,8 @@ vc_uc_lib__init()
   #  bzr: \
   #  svn: \
   #  fields:vc-fields-{}
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":vc-uc:lib-init" "Initialized vc-uc.lib"
 }
 
 

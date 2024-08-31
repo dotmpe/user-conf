@@ -30,6 +30,9 @@ lib_uc_lib__init ()
     done
     export PATH
   }
+
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":lib-uc:lib-init" "Initialized lib-uc.lib"
 }
 
 

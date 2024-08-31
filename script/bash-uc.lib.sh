@@ -24,6 +24,8 @@ bash_uc_lib__init ()
     shopt -s extdebug &&
     trap 'bash_uc_errexit' ERR || return
   }
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${INIT_LOG:?} info ":bash-uc:lib-load" "Initialized bash-uc.lib"
 }
 
 bash_env_exists () # ~ NAMES...

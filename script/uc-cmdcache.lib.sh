@@ -10,7 +10,10 @@ uc_cmdcache_lib__init ()
 {
   test -z "${uc_cmdcache_lib_init-}" || return $_
   uc_fields_define uc commands-{{start-,}time,ttl,status,stdout} &&
-  uc_fields_group_define uc commands
+  uc_fields_group_define uc commands &&
+  true || return
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":uc-cmdcache:lib-init" "Initialized uc-cmdcache.lib"
 }
 
 

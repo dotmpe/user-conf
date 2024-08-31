@@ -19,7 +19,9 @@ rules_lib__load ()
 
 rules_lib__init()
 {
-  lib_require env-main
+  lib_require env-main || return
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":rules:lib-init" "Initialized rules.lib"
 }
 
 

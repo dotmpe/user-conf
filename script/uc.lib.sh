@@ -24,7 +24,11 @@ uc_lib__init ()
   create uctab StatTab $STTTAB_UC || return
 
   # Create table if not exists
-  $uctab.tab-exists || $uctab.tab-init
+  $uctab.tab-exists || $uctab.tab-init || return
+
+  #! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! sys_debug -debug -dev -init ||
+  ${LOG:?} notice ":uc-lib:lib-init" "Initialized uc-lib.lib"
 }
 
 # Generate current bases sequence, default to <base>.

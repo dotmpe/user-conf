@@ -26,6 +26,9 @@ vc_ucnew_lib__init ()
   #  bzr: \
   #  svn: \
   #  fields:vc-fields-{}
+  #! sys_debug -debug -dev -init ||
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":vc-ucnew:lib-init" "Initialized vc-ucnew.lib"
 }
 
 

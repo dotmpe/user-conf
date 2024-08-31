@@ -13,7 +13,11 @@ uc_sys_lib__init ()
   }
 
   envd_dtype uc/sys.lib lib &&
-  envd_fun source_all var_{assert,set}
+  envd_fun source_all var_{assert,set} &&
+  true || return
+
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":uc-sys:lib-init" "Initialized uc-sys.lib"
 }
 
 source_all () # ~ <Sources...>

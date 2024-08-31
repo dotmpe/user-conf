@@ -6,7 +6,10 @@ uc_os_lib__load()
 uc_os_lib__init ()
 {
   envd_dtype uc/os.lib lib &&
-  envd_dfun filter_args
+  envd_dfun filter_args &&
+  true || return
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":uc-os:lib-init" "Initialized uc-os.lib"
 }
 
 filter_args () # ~ <Test-cmd> <Args...> # Print args for which test pass

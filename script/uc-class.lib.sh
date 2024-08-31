@@ -9,6 +9,8 @@ uc_class_lib__init ()
   # TODO: see ns/package management
   declare -gA uc_ns_{alias,exec,group,ref,path,urn,usr}
   declare -ga uc_path
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":uc-class:lib-init" "Initialized uc-class.lib"
 }
 
 # Wrapper for direct static call invocations during type load/declaration,

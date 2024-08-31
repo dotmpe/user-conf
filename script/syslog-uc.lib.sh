@@ -52,6 +52,8 @@ syslog_uc_lib__init () # ~
 {
   lib_require $( [[ "1" != "${COLORIZE:-1}" ]] || echo ansi-uc ) stdlog-uc ||
     return
+  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ${LOG:?} notice ":syslog-uc:lib-init" "Initialized syslog-uc.lib"
 }
 
 # Init generates a new stdlog frontend for uc_syslog_1, the syslog 'logger'
