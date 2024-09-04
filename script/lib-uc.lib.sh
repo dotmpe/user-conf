@@ -326,9 +326,10 @@ lib_uc_require () # ~ <Names...>
 {
   [[ $# -gt 0 ]] || return ${_E_MA:-194}
 
-  [[ -z "${lib_load-}" ]] || {
+  [[ ${lib_load-} ]] && {
     # Already in load call; list unloaded libs and set as pending
-    set -- $(filter_args "not lib_uc_loaded" "$@")
+    if_ok "$(filter_args "not lib_uc_loaded" "$@")" &&
+    set -- $_ || return
     # Add pending libs and return
     LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
     [[ -z "$LIB_REQ" ]] && return || return ${_E_retry:-198}
@@ -361,7 +362,7 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
   for scr_name in "${@:?}"
   do
     scr_path=$(command -v "$scr_name.${scr_ext:-sh}") ||
-      $LOG error "$lk" "Not found" "$scr_name" 127 || return
+      $LOG error "$lk" "Not found" "E127:$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_load
     [[ 0 -eq ${!scr_st:--1} ]] && {
