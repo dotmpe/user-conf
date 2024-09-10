@@ -132,6 +132,10 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
     .class-type ) class_loop class_type ;;
     .class-calls ) class_loop class_calls ;;
     .class-debug )
+        local fun ln src &&
+        if_ok "$(declare -F class_${SELF_NAME:?}_)" &&
+        read -r fun ln src <<< "$_" &&
+        echo "Function $fun, source $ln $src" &&
         class_call_info &&
         $self.class-tree &&
         $self.class-attributes &&
