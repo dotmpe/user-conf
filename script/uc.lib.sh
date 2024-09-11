@@ -156,7 +156,7 @@ uc_conf_load () # ~ <Subcmd-Name>
   }
 
   std_info "Loading config for '$tag'..."
-  $uctab.fetch ucstat $tag || {
+  $uctab.fetch-var ucstat $tag || {
     error "No entry" 1
   }
 
@@ -264,7 +264,7 @@ uc_commit_report ()
     cat "$uc_results" >"$uc_cache"
     rm "$uc_results"
   }
-  $uctab.fetch ucstat "$tag" || return
+  $uctab.fetch-var ucstat "$tag" || return
 
   uc_profile_report || return
   local ctime utime

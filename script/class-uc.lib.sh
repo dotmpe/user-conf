@@ -141,6 +141,10 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         $self.class-attributes &&
         $self.class-calls
       ;;
+    .class-dump )
+        # Dump instance data
+        arr_kdump Class__instance $id
+      ;;
     .class-info ) class_info ;;
     .class-methods ) class_loop class_methods ;;
     .class-names ) class_names ;;
@@ -404,6 +408,17 @@ class_ParameterizedClass_mparams () # (id) ~ <Class-params-var> <Message> ...
 }
 
 
+class_akdump () # (id) ~ <Class> <Id-key> <fields...>
+{
+  local arr class &&
+  str_vword class "${1:?}" &&
+  for arr in "${@:3}"
+  do
+    arr_kdump ${class:?}__$arr ${id:?} || return
+  done
+  #sed 's/^\('"${1:?}"'__[^\[]*\)\["'"${id:?}"'"\]=/\1['"${2:-\$OBJ_ID}"']/g'
+}
+
 class_assert_ref ()
 {
   assert rematch "$1" '^[A-Za-z0-9\/\.+-]+$' "${2-Illegal class ref}"
@@ -520,9 +535,9 @@ class.$class ()
 
     # XXX: Allow static call based on select prefix characters?
     str_globmatch \"\${1:0:1}\" \"[:-]\" && {
-      declare call=\$1
+      declare call=\$1 class=class_${class//[^A-Za-z0-9_]/_}_
       shift
-      class_${class//[^A-Za-z0-9_]/_}_ \"\$@\"
+      \$class \"\$@\"
       return
 
     } || {
