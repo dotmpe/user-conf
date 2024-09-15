@@ -77,12 +77,23 @@ fnmatch () # ~ PATTERN STRING
 
 # mkid STR '-' '\.\\\/:_'
 
+str_uc_id () # ~
+{
+  : "${1:?}"
+  #: "${_//[^A-Za-z0-9\/:_,.-]/-}"
+  # XXX: this doesnt collapse
+  : "${_//[^A-Za-z0-9:_,.%+-]/-}"
+  "${upper:-false}" "$_" &&
+  echo -n "${_^^}" || {
+    "${lower:-false}" "$_" &&
+    echo -n "${_,,}" || echo -n "$_"
+  }
+}
+
 str_uc_mkid () # ~ <Var> [<Input>]
 {
   local -n __str_uc_mkid_1=${1:?} &&
-  __str_uc_mkid_1=$(<<< "${__str_uc_mkid_1:-${2-}}" \
-    tr -sc 'A-Za-z0-9\/:_,.-' '-' )
-  # XXX: upper/lower
+  __str_uc_mkid_1=$(str_uc_id "${__str_uc_mkid_1:-${2-}}")
 }
 
 # Sync-Sh: BIN:str-htd.lib.sh

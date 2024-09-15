@@ -178,7 +178,7 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         $LOG debug "$lk" "Switching class" "$#:$*"
         class_switch "$@"
       ;;
-    .set-attr )
+    .set-attr ) # ~ ~ <Name> <Value> [<Type>]
         [[ $# -ge 2 && $# -le 3 ]] || return ${_E_MA:?}
         : "${1:?}"
         : "${1//:/__}"
@@ -243,6 +243,17 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
         done
       ;;
 
+  ( --find-instance ) # ~ ~ <Constructor-args>
+        local -i oid
+        local cparams="${1:?}"
+        for oid in "${!Class__instance[@]}"
+        do
+          [[ ${Class__instance[$oid]} = "$cparams" ]] || continue
+          echo "$oid"
+          return
+        done
+      ;;
+
     --hooks ) # ~ ~ <Hook-names...>
         : about 'Register global class declaration hooks to current static class'
         declare -n hooks=Class__hook &&
@@ -260,8 +271,9 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
 
     --ref ) # ~ ~ <Object-id>
         : about 'Static helper to get reference to object'
-        local id=${1:?} type
-        local -n cparam="Class__instance[\"$id\"]"
+        local -i id=${1:?}
+        local -n cparam="Class__instance[$id]"
+        local type
         type=${cparam// *}
         : "class.${type:?} $type $id "
         echo "$_"
@@ -408,6 +420,7 @@ class_ParameterizedClass_mparams () # (id) ~ <Class-params-var> <Message> ...
 }
 
 
+# XXX: id-key was to be used for rewriting
 class_akdump () # (id) ~ <Class> <Id-key> <fields...>
 {
   local arr class &&
@@ -515,15 +528,14 @@ class_define () # ~ <Class-name> # Generate function to wrap class calls
   : "
 class.$class ()
 {
-  local lk=\${lk-}:class.$class
+  declare lk=\${lk-}:class.$class {,super}class CLASS_NAME
+  class=class_${class//[^A-Za-z0-9_]/_}_
 
   [[ $class = \${1:?\"\$(sys_exc class-uc.lib/@$class: \"Expected\")\"} ]] && {
     # Start new call resolution
-
     : \${2:?\"\$(sys_exc class-uc.lib/@$class: \"Id Expected\")\"}
-    declare SELF_NAME=$class OBJ_ID=\$2 call=\${3:-.toString} self id super \
-      CLASS_{NAME,IDX,TYPERES,TYPEC}
-    id=\$OBJ_ID
+    declare SELF_NAME=$class OBJ_ID=\$2 call=\${3:-.toString}
+    declare self id=\$OBJ_ID
     self=\"class.$class $class \$id \"
 
     [[ 2 -lt \$# ]] && shift 3 || shift 2
@@ -535,15 +547,18 @@ class.$class ()
 
     # XXX: Allow static call based on select prefix characters?
     str_globmatch \"\${1:0:1}\" \"[:-]\" && {
-      declare call=\$1 class=class_${class//[^A-Za-z0-9_]/_}_
+      declare call=\$1
       shift
       \$class \"\$@\"
       return
 
     } || {
 
+      : \"\${id:?\"\$(sys_exc class.$class:continue:id)\"}\"
+      : \"\${OBJ_ID:?\"\$(sys_exc class.$class:continue:OBJ-ID)\"}\"
+
       # Do invocation at super type, for existing class env
-      declare super_type=\${1:?} call=\${2:?} super &&
+      declare super_type=\${1:?} call=\${2:?} &&
       shift 2 &&
       class_loop_continue class_run_call \"\$@\"
     }
@@ -628,6 +643,7 @@ class_find () # ~ <Class-names...>
 
 class_info () # (name,id) ~ # Print Id info for current class context
 {
+  #: "${OBJ_ID:?"$(sys_exc class-info:OBJ-ID)"}"
   echo "class.${CLASS_NAME:?} ${SELF_NAME:?} ${OBJ_ID:?}"
 }
 
@@ -804,8 +820,7 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
   : "${Class__type["${SELF_NAME:?}"]//:/ }"
   CLASS_TYPERES=( $_ )
 
-  declare super resolved
-
+  declare CLASS_{IDX,NAME,TYPEC} super resolved
   for ((
     CLASS_TYPEC=${#CLASS_TYPERES[@]}, CLASS_TYPEC--, CLASS_IDX=0;
     CLASS_TYPEC >= 0;
@@ -825,7 +840,6 @@ class_loop () # (SELF-{NAME,ID}) ~ <Item-handler> <Args...>
       return $r
     }
   done
-
   "${resolved:-false}" || return ${_E_not_found:?}
 }
 
@@ -944,8 +958,10 @@ class_run_call () # (id,self,super,call) ~ <Args...>
 class_static_mro () # ~ <Class-name>
 {
   [[ 1 -eq $# ]] || return ${_E_GAE:?}
-  declare type
-  set -- ${Class__static_type[${1:?}]//:/ }
+  declare type lk=class-static-mro
+  : "${1:?"$(sys_exc $lk:1:class-name)"}"
+  : "${Class__static_type[$_]:?"$(sys_exc $lk:static-type "Expected '$_'")"}"
+  set -- ${_//:/ }
   shift
   while [[ 0 -lt $# ]]
   do
