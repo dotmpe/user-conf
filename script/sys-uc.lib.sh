@@ -12,12 +12,16 @@ sys_uc_lib__load ()
 }
 
 uc_fun "${func_exists:-func_exists}" || {
-  eval "$_ () { uc_fun \"\$@\"; }"
+  eval "$_ () {
+    : source \"sys-uc.lib.sh:\"
+    uc_fun \"\$@\"
+  }"
 }
 
 # Error unless non-empty and true-ish
 trueish () # Str
 {
+  : source "sys-uc.lib.sh"
   test $# -eq 1 -a -n "${1-}" || return
   case "$1" in
     [Oo]n|[Tt]rue|[Yyj]|[Yy]es|1)
@@ -27,48 +31,31 @@ trueish () # Str
   esac
 }
 
-uc_fun append_path ||
-append_path ()
+uc_fun add_path ||
+add_path () # ~ <Path> ...
 {
-  add_env_path "" "${1:?}"
+  : source "sys-uc.lib.sh"
+  os_path_add "" "${1:?}"
+}
+
+uc_fun append_path ||
+append_path () # ~ <Path> ...
+{
+  : source "sys-uc.lib.sh"
+  os_path_add "" "${1:?}"
 }
 
 uc_fun prepend_path ||
-prepend_path ()
+prepend_path () # ~ <Path> ...
 {
-  add_env_path "${1:?}"
-}
-
-add_env_path() # <Prepend-Value> <Append-Value>
-{
-  test $# -ge 1 -a -n "$1" -o -n "${2:-}" || return 64
-  test -e "$1" -o -e "${2-}" || {
-    echo "add_env_path: No such file or directory '$*'" >&2
-    return 1
-  }
-  test -n "${1:-}" && {
-    case "$PATH" in
-      $1:* | *:$1 | *:$1:* ) ;;
-      * ) eval PATH=$1:$PATH ;;
-    esac
-  } || {
-    test -n "${2:?}" && {
-      case "$PATH" in
-        $2:* | *:$2 | *:$2:* ) ;;
-        * ) eval PATH=$PATH:$2 ;;
-      esac
-    }
-  }
-  # XXX: to export or not to launchctl
-  #test "$OS_UNAME" != "Darwin" || {
-  #  launchctl setenv "$1" "$(eval echo "\$$1")" ||
-  #    echo "Darwin setenv '$1' failed ($?)" >&2
-  #}
+  : source "sys-uc.lib.sh"
+  os_path_add "${1:?}"
 }
 
 #uc_fun append_path_lookup ||
 append_path_lookup ()
 {
+  : source "sys-uc.lib.sh"
   add_env_path_lookup "${1:?}" "" "${2:?}"
 }
 
@@ -147,6 +134,7 @@ req_profile() # Name Vars...
 
 sys_debug ()
 {
+  : source "sys-uc.lib.sh"
   test $# -gt 0 || set -- debug
   while test $# -gt 0
   do
@@ -170,6 +158,7 @@ sys_debug ()
 
 sys_debug_mode ()
 {
+  : source "sys-uc.lib.sh"
   local lk=${lk-}:us:sys.lib:debug-mode
   case "$1" in
     ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
@@ -187,12 +176,14 @@ sys_debug_mode ()
 # XXX: hook to test for envd/uc and defer, returning cur bool value for setting
 sys_debug_ () # ~ [<...>]
 {
+  : source "sys-uc.lib.sh"
   sys_debug "$@" && echo true || echo false
 }
 
 # A helper for inside ${var?...} expressions
 sys_exc () # ~ <Head>: <Label> # Format exception-id and message
 {
+  : source "sys-uc.lib.sh"
   ! "${DEBUG:-$(sys_debug_ exceptions)}" && echo "$1: ${2-Expected}" ||
     # TODO: use localenv for params
     "${sys_on_exc:-sys_exc_trc}" "$1" "${2-Expected}" 3 "${@:3}"
@@ -201,6 +192,7 @@ sys_exc () # ~ <Head>: <Label> # Format exception-id and message
 # system-exception-trace: Helper to format callers list including custom head.
 sys_exc_trc () # ~ [<Head>] [<Msg>] [<Offset=2>] ...
 {
+  : source "sys-uc.lib.sh"
   echo "${1:-us:sys: E$? source trace:}${2+ }${2}"
   std_findent "  - " sys_callers "${3-2}"
 }
@@ -209,6 +201,7 @@ sys_exc_trc () # ~ [<Head>] [<Msg>] [<Offset=2>] ...
 # non-zero statusses, but one specifically. See also sys-astat.
 sys_not ()
 {
+  : source "sys-uc.lib.sh"
   "$@"
   [[ $? -eq ${_E_fail:-1} ]]
 }

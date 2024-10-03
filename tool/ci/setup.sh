@@ -40,8 +40,8 @@ test -e "$U_S" || {
 { cat <<EOM
 . ~/.profile
 
-. \${U_S:?}/tools/sh/parts/fnmatch.sh
-. \${U_S:?}/tools/sh/parts/sh-mode.sh
+. \${U_S:?}/tool/sh/part/fnmatch.sh
+. \${U_S:?}/tool/sh/part/sh-mode.sh
 #sh_mode build
 sh_mode strict log-init dev
 
