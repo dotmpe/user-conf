@@ -90,7 +90,7 @@ filter_dir_paths ()
 #
 # If this routine is given no data is hangs indefinitely. It does not have
 # indicators for data availble at stdin.
-foreach ()
+foreach_item ()
 {
   {
     test -n "$*" && {
@@ -110,7 +110,8 @@ foreach ()
 }
 
 
-# Read `foreach` lines and act, default is echo ie. same result as `foreach`
+# Read `foreach-item` lines and act, default is echo ie. same result as
+# `foreach-item`
 # but with p(refix) and s(uffix) wrapped around each item produced. The
 # unwrapped loop-var is _S.
 foreach_do ()
@@ -118,7 +119,7 @@ foreach_do ()
   test -n "${p-}" || local p= # Prefix string
   test -n "${s-}" || local s= # Suffix string
   test -n "${act-}" || local act="echo"
-  foreach "$@" | while read -r _S ; do S="$p$_S$s" && $act "$S" ; done
+  foreach_item "$@" | while read -r _S ; do S="$p$_S$s" && $act "$S" ; done
 }
 
 
