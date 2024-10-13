@@ -30,6 +30,11 @@ uc_cmd ()
   test -x "$(command -v "$1")"
 }
 
+uc_diag ()
+{
+  : "${UC_TAB:?}"
+}
+
 # Use UC_DEBUG to get more logs about what uc-profile is doing, see also
 # US_DEBUG and DEBUG. XXX: SHDEBUG
 uc_debug () # ~ [ <Cmd...> ] # Test for or execute command if env debug is on
@@ -225,7 +230,7 @@ uc_profile_load () # ~ NAME [TAG]
 
   local uc_profile_load="$1" uc_profile_tag="${2:-}"
 
-  local uc_profile_load_path=$( for profile_d in $(echo $UC_PROFILE_D | tr ':' ' ');
+  local uc_profile_load_path=$( for profile_d in $(echo ${UC_PROFILE_D:?} | tr ':' ' ');
       do
           test -e "$profile_d/$uc_profile_partname.sh" || continue
           printf '%s' "$profile_d/$uc_profile_partname.sh"
@@ -331,7 +336,7 @@ uc_profile_boot () # TAB [types...]
 
   test $# -gt 0 && UC_PROFILE_TP="$*" || set -- ${UC_PROFILE_TP:?}
 
-  local c="${UC_RT_DIR}/user-$(id -u)-profile.tab"
+  local c="${UC_RT_DIR:?}/user-$(id -u)-profile.tab"
   test ! -e "$c" -o "$c" -ot "$tab" && {
     grep -v -e '^ *#' -e '^ *$' "$tab" >"$c"
   }
@@ -393,6 +398,24 @@ uc_profile__record_env__diff_keys () # ~ FROM TO
   args_uc__argc_n :env-diff-keys $# eq 2 || return
 
   comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
+}
+
+# [4124] TODO: start thinking about building cache files, and backup envs
+# when parts arent working; ie. track+report on env status
+uc_profile_reboot ()
+{
+  # Load everything to boot user uc profile
+  # (or do whatever required to get a functional session)
+
+  # Current user-conf repo location
+  true "${UCONF:="$HOME/.conf"}"
+
+  . "${U_C}/script/uc-profile.lib.sh" &&
+
+  uc_profile_boot_parts &&
+
+  # Include log-routines and -entrypoint
+  . "${U_C}/tool/sh/log.sh"
 }
 
 uc_signal_exit ()
@@ -533,7 +556,8 @@ uc_ctx ()
   sys_aarrv UC_CTX "$@"
 }
 
-# 2024 feb: looking at improved envd setup
+# 2024 feb: looking at improved envd setup XXX: but cant use arrays outside
+# of functions
 uc_env_init ()
 {
   # Bootstrap envd-type env if not already initialized
@@ -551,6 +575,7 @@ uc_env_init ()
 
 append_path () # ~ <DIR> # PATH helper (does not export!)
 {
+  : source "u-c:script/uc-profile.lib.sh"
   case ":$PATH:" in
     ( *:"${1:?}":* ) ;;
     ( * ) PATH="${PATH:+$PATH:}${1:?}"
@@ -560,6 +585,7 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
 # Store variables (name and current value) at associative array
 sys_aarrv () # ~ <Array> <Vars...>
 {
+  : source "u-c:script/uc-profile.lib.sh"
   # XXX: for some reason cannot set var to by-name-ref as well
   declare -n arr=${1:?}
   declare var
@@ -573,13 +599,21 @@ sys_aarrv () # ~ <Array> <Vars...>
 
 env_keys () # ~
 {
+  : source "u-c:script/uc-profile.lib.sh"
   # Ignore first line (for '_' value)
   compgen -A variable | sort | tail -n +2
 }
 
 if_ok ()
 {
+  : source "u-c:script/uc-profile.lib.sh"
   return $?
+}
+
+sh_fun ()
+{
+  : source "u-c:script/uc-profile.lib.sh"
+  declare -F "${1:?}" > /dev/null
 }
 
 # Id: User-Conf:uc-profile.lib
