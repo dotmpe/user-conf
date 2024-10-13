@@ -5,7 +5,7 @@ true "${U_S:?Requires User-Script installation}"
 true "${UC_LIB_PATH:?Expected UC shell lib}"
 
 #test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
-true "${LOG:=${U_C:?}/tools/sh/log.sh}"
+true "${LOG:=${U_C:?}/tool/sh/log.sh}"
 export LOG
 INIT_LOG=$LOG
 

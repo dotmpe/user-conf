@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Lookup recipe name on */tools/redo/recipe/
+## Lookup recipe name on */tool/redo/recipe/
 
 # XXX: static inline config
 : "${XREDO_PATH:=${C_INC:?}/tool/redo/recipe:${US_BIN:?}/tool/redo/recipe:${U_C:?}/tool/redo/recipe:${U_S:?}/tool/redo/recipe:${US_INC:?}/tool/redo/recipe:${REDO_BASE:?}/tool/redo/recipe}"

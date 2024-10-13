@@ -71,7 +71,7 @@ source-path=/srv/conf-local
 source-path=/srv/home-local/.l/c
 source-path=/srv/home-local/bin
 source-path=/srv/home-local/bin/.l/c
-source-path=/srv/home-local/bin/.l/c/Tools/bash/parts
+source-path=/srv/home-local/bin/.l/c/Tool/bash/part
 source-path=/srv/project-local/user-conf-dev
 
 #

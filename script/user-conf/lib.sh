@@ -4,7 +4,7 @@
 test -n "${UC_LIB_PATH:-}" || return 123
 true "${UC_LIB_PATH:?Expected UC shell lib}"
 
-. ${UC_LIB_PATH}/../tools/u-c/init.sh
+. ${UC_LIB_PATH}/../tool/u-c/init.sh
 
 # Finally, run init for Uc lib
 uc_lib__init

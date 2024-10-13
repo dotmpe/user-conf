@@ -12,7 +12,7 @@ uconf-local:init ()
   do
     test -e "$bd/default.do" || {
       test ! -h "$bd/default.do" || rm -v "$bd/default.do"
-      ln -vs "${UCONF:?}/tools/redo/local.do" "$bd/default.do"
+      ln -vs "${UCONF:?}/tool/redo/local.do" "$bd/default.do"
     }
 
     test -e "$bd/.properties" || {

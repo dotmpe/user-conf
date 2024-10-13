@@ -66,7 +66,7 @@ lib_require sys os build-uc &&
 
 ucbuild_do4124 uc-build.user.default.bash.do "$@"
 
-exit 123
+exit $?
 
 case "${2:?}" in
 ( all )

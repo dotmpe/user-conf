@@ -11,7 +11,7 @@ branches:
 script:
   - test -x "$(which git)" && git status
   - case "$REINIT" in 1|true) git clean -dfx ./ ;; esac
-  - ./tools/ci/test.sh
+  - ./tool/ci/test.sh
   - 'test -x "$(which git)" && { git status && git diff build; }'
 
 env:

@@ -19,7 +19,7 @@
   pd-meta:
     init: "./install-dependencies.sh project dev"
     check: ""
-    test: "./tools/ci/test.sh"
+    test: "./tool/ci/test.sh"
     build: ""
     tasks:
       document: todo.txt
@@ -32,10 +32,10 @@
   scripts:
     ci: # Builds the CI tests
       - git-versioning check
-      - ./tools/git/hooks/pre-commit-spaceindent-check.sh '*'
-      # FIXME setup or remove tab-check ./tools/git/hooks/pre-commit-tabindent-check.sh
+      - ./tool/git/hooks/pre-commit-spaceindent-check.sh '*'
+      # FIXME setup or remove tab-check ./tool/git/hooks/pre-commit-tabindent-check.sh
       - eval $( hostname -s | tr 'a-z' 'A-Z' )_SKIP=1
-      - ./tools/ci/test.sh
+      - ./tool/ci/test.sh
 
     init:
       - htd package update && htd package remotes-reset

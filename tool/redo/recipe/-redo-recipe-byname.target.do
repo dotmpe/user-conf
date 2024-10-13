@@ -1,4 +1,4 @@
-## Lookup recipe name on */tools/redo/recipe/
+## Lookup recipe name on */tool/redo/recipe/
 
 # This is redo shell compatible (so no bash bang above) but that means the
 # sourced recipe also has to be.

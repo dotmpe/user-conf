@@ -6,7 +6,7 @@ scriptname=uctab-spec
 @test "1. init" {
 
   . ./script/user-conf/lib.sh
-  . ./tools/u-c/init.sh
+  . ./tool/u-c/init.sh
 
   STTTAB_UC=$PWD/test/var/configs.tab
   uc_lib_init &&

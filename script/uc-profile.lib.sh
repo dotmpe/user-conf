@@ -10,14 +10,14 @@ uc_profile_load_lib ()
   }
 }
 
-# Include first existing tools/sh/profile.sh
+# Include first existing tool/sh/profile.sh
 uc_profile_boot_parts ()
 {
   for bd in ${UC_BOOT_PATH:-${UCONF:?} ${U_C:?}}
   do
-    test -s "$bd/tools/sh/profile.sh" || continue
-    #shellcheck source=tools/sh/profile.sh
-    . "$bd/tools/sh/profile.sh"
+    test -s "$bd/tool/sh/profile.sh" || continue
+    #shellcheck source=tool/sh/profile.sh
+    . "$bd/tool/sh/profile.sh"
     break
   done
   unset bd

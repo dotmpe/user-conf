@@ -66,5 +66,5 @@ case "${uc_init_act:-}" in
 esac
 
 
-# Sync: U-S:tools/sh/init-wrapper.sh
-# Id: Conf.mpe/0.0.0-dev tools/sh/init-uc.sh
+# Sync: U-S:tool/sh/init-wrapper.sh
+# Id: Conf.mpe/0.0.0-dev tool/sh/init-uc.sh

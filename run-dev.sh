@@ -23,7 +23,7 @@ docker run \
   -e UC_LOG_LEVEL=7 \
   -e USER=treebox \
   -e TERM=xterm-256color \
-  -e LOG=$PWD/tools/sh/log.sh \
+  -e LOG=$PWD/tool/sh/log.sh \
   -w $PPWD \
   $image "$@" </dev/tty
 

@@ -13,9 +13,9 @@ do
 done
 
 # Start standardized redo for build.lib
-: "${REDO_DEFAULT_DO:=${UCONF?}/tools/redo/local.do}"
+: "${REDO_DEFAULT_DO:=${UCONF?}/tool/redo/local.do}"
 [[ -e $REDO_DEFAULT_DO ]] ||
-  : "${REDO_DEFAULT_DO:=${U_C:?}/tools/redo/local.do}"
+  : "${REDO_DEFAULT_DO:=${U_C:?}/tool/redo/local.do}"
 
 . "${REDO_DEFAULT_DO:?}"
 

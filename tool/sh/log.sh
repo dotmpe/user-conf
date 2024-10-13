@@ -17,7 +17,7 @@ test -d "$U_C" || {
 }
 
 # The path to this executable
-true "${UC_SELF:="$U_C/tools/sh/log.sh"}"
+true "${UC_SELF:="$U_C/tool/sh/log.sh"}"
 
 
 ## Entrypoints if called as script.
@@ -95,7 +95,7 @@ uc_log_init () # ~
 
   # Make Uc-profile source all its parts
   test "${UC_PROFILE_LOADED-}" = "0" || {
-    #. "${U_C:?}/tools/sh/log-init.sh"
+    #. "${U_C:?}/tool/sh/log-init.sh"
     . "${U_C}/script/uc-profile.lib.sh" &&
     uc_profile_boot_parts || return
   }
