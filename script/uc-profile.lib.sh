@@ -410,12 +410,7 @@ uc_profile_reboot ()
   # Current user-conf repo location
   true "${UCONF:="$HOME/.conf"}"
 
-  . "${U_C}/script/uc-profile.lib.sh" &&
-
-  uc_profile_boot_parts &&
-
-  # Include log-routines and -entrypoint
-  . "${U_C}/tool/sh/log.sh"
+  uc_profile_boot_parts
 }
 
 uc_signal_exit ()
