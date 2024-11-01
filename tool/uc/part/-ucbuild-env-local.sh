@@ -35,7 +35,7 @@ ENV_BASE=${ENV_BASE-}${ENV_BASE+ }local
 
 # Continue env chain or finally include main env, for which there is no tag
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
-for __ in ${EWD:?}/{,.}{,_}$_.sh
+for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -s $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" && unset __ ||
@@ -43,3 +43,12 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 
 [[ ! ${ENV_PEND+set} ]] ||
   $LOG alert ":env-local" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
+
+# Boilerplate end:
+
+# Set ENV_{NAME,ID} now as well, so other local doesnt need to
+: "${ENV_BASE//[-]}"
+: "${_// /-}"
+: "${ENV_NAME:=${PACK_NAME:-${APP:?}}.${_}}"
+
+#: "${ENV_WID:=${ENV_NAME//[^A-Za-z0-9_]/_}}"

@@ -24,7 +24,7 @@ set -euo pipefail &&
 
 # Continue env chain or finally include main env, for which there is no tag
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
-for __ in ${EWD:?}/{,.}{,_}$_.sh
+for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -s $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" && unset __ ||
@@ -36,4 +36,18 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 # Boilerplate end:
 
 # The env-build also inserts a default Env-Init that env-boot would pick up
-: "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${ENV_ID:?}_init}"
+: "${ENV_BASE//[^A-Za-z0-9_]/_}"
+: "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${_:?}_init}"
+
+#: "${CWD:=${REDO_STARTDIR:?}}"
+: "${BUILD_TOOL:=redo}"
+: "${BUILD_ID:=${REDO_RUNID:?}}"
+#: "${BUILD_STARTDIR:=$CWD:?}"
+: "${BUILD_BASE:=${REDO_BASE:?}}"
+#: "${BUILD_PWD:="${REDO_PWD:-${CWD:${#BUILD_BASE}}}"}"
+#test -z "$BUILD_PWD" || BUILD_PWD=${BUILD_PWD:1}
+#BUILD_SCRIPT=${BUILD_PWD}${BUILD_PWD:+/}default.do
+#test -z "$BUILD_PWD" && BUILD_PATH=$CWD || BUILD_PATH=$CWD:$BUILD_BASE
+#BUILD_PATH=$BUILD_PATH:${UCONF:?}:${U_C:?}:${U_S:?}
+: "${BUILD_TARGETS:=${METADIR:?}/stat/index/build-targets.local.list}"
+#

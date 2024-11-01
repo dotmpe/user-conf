@@ -24,7 +24,7 @@ ENV_BASE=${ENV_BASE-}${ENV_BASE+ }boot
 
 # Continue env chain, at either 'local' or something else
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
-for __ in ${EWD:?}/{,.}{,_}$_.sh
+for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -s $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" && unset __ ||
@@ -42,7 +42,9 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 # XXX: should rewrite this to use some limited seeding of a boot script, build
 # cache etc.
 #[[ ! ${ENV_BOOT-} ]] ||
-[[ ! ${ENV_INIT-} ]] || {
+[[ ! ${ENV_INIT+set} ]] && {
+  $LOG warn :ucbuild:env-boot "Boot env group is included but no init handler was specified"
+} || {
 
   "${ENV_INIT:?}" || {
     test 127 -eq $? && {

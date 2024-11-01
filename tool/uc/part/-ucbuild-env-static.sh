@@ -24,7 +24,7 @@ ENV_BASE=${ENV_BASE-}${ENV_BASE+ }static
 
 # Continue env chain or finally include main env, for which there is no tag
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
-for __ in ${EWD:?}/{,.}{,_}$_.sh
+for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -s $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" && unset __ ||
@@ -37,16 +37,18 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 
 [[ ${ENV_STATIC+set} ]] || {
   : "${ENV_STATIC_INC:=static}"
-  for lib in ${EWD:?}/{_,}${_}.sh
+  for lib in ${EWD:?}/{,.}{_,}${_}.sh
   do
     test -e "$lib" || continue
     : "${lib:$(( 1 + ${#EWD} ))}"
     #: "${_%.sh}"
     ENV_STATIC=${_:?}
-  done
+  done && unset lib
 }
 
-! [[ ${ENV_STATIC+set} ]] || {
+[[ ! ${ENV_STATIC+set} ]] && {
+  $LOG warn :ucbuild:env-static "Static env group is included but no static include was specified"
+} || {
 
   . "${EWD:?}/${ENV_STATIC:?}" || $LOG error :ucbuild:env-static "" E$? $?
 }

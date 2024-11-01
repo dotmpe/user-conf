@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
-# XXX: symlinked to ~/default.do
+set -eETuo pipefail
 
 [[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = default.do ]] ||
   $LOG alert "" "Illegal env" "" 124
