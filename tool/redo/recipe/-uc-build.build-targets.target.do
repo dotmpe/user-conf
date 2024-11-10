@@ -25,7 +25,7 @@ declare -x BUILD_TOOL
 # during development. XXX: working on build-rule conversion, add some
 # dynamic env based mapping after first trying builtin case/esac
 
-target_item="$(grep "^.* ${REDO_TARGET:?}\.[^:]*: " "${BUILD_TARGETS:?}")" &&
+target_item="$(grep "^[0-9 \.+-]\+ ${REDO_TARGET:?}\.[^:]*: " "${BUILD_TARGETS:?}")" &&
 
 case "$target_item" in
 
@@ -34,7 +34,7 @@ case "$target_item" in
 
 ( *" ${REDO_TARGET}.alias: "* )
     targets=${target_item#*" ${REDO_TARGET}.alias: "}
-    $LOG info ":$REDO_TARGET" "Building alias target..." "$targets"
+    $LOG info ":$REDO_TARGET" "Building aliased target(s)..." "$targets"
     "${BUILD_TOOL?}"-ifchange $targets
   ;;
 
@@ -44,6 +44,11 @@ case "$target_item" in
 
 ( *" ${REDO_TARGET}.fun: "* )
     : "${target_item#*" ${REDO_TARGET}.fun: "}" &&
+    "${_}" "$@"
+  ;;
+
+( *" ${REDO_TARGET}.func: "* )
+    : "${target_item#*" ${REDO_TARGET}.func: "}" &&
     "${_}" "$@"
   ;;
 
@@ -63,7 +68,10 @@ case "$target_item" in
   ;;
 
 
-( * ) echo "? ${REDO_TARGET}: No such uc-build.target (in ${BUILD_TARGETS:?})" >&2
+( * ) {
+  echo "? ${REDO_TARGET}: No such uc-build.target type (in ${BUILD_TARGETS:?}):"
+  echo "$target_item"
+} >&2
     false
 esac
 # uc-build.target
