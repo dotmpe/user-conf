@@ -30,20 +30,30 @@ ucbuild_core_sldef=(
   ".env-local.sh" "${U_C:?}/tool/uc/part/-ucbuild-env-local.sh"
   ".env-pack.sh" "${U_C:?}/tool/uc/part/-ucbuild-env-pack.sh"
 
-  "tool/redo/recipe/&uc-build.build-targets.target.do" "${U_C:?}/tool/redo/recipe/-uc-build.target.do"
+  "default${BUILD_TARGET_TYPE:-.spec}.do" "${U_C:?}/tool/redo/recipe/-uc-build.build-targets.spec.do"
+
+  "tool/redo/recipe/&uc-build.build-targets.target.do" "${U_C:?}/tool/redo/recipe/-uc-build.build-targets.target.do"
 )
 
 for ((i=0; i<${#ucbuild_core_sldef[*]}; i+=2))
 do
+  [[ -e "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
+    [[ -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] && stderr rm -v "${EWD:?}/${ucbuild_core_sldef[i]}"
+  }
   [[ -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] ||
     stderr ln -vs "${ucbuild_core_sldef[i+1]}" "${EWD:?}/${ucbuild_core_sldef[i]}"
 done
 
-if_ok "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
-for tag in $_
-do [[ -h "${EWD:?}/${tag:?}.do" ]] ||
-    stderr ln -vs "tool/redo/recipe/&uc-build.build-targets.target.do" \
-    "${EWD:?}/$tag.do"
-done && unset tag
-
+[[ ! -s ${BUILD_TARGETS:?} ]] || {
+  if_ok "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
+  for tag in $_
+  do
+    [[ -e "${EWD:?}/${tag:?}.do" ]] || {
+      [[ -h "${EWD:?}/${tag:?}.do" ]] && stderr rm -v "${EWD:?}/${tag:?}.do"
+    }
+    [[ -h "${EWD:?}/${tag:?}.do" ]] ||
+      stderr ln -vs "tool/redo/recipe/&uc-build.build-targets.target.do" \
+      "${EWD:?}/$tag.do"
+  done && unset tag
+}
 #

@@ -37,6 +37,8 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 
 # The env-build also inserts a default Env-Init that env-boot would pick up
 : "${ENV_BASE//[^A-Za-z0-9_]/_}"
+
+: "${PACK_ID:=${APP_ID:?env-build: package ID default; expected APP env}}"
 : "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${_:?}_init}"
 
 #: "${CWD:=${REDO_STARTDIR:?}}"
@@ -49,5 +51,6 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 #BUILD_SCRIPT=${BUILD_PWD}${BUILD_PWD:+/}default.do
 #test -z "$BUILD_PWD" && BUILD_PATH=$CWD || BUILD_PATH=$CWD:$BUILD_BASE
 #BUILD_PATH=$BUILD_PATH:${UCONF:?}:${U_C:?}:${U_S:?}
-: "${BUILD_TARGETS:=${METADIR:?}/stat/index/build-targets.local.list}"
+: "${METADIR:?env-build: expected METADIR env}"
+: "${BUILD_TARGETS:=${_}/stat/index/build-targets.local.list}"
 #
