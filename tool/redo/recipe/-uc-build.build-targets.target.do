@@ -25,7 +25,10 @@ declare -x BUILD_TOOL
 # during development. XXX: working on build-rule conversion, add some
 # dynamic env based mapping after first trying builtin case/esac
 
-target_item="$(grep "^[0-9 \.+-]\+ ${REDO_TARGET:?}\.[^:]*: " "${BUILD_TARGETS:?}")" &&
+target_item="$(grep -m1 "^[0-9 \.+-]* ${REDO_TARGET:?}\.[^:]*: " "${BUILD_TARGETS:?}")" || {
+  $LOG alert :ucbuild:build-target "No matching name" "${REDO_TARGET:?}"
+  exit 3
+}
 
 case "$target_item" in
 
