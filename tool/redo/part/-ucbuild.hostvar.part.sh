@@ -1,4 +1,4 @@
-ucbuild:hostvar:define ()
+ucbuild.hostvar:define ()
 {
   uc.build.declare-target hostvar.PATH macro &&
   uc.build.declare-target hostvar.PPATH macro &&
@@ -17,4 +17,22 @@ ucbuild:hostvar:define ()
 
   uc_node_handler[${key}]="ucbuild:target &PPATH.lookup.var"
 }
+
+ucbuild.path:define ()
+{
+  false
+}
+ucbuild.ppath:define ()
+{
+  false
+}
+ucbuild.src-local:define ()
+{
+  false
+}
+ucbuild.userdirs:define ()
+{
+  false
+}
+
 #
