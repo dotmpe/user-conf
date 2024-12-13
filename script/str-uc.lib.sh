@@ -9,7 +9,8 @@ str_uc_lib__load ()
 str_uc_lib__init ()
 {
   test -z "${str_uc_lib_init-}" || return $_
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! "${INIT:-false}" ||
+  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
   ${LOG:?} notice ":str-uc:lib-init" "Initialized str-uc.lib"
 }
 

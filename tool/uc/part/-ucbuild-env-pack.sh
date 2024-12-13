@@ -25,6 +25,9 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 [[ ! ${ENV_PEND+set} ]] ||
   $LOG alert ":env-pack" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
 
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :env-pack "Package env loading..."
+
 # Boilerplate end:
 
 [[ ${PACK_NAME+set} && ${PACK_VER+set} ]] || {

@@ -116,7 +116,8 @@ ansi_uc_lib__init ()
       ;;
   esac
 
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! "${INIT:-false}" ||
+  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
   ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM=$TERM:colors=$ncolors"
 }
 

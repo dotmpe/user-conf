@@ -33,6 +33,9 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 [[ ! ${ENV_PEND+set} ]] ||
   $LOG alert ":env-static" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
 
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :env-static "Loading additional static source..."
+
 # Boilerplate end:
 
 [[ ${ENV_STATIC+set} ]] || {

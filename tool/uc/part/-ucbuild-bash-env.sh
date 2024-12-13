@@ -13,6 +13,9 @@
 # Stop subshells from restarting this script. We'll export any bits when needed.
 unset BASH_ENV 2>/dev/null || true
 
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :bash-env "Bash env loading..."
+
 # Continue with next env script (at root of project, ie. regardless where we
 # started)
 # XXX: could also take basedir of current source, but that could interfere with

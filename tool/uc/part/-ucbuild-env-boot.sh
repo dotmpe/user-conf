@@ -6,6 +6,9 @@
 # invoked at the end, but only after sourcing all pending parts.
 
 # Boilerplate (derived from env-local)
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG debug :env-boot "Bootable env starting..."
+
 case " $ENV_BASE " in ( *" boot "* )
   $LOG alert :env-boot "Loop detected" \
     "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
@@ -14,7 +17,7 @@ case " $ENV_BASE " in ( *" boot "* )
 : "${EWD:=${REDO_BASE:-${CWD:-${PWD?}}}}" # Copy: env-working-dir
 
 [[ ${ENV_PEND+set} ]] && {
-  [[ ${ENV_PEND%% *} = boot ]] || exit ${_E_envif:-121}
+  [[ ${ENV_PEND%% *} = boot ]] || exit ${_E_ifenv:-121}
   [[ ${#ENV_PEND} = 4 ]] && unset ENV_PEND || ENV_PEND=${ENV_PEND:5}
 } || {
   ENV_PEND=${ENV_PEND_DEFAULT:-local}
@@ -32,6 +35,9 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 
 [[ ! ${ENV_PEND+set} ]] ||
   $LOG alert ":env-boot" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
+
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :env-boot "Bootable env loading..."
 
 # Boilerplate end:
 
@@ -54,3 +60,4 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
       $LOG error "" "Unexpected env boot status" "E$_:ENV_INIT=$ENV_INIT" $_
   }
 }
+#  $LOG debug :env-boot "Bootable env done"

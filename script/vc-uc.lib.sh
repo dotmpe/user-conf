@@ -371,7 +371,7 @@ vc_status ()
     }
 
     short="${short%$sub}"
-    echo "$short\[$GREEN\] $(vc_flags_git "$realcwd" "[git:%s%s%s%s%s%s%s%s $rev]")\[$NORMAL\]$sub"
+    echo "$short \[$GREEN\]$(vc_flags_git "$realcwd" "[git:%s%s%s%s%s%s%s%s $rev]")\[$NORMAL\]$sub"
 
   elif [ -n "$bzr" ]; then
     #if [ "$bzr" = "." ];then bzr="./"; fi

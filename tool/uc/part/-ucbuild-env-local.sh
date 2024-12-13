@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## ucbuild:env-local Env script for annex-p boot routine
+## ucbuild:env-local Env script for user-script shell boot routine
 
 # 'env-local' is the simplest ENV_{PEND+BASE} handler, including just the local
 # .env.sh, or whatever is pending. Its a template of boilerplate that can be
@@ -13,6 +13,9 @@
 #us-env -r -V EWD
 
 # Boilerplate that uses this script should copy (and update from) below
+
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG debug :env-local "Local env starting..."
 
 case " $ENV_BASE " in ( *" local "* )
   $LOG alert :env-local "Loop detected" \
@@ -44,6 +47,9 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 [[ ! ${ENV_PEND+set} ]] ||
   $LOG alert ":env-local" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
 
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :env-local "Local env loading..."
+
 # Boilerplate end:
 
 # Set ENV_{NAME,ID} now as well, so other local doesnt need to
@@ -52,3 +58,6 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 : "${ENV_NAME:=${PACK_NAME:-${APP:?env-local: No env-name (dir: $EWD, bases: $_, pending: ${ENV_PEND-unset})}}.${_}}"
 
 #: "${ENV_WID:=${ENV_NAME//[^A-Za-z0-9_]/_}}"
+
+#! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+#  $LOG debug :env-local "Local env done"
