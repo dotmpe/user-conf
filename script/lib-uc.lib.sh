@@ -2,6 +2,8 @@
 
 ### User-Conf lib-load impl.
 
+# XXX: See also uc-profile:source-lib
+
 
 ## Core-ext
 
@@ -354,8 +356,11 @@ lib_uc_require () # ~ <Names...>
   done
 }
 
-# Same as lib files, but track <nameid>_script_load and ENV_SRC.
-# And no hooks. See user-script:load
+# Same idea as for lib files (uc-lib-load), but track <nameid>_script_load and
+# ENV_SRC. But also provide log-key [lk] for nested env, while iter variables
+# here are scr-{name,path,varn,st}
+# No hooks.
+# XXX: See also uc-profile:import
 uc_script_load () # (scr_ext=sh} ~ <Src-name...>
 {
   local scr_name scr_path scr_varn scr_st lk=${lk-}:uc:script-load
