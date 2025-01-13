@@ -7,6 +7,27 @@ set -eETuo pipefail
   echo  "Illegal env" && exit 124
 }
 
+# Keep this recipe UTD automatically
+[[ -h @build+init.do ]] || {
+  ! "${DEV:-false}" && {
+    ! "${DEBUG:-false}" || {
+      stderr diff -bqr @build+init.do \
+      "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do ||
+        $LOG alert : "Local recipe is OOD" "E122:doenv/req" 122 || exit $?
+    }
+  } || {
+
+    stderr diff -bqr @build+init.do \
+      "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do || {
+
+      stderr cp -v "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do @build+init.do && {
+        $LOG warn : "Local recipe was OOD" "E123:noenv/pend" 123 || exit $?
+      } ||
+        $LOG alert : "Local recipe update failed" "E121:ifenv/bug" 121 || exit $?
+    }
+  }
+}
+
 #us-env -r uc-type &&
 
 #ucbuild_getnode target @build+init &&
@@ -32,8 +53,22 @@ ucbuild_core_sldef=(
   ".env-local.sh" "${U_C:?}/tool/uc/part/-ucbuild-env-local.sh"
   ".env-pack.sh" "${U_C:?}/tool/uc/part/-ucbuild-env-pack.sh"
 
+
   "@build.@/date/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.date-fmt.bash.do"
+
+  "@build.@/filestat,os/default.do" "../../tool/redo/recipe/&default.filestat.os.do"
+
+  "@build.@/filestat,os/index.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
+  "index.filestat.userdir.os.do" "tool/redo/recipe/&default.filestat.os.do"
+
+  "@build.@/filestat,os/default.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
+  "default.filestat.userdir.os.do" "tool/redo/recipe/&default.filestat.os.do"
+
   "@build.@/make/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.make-basedir.bash.do"
+
+  "@build.@/user/default.user-screenshots.do" "../../tool/redo/recipe/&default.user-screenshots.do"
+
+  "@build.@/bittorrent/default.do" "../../tool/redo/recipe/&default.transmission-bt.do"
 
   "default.class.target.do" "tool/redo/recipe/&default.class.target.bash.do"
 
@@ -41,6 +76,9 @@ ucbuild_core_sldef=(
 
   "tool/redo/recipe/&default.class.target.bash.do" "${U_C:?}/tool/redo/recipe/default.class.target.bash.do"
   "tool/redo/recipe/&uc-build.build-targets.target.do" "${U_C:?}/tool/redo/recipe/-uc-build.build-targets.target.do"
+  "tool/redo/recipe/&default.filestat.os.do" "${UCONF:?}/tool/redo/recipe/-os-filestat.bash.do"
+  "tool/redo/recipe/&default.transmission-bt.do" "${UCONF:?}/tool/redo/recipe/-bt-transmission.bash.do"
+  "tool/redo/recipe/&default.user-screenshots.do" "${UCONF:?}/tool/redo/recipe/-user-screenshots.bash.do"
 )
 
 for ((i=0; i<${#ucbuild_core_sldef[*]}; i+=2))

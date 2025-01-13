@@ -300,7 +300,7 @@ class_Class_ () # (call,id,self,super) ~ <Instance-Id> .<Message-name> <Args...>
 
     * ) return ${_E_next:?"$(sys_exc class-uc.lib:@class-: "Expected")"}
 
-  esac && return ${_E_done:?"$(sys_exc class-uc.lib:@class-: "Expected")"}
+  esac && return ${_E_done:?"$(sys_exc class-uc.lib:@class-: "Expected _E_*")"}
 }
 
 

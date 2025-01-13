@@ -56,8 +56,10 @@ std_uc_lib__init ()
     eval "$std_interactive" && STD_INTERACTIVE=1 || STD_INTERACTIVE=0
   }
 
-  std_uc_env_def
-  ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*" $?
+  std_uc_env_def || return
+
+  ! sys_debug -dev -debug -init ||
+  ${INIT_LOG:?} "debug" "" "Initialized std-uc.lib" "$*"
 }
 
 

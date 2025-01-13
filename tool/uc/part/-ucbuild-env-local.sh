@@ -53,11 +53,14 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
 # Boilerplate end:
 
 # Set ENV_{NAME,ID} now as well, so other local doesnt need to
+
+#: "${ENV_WID:=${ENV_NAME//[^A-Za-z0-9_]/_}}"
+
+ENV_NID=${ENV_ID:+${ENV_ID}:}local
+
 : "${ENV_BASE//[-]}"
 : "${_// /-}"
 : "${ENV_NAME:=${PACK_NAME:-${APP:?env-local: No env-name (dir: $EWD, bases: $_, pending: ${ENV_PEND-unset})}}.${_}}"
-
-#: "${ENV_WID:=${ENV_NAME//[^A-Za-z0-9_]/_}}"
 
 #! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
 #  $LOG debug :env-local "Local env done"
