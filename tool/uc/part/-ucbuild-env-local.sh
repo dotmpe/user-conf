@@ -17,7 +17,7 @@
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
   $LOG debug :env-local "Local env starting..."
 
-case " $ENV_BASE " in ( *" local "* )
+case " ${ENV_BASE-} " in ( *" local "* )
   $LOG alert :env-local "Loop detected" \
     "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
 ;; esac

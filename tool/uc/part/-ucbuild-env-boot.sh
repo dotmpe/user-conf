@@ -9,7 +9,7 @@
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
   $LOG debug :env-boot "Bootable env starting..."
 
-case " $ENV_BASE " in ( *" boot "* )
+case " ${ENV_BASE-} " in ( *" boot "* )
   $LOG alert :env-boot "Loop detected" \
     "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
 ;; esac

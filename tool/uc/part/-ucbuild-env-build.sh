@@ -7,7 +7,7 @@
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
   $LOG info :env-build "Build env loading..."
 
-case " $ENV_BASE " in ( *" build "* )
+case " ${ENV_BASE-} " in ( *" build "* )
   $LOG alert :env-build "Loop detected" \
     "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
 ;; esac

@@ -9,7 +9,7 @@
 
 # Boilerplate (copy, see env-local)
 
-case " $ENV_BASE " in ( *" static "* )
+case " ${ENV_BASE-} " in ( *" static "* )
   $LOG alert :env-static "Loop detected" "pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
 ;; esac
 

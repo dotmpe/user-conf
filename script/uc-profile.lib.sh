@@ -271,6 +271,7 @@ uc_profile_load () # ~ NAME [TAG]
 # End shell session
 uc_profile_cleanup ()
 {
+  shopt -s nullglob
   set -- "$SD_SHELL_DIR/$UC_SH_ID"*.sh
   test $# -eq 0 || rm "$@"
   exit ${rs-}

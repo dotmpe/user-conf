@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-case " $ENV_BASE " in ( *" pack "* )
+case " ${ENV_BASE-} " in ( *" pack "* )
   $LOG alert :env-pack "Loop detected" \
     "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
 ;; esac
