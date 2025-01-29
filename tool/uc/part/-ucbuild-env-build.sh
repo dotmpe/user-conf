@@ -5,36 +5,38 @@
 # Boilerplate (derived from env-local)
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info :env-build "Build env loading..."
+  $LOG info ":ucbuild[$$]:env-build" "Build env loading..."
 
 case " ${ENV_BASE-} " in ( *" build "* )
-  $LOG alert :env-build "Loop detected" \
-    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
+  $LOG alert ":ucbuild[$$]:env-build" "Loop detected" \
+    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121} ||
+      return
 ;; esac
 
-: "${EWD:=${REDO_BASE:-${CWD:-${PWD?}}}}" # Copy: env-working-dir
+[[ ${ENV_PEND+set} ]] ||
+  $LOG alert ":ucbuild[$$]:env-build" "Unverified env" "" ${_E_ifenv:-121} ||
+    return
 
-! [[ ${ENV_PEND+set} ]] || {
-  [[ ${ENV_PEND%% *} = build ]] || exit 121
-  [[ ${#ENV_PEND} = 5 ]] && unset ENV_PEND || ENV_PEND=${ENV_PEND:6}
-}
+[[ ${ENV_PEND%% *} = build ]] || return ${_E_ifenv:-121}
+[[ ${#ENV_PEND} = 5 ]] && unset ENV_PEND || ENV_PEND=${ENV_PEND:6}
 
 ENV_BASE=${ENV_BASE-}${ENV_BASE+ }build
-
-# XXX: this has different sh-mode and env-init from normal .env-local sequence?
-
-set -euo pipefail &&
 
 # Continue env chain or finally include main env, for which there is no tag
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
 for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
-  [[ -s $__ ]] && break || continue
-done && [[ -s $__ ]] && . "$__" && unset __ ||
-  $LOG alert ":next" "At env-build" "E$?:pending=${ENV_PEND-(unset)}" ${_E_noenv:-123}
+  [[ -e $__ ]] && break || continue
+done && [[ -s $__ ]] && . "$__" ||
+  $LOG alert ":ucbuild[$$]:env-build" "Failure resolving base env" \
+    "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123} ||
+      return
 
-[[ ! ${ENV_PEND+set} ]] ||
-  $LOG alert ":env-build" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
+[[ ! ${ENV_PEND+set} ]] || $LOG alert ":ucbuild[$$]:env-build" \
+  "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
+
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info ":ucbuild[$$]:env-build" "Local env loading..."
 
 # Boilerplate end:
 

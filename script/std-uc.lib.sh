@@ -65,16 +65,12 @@ std_uc_lib__init ()
 
 std_uc_env_def ()
 {
-  # user scripts may fail without blaming either script or user. Or, decide one
-  # of the two and this should be based on the source of the inputs Is the
-  # cause user arguments or data, or was the fault in supposed finalized and
-  # static script? This can be contextually nuanced, and irrelevant too.
   : "${_E_fail:=1}"
   # 1: fail: generic non-success status, not an error per se
   : "${_E_script:=2}"
   # 2: script: error caused by broken syntax or script misbehavior
   : "${_E_user:=3}"
-  # 3: user: usage error or faulty data
+  # 3: user: usage error or faulty data (less serious than 2, but ie. grep uses
 
   : "${_E_nsk:=67}"
   # 67: nsk: no such key
@@ -221,9 +217,9 @@ std_v_stat ()
 
 std_vs () # ~ <Message ...> # Print message, but pass previous status code
 {
+  local stat=$?
   : about "Print message, but pass previous status code"
   : param "<Message ...>"
-  local stat=$?
   stderr echo "$@" || return 3
   return $stat
 }

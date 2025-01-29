@@ -7,37 +7,37 @@
 
 # Boilerplate (derived from env-local)
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG debug :env-boot "Bootable env starting..."
+  $LOG info ":ucbuild[$$]:env-boot" "Bootable env loading..."
 
 case " ${ENV_BASE-} " in ( *" boot "* )
-  $LOG alert :env-boot "Loop detected" \
-    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121}
+  $LOG alert ":ucbuild[$$]:env-boot" "Loop detected" \
+    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121} ||
+      return
 ;; esac
 
-: "${EWD:=${REDO_BASE:-${CWD:-${PWD?}}}}" # Copy: env-working-dir
+[[ ${ENV_PEND+set} ]] ||
+  $LOG alert ":ucbuild[$$]:env-boot" "Unverified env" "" ${_E_ifenv:-121} ||
+    return
 
-[[ ${ENV_PEND+set} ]] && {
-  [[ ${ENV_PEND%% *} = boot ]] || exit ${_E_ifenv:-121}
-  [[ ${#ENV_PEND} = 4 ]] && unset ENV_PEND || ENV_PEND=${ENV_PEND:5}
-} || {
-  ENV_PEND=${ENV_PEND_DEFAULT:-local}
-}
+[[ ${ENV_PEND%% *} = boot ]] || return ${_E_ifenv:-121}
+[[ ${#ENV_PEND} = 4 ]] && unset ENV_PEND || ENV_PEND=${ENV_PEND:5}
 
 ENV_BASE=${ENV_BASE-}${ENV_BASE+ }boot
 
-# Continue env chain, at either 'local' or something else
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
 for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
-  [[ -s $__ ]] && break || continue
-done && [[ -s $__ ]] && . "$__" && unset __ ||
-    $LOG alert "" "At env-boot" "E$?:pending=${ENV_PEND-(unset)}" ${_E_noenv:-123}
+  [[ -e $__ ]] && break || continue
+done && [[ -s $__ ]] && . "$__" ||
+  $LOG alert ":ucbuild[$$]:env-boot" "Failure resolving base env" \
+    "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123} ||
+      return
 
-[[ ! ${ENV_PEND+set} ]] ||
-  $LOG alert ":env-boot" "Expected complete env" "pending: $ENV_PEND" ${_E_noenv:-123}
+[[ ! ${ENV_PEND+set} ]] || $LOG alert ":ucbuild[$$]:env-boot" \
+  "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info :env-boot "Bootable env loading..."
+  $LOG info ":ucbuild[$$]:env-boot" "Bootable env ready"
 
 # Boilerplate end:
 
@@ -60,4 +60,7 @@ done && [[ -s $__ ]] && . "$__" && unset __ ||
       $LOG error "" "Unexpected env boot status" "E$_:ENV_INIT=$ENV_INIT" $_
   }
 }
+
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG debug ":ucbuild[$$]:env-boot" "Bootable env done"
 #  $LOG debug :env-boot "Bootable env done"

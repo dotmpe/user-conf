@@ -87,13 +87,14 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
   : ${_6_2:=${_6_1}}
 
   : ${BASH_UC_SCRIPTNAME:=Bash}
+  : ${BASH_UC_SCRIPTTAG:=$0[$$]}
 
   # Print error-line and stack-trace
 
   test $# -gt 0 && {
     printf "\n    Exception: %s <id=%s>\nTrace:\n" "$2" "$1"
   } ||
-    printf " ${_1}${_1_2} ${_1_1} ${_1}${BASH_UC_SCRIPTNAME} error:${n} ${_3_1}'${_3}$head${_3_1}' ${_2}exited with status ${_2_1}$err\n"
+    printf " ${_1}${_1_2} ${_1_1} ${_1}${BASH_UC_SCRIPTNAME} error:${n} ${_4}${BASH_UC_SCRIPTTAG} ${_3_1}'${_3}$head${_3_1}' ${_2}exited with status ${_2_1}$err\n"
   # TODO: If str/argv are loaded, run some user-configured errexit handles as well
   #: "${SHELL_NAME:=$(basename -- $SHELL)}"
   #printf "    ${b}${_f0}${r}${b}"

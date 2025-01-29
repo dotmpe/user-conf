@@ -21,27 +21,98 @@
 # Stop subshells from restarting this script. We'll export any bits when needed.
 unset BASH_ENV 2>/dev/null || true
 
+# This env trigger depends on uc-env or a minimal user-script env being
+# established first.
+
+#uc-env -q uc:env && {
+if_ok "$(declare -F uc:env:bash)" && {
+  uc_env +continue ||
+    $LOG info ":ucbuild[$$]:bash-env" "Failed starting from compiled env" \
+      "E$?" ${_E_ifenv:-121} || ${uc_stat:-exit} $?
+} || {
+  declare -gA uc_env{,_{parts,types}}
+  declare -ga uc_env_exports
+  # XXX: dyanmic setup disabled for now, see local-env
+}
+
+# TODO: run callbacks
+[[ ! ${uc_env_parts['local']+set} ]] || {
+  stderr echo "Found local exports"
+  return
+}
+
 ! "${DEBUG:-false}" || {
     declare -x US_DEBUG=${US_DEBUG:-false}
     declare -x UC_DEBUG=${UC_DEBUG:-false}
 }
 
-! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info :bash-env "Bash env loading..."
+: "${ENV_PEND=local}"
+declare +x ENV_PEND
 
-# Continue with next env script (at root of project, ie. regardless where we
-# started)
-# XXX: could also take basedir of current source, but that could interfere with
-# re-use by symlinking.
-: "${EWD:=${REDO_BASE:-${CWD:-${PWD?}}}}" # Copy: env-working-dir
+: "${BASH_UC_SCRIPTNAME:=Local}"
+: "${BASH_UC_SCRIPTTAG:=$0[$$]:bash-env}"
+: "${UC_LOG_BASE:=$BASH_UC_SCRIPTTAG}"
+declare -x UC_LOG_BASE
+
+declare -x OS_{HOSTNAME,UNAME}
+
+
+# XXX: would like to return to mode for DIAG after env has completed
+OLDSET=$-
+set -eETu
+shopt -s extdebug
+
+{ ! "${DIAG:-false}" && ! "${STRICT:-false}"
+} ||
+  set -eETuo pipefail
+
+! "${DIAG:-false}" || shopt -s extdebug
+
+
+! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
+  $LOG info :ucbuild:bash-env "Bash env trigger started..."
+
+# NOTE: trigger script for BASH_ENV Bash shell special variable.
 
 # Not bothering adding bash to env tags for now, just boot for whatever env-pend
 # is set or default.
-: "${ENV_PEND=${ENV_PEND_DEFAULT:-boot local}}"
-#: "env-${ENV_PEND%% *}"
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
 for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
-  [[ -s $__ ]] && break || continue
-done && [[ -s $__ ]] && . "$__" && unset __ ||
-    $LOG alert "" "At bash-env" "E$?:pending=${ENV_PEND-(unset)}" ${_E_noenv:-123}
+  [[ -e $__ ]] && break || continue
+done && [[ -s $__ ]] && . "$__" ||
+  $LOG alert ":ucbuild[$$]:bash-env" "Failure resolving base env" \
+    "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123}
+
+
+# Export env and env metadata
+
+for __env_key in "${uc_env_exports[@]}"
+do
+  declare -x${uc_env_types["$__env_key"]-} $__env_key
+done
+
+# XXX: cant think of way to do this incrementally, so need to dump everything
+#if_ok "$(declare -f uc:env:bash)" && {
+#  : "${_#uc:env:bash ()$'*\n\{*\n'}" &&
+#  : "${_%\}}  : :#: Local-env append: "
+#} || {
+#  : "  : :#: Local-env root: "
+#}
+eval "uc:env:bash () {
+  declare -ga uc_env_exports
+  uc_env_exports=( ${uc_env_exports[*]} )
+  declare -gA uc_env_parts
+  $( for __env_key in "${!uc_env_parts[@]}"
+    do
+      echo "uc_env_parts[\"$__env_key\"]=${uc_env_parts["$__env_key"]@Q}"
+    done)
+  declare -gA uc_env_types
+  $( for __env_key in "${!uc_env_types[@]}"
+    do
+      echo "uc_env_types[\"$__env_key\"]=${uc_env_types["$__env_key"]@Q}"
+    done)
+}"
+declare -xf uc:env:bash
+
+#

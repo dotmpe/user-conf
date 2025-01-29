@@ -3,6 +3,12 @@
 # Helper to source libs only once
 uc_profile_load_lib ()
 {
+  [[ ${BASH_UC_SCRIPTTAG+set} ]] || {
+    : "$(</proc/uptime)"
+    : "$$:${_% *}"
+    : "${BASH_UC_SCRIPTTAG:="$0[$_]:uc-profile"}"
+  }
+
   test "0" = "${UC_PROFILE_SRC_LIB-}" || {
     test -z "$_" ||
       echo "Possible recursion at uc-profile-load-lib" >&2
@@ -554,7 +560,7 @@ uc_ctx ()
 
 # 2024 feb: looking at improved envd setup XXX: but cant use arrays outside
 # of functions
-uc_env_init ()
+uc_envd_init ()
 {
   # Bootstrap envd-type env if not already initialized
   [[ "set" = "${ENV_TYPE[*]+set}" ]] || {

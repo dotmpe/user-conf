@@ -95,6 +95,7 @@ sys_exc () # Format exception-id and message
 sys_exc_trc () # ~ [<Head>] ...
 {
   echo "${1:-uc/sys: $? Source trace:}"
+  local i
   for (( i=1; 1; i++ ))
   do
     if_ok "$(caller $i)" && echo "  - $_" || break

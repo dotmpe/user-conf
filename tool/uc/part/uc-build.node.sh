@@ -2,7 +2,11 @@
 
 uc-build:meta ()
 {
-  : group uc
+  : category= tool
+  : group[:] uc
+  : group[:] build
+  : type= part
+  : description= "Group for future uc-build context"
 }
 
 #

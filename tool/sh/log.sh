@@ -75,13 +75,15 @@ uc_log_init () # ~
 {
   # Get log key base. This is the first part a tag/facility prefixed to each
   # output.
-  test -z "${log_key:-}" || UC_LOG_BASE="$log_key" # XXX: BWC
+  test -z "${log_key:-}" || UC_LOG_BASE="$log_key" # XXX: BWC log-key env
 
-  : "$(ps -q $$ -o ppid=)"
-  : "${_# }"
-  "${UC_LOG_BASE_LONG:-true}" "$_" &&
-    : "${UC_LOG_BASE:="$USER@$HOST:$PWD:$(basename -- "$SHELL")[$_]"}" ||
-    : "${UC_LOG_BASE:="$(basename -- "$SHELL")[$_]"}"
+  [[ ${UC_LOG_BASE:+set} ]] || {
+    : "$(ps -q $$ -o ppid=)"
+    : "${_# }"
+    "${UC_LOG_BASE_LONG:-true}" "$_" &&
+      : "${UC_LOG_BASE:="$USER@$HOST:$PWD:$(basename -- "$SHELL")[$_]"}" ||
+      : "${UC_LOG_BASE:="$(basename -- "$SHELL")[$_]"}"
+  }
 
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
