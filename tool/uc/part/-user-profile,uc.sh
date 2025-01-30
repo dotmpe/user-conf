@@ -15,7 +15,7 @@ then
   return
 fi
 
-if [[ ! ${uc_env_parts[*]+set} || ! ${uc_env_parts["us-system.g"]+set} ]]
+if [[ ! ${uc_env_parts[*]+set} || ! ${uc_env_parts["us-system.G"]+set} ]]
 then
   >&2 echo "uc-user-profile.sh did not find host profile; base=${ENV_BASE:-(unspecified)}"
   return
@@ -27,9 +27,9 @@ then
   return
 fi
 
-### Load user profile parts
-
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.profile
+: "${ENV_BASE:=profile}"
+: "${ENV_CTX:=$0[$$]:~/.profile}"
 
 export CAL_DEF=dutch\ german\ debian
 
@@ -54,7 +54,7 @@ fi
     $uc_log info "${ENV_CTX}" "Load complete" "~/.profile"
 } || {
     $uc_log debug "${ENV_CTX}" "Loaded, starting now" "~/.profile"
-    
+
     # Append metadata and run exports
     uc_env +start profile -- $0 "$@"
 

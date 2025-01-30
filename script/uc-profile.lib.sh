@@ -79,7 +79,9 @@ uc_fun () # ~ <Function-name>
 uc_profile_import () # ~ [Source-Path]
 {
   uc_source "${1:?"$(uc_exc uc:profile-import)"}" &&
-  if_ok "$(<<< "${1//\//-}" uc_profile_mkid)" &&
+  : "${1//\//-}" &&
+  #if_ok "$(uc_profile_mkid <<< "${_}" )" &&
+  if_ok "$(echo "$_" | uc_profile_mkid )" &&
   uc_profile__record_env__keys "${_:?}" ||
     $uc_log error ":import" "Loading shell file" "E$?:$1" $? ||
     return
