@@ -2,7 +2,7 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples [Debian]
 
-# 2006--2024  Berend van Berkum <dev@dotmpe.com>
+# 2006--2024,2025  Berend van Berkum <dev@dotmpe.com>
 
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.bashrc
 
@@ -11,6 +11,9 @@ case $- in
     *i*) ;;
       *) return;;
 esac
+
+: "${ENV_BASE:=rc}"
+: "${ENV_CTX:=$0[$$]:~/.bashrc}"
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
