@@ -205,8 +205,9 @@ lib_uc_islib () # ~ <Name>
 # directly after they are recorded.
 lib_uc_load () # <Names...>
 {
+  local lk="${ENV_CTX-}:uc:lib-load"
   [[ -z "${lib_loading-}" ]] || {
-    $LOG alert :uc:lib-load "Recursion" "lib_loading=$lib_loading" \
+    $LOG alert "$lk" "Recursion" "lib_loading=$lib_loading" \
       ${_E_recursion:-111} ||
     return
   }
@@ -214,7 +215,7 @@ lib_uc_load () # <Names...>
   [[ $# -gt 0 ]] && {
     [[ "${1-}" ]] || return ${_E_GAE:-193}
   } || set -- ${default_sh_lib:?}
-  ! uc_debug || $LOG info ":uc:lib-load" "Resolving lib(s)" "($#) $*"
+  ! uc_debug || $LOG info "$lk" "Resolving lib(s)" "($#) $*"
 
   local lib_name lib_varn lib_stat lib_path f_lib_load retry
   for lib_name in "${@:?}"
@@ -222,7 +223,7 @@ lib_uc_load () # <Names...>
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
     [[ 0 -ne "${!lib_stat:--1}" ]] || {
-      ! uc_debug || $LOG debug :uc:lib-load "Skipping loaded" "$lib_name"
+      ! uc_debug || $LOG debug "$lk" "Skipping loaded" "$lib_name"
       continue
     }
     # Stored status means file already loaded
@@ -230,12 +231,12 @@ lib_uc_load () # <Names...>
     [[ "-1" != "${!lib_stat:--1}" ]] || {
       # Lookup path to lib
       lib_path=$(command -v "$lib_name${lib_uc_ext:-.lib.sh}") ||
-        $LOG error ":uc:lib-load" "Not found" "$lib_name" 127 || return
+        $LOG error "${lk}" "No such lib found" "$lib_name" 127 || return
       # XXX: not the same var.. UC_TOOLS_DEBUG?
       #test -z "${USER_CONF_DEBUG-}" ||
-      ! uc_debug || $LOG info ":uc:lib-load:$lib_varn" "Loading" "$lib_path"
+      ! uc_debug || $LOG info "$lk:$lib_varn" "Loading" "$lib_path"
       . "$lib_path" ||
-        $LOG error ":uc:lib-load" "Sourcing library" "E$?:$lib_name" $? ||
+        $LOG error "$lk" "Sourcing library" "E$?:$lib_name" $? ||
           return
       ENV_LIB="${ENV_LIB:-}${ENV_LIB:+ }$lib_path"
     }
@@ -243,7 +244,7 @@ lib_uc_load () # <Names...>
     f_lib_load=${lib_varn}${lib_uc_kin:-_lib}__load
     ! typeset -F "$f_lib_load" >/dev/null 2>&1 || {
       ! uc_debug ||
-        $LOG debug : "Running lib 'load' hook" "$lib_name"
+        $LOG debug "$lk" "Running lib 'load' hook" "$lib_name"
       "$f_lib_load"
     }
     typeset -g ${lib_stat}=$?
@@ -367,7 +368,7 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
   local scr_name scr_path scr_varn scr_st lk=${lk-}:uc:script-load
   for scr_name in "${@:?}"
   do
-    scr_path=$(command -v "$scr_name.${scr_ext:-sh}") ||
+    scr_path=$(command -v -- "$scr_name.${scr_ext:-sh}") ||
       $LOG error "$lk" "Not found" "E127:$scr_name" 127 || return
     scr_varn=${scr_name//[^A-Za-z0-9_]/_}
     scr_st=${scr_varn}_script_load

@@ -89,10 +89,43 @@ uc_profile_import () # ~ [Source-Path]
     $uc_log warn ":import" "New env loaded, keys stored" "$1"
 }
 
+#
 uc_profile_mkid () # ~
 {
   args_uc__argc :env-keys $# || return
   tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
+}
+
+uc_profile_part () # ~ <Name>
+{
+  : "${1:?uc-profile-part:name}"
+  local profile_d
+  for profile_d in ${UC_PROFILE_D//[:]/ }
+  do
+    test -e "$profile_d/$1.sh" || continue
+    echo "$profile_d/$1.sh"
+    break
+  done
+}
+
+uc_profile_partnames () # ~ <Namespec>
+{
+  : "${1:?uc-profile-part:namespec}"
+  uc_profile_parts "$@" | while read -r path
+  do
+    : "${path##*/}"
+    echo "${_%.sh}"
+  done
+}
+
+uc_profile_parts () # ~ <Namespec>
+{
+  : "${1:?uc-profile-part:namespec}"
+  local profile_d
+  for profile_d in ${UC_PROFILE_D//[:]/ }
+  do
+    ( cd "$profile_d" && compgen -G "$1.sh" )
+  done
 }
 
 #shellcheck disable=1091 # Cannot add source directives here
@@ -135,7 +168,7 @@ uc_profile_init () # ~
 
   args_uc__argc :init $# eq 1 || return
 
-  set -- $(printf '%s:' $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1")
+  set -- $(printf -- '%s:' $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1")
   export UC_SH_ID="${1:0:-1}"
 
   # Comply with dynamic init of non-interactive shell, but be more cautious
@@ -209,7 +242,7 @@ uc_profile_start () # ~
   $uc_log "notice" ":start" "Session ready$_" "$ctx"
 }
 
-# Add parts to shell session
+# Add parts (scripts) to shell session
 uc_profile_load () # ~ NAME [TAG]
 {
   args_uc__argc :load $# gt || return
@@ -236,18 +269,15 @@ uc_profile_load () # ~ NAME [TAG]
 
   local uc_profile_load="$1" uc_profile_tag="${2:-}"
 
-  local uc_profile_load_path=$( for profile_d in $(echo ${UC_PROFILE_D:?} | tr ':' ' ');
-      do
-          test -e "$profile_d/$uc_profile_partname.sh" || continue
-          printf '%s' "$profile_d/$uc_profile_partname.sh"
-          break
-      done )
+  local uc_profile_load_path=$(uc_profile_part "$uc_profile_partname")
 
   # Bail if no such <name> profile exists
-  test -e "$uc_profile_load_path" || {
+  [ -n "$uc_profile_load_path" ] &&
+  [ -e "$uc_profile_load_path" ] || {
     # error unless '*<name>' was specified
-    test $uc_profile_part_exists -eq 0 && return 255
-    $uc_log "error" ":load" "Error: no uc-source" "$uc_profile_partname"
+    test $uc_profile_part_exists -eq 0 && return 255 # ie. -1
+    #>&2 echo "No such part found $uc_profile_partname"
+    $uc_log "error" ":load" "Error: no uc-source" "name:$uc_profile_partname;*:$*"
     return 6
   }
 
@@ -257,7 +287,7 @@ uc_profile_load () # ~ NAME [TAG]
   uc_profile_part_ret=$?
   $uc_log debug ":load" "Loaded part" "$*:$uc_profile_partname:E$uc_profile_part_ret"
 
-  local _stat="$(eval "echo \"\${$uc_profile_part_envvar-}\"")"
+  local _stat="${!uc_profile_part_envvar-}"
 
   # File exists, so we have a status either way
   test "${_stat}" != "-1" || unset $uc_profile_part_envvar
@@ -354,8 +384,8 @@ uc_profile_boot () # TAB [types...]
 
   $uc_log "info" ":boot" "Start sourcing profile.tab parts" "$*:wcl=$(wc -l "$c")"
 
-  local name type
-  while read name type
+  local name{,s,spec} type rest
+  while read -r namespec type rest
   do
     test -n "$type" -a $# -gt 0 && {
       # Skip entry unless '$*' matches any type for entry
@@ -364,38 +394,89 @@ uc_profile_boot () # TAB [types...]
 
       test $m -eq 1 || {
         test -z "${USER_CONF_DEBUG-}" ||
-          $uc_log warn ":boot<>$name" "Skipped profile.tab entry" "$type not in $*"
+          $uc_log warn ":boot<>$namespec" "Skipped profile.tab entry" "$type not in $*"
         continue
       }
     }
 
-    # uc_profile_load already does the same envvar name building,
-    # but we want to pick up any setting left by profile here
+    # test for globs, and expand those first
+    if fnmatch "*[\*\?]*" "$namespec"
+    then
+      # Use Bash compgen to expand glob
+      # Also '-' prefix must be handled here
+      fnmatch "-*" "$namespec" &&
+        require=false namespec=${namespec:1} || require=true
+      mapfile -t names <<< "$(uc_profile_partnames "$namespec")"
+      [ "${require}" = false ] || [ ${#names[*]} -gt 0 ] ||
+        $uc_log "error" ":load" "Error: no uc-source" \
+          "name:$namespec;*:$*" 6 || return
+    else
+      # Can leave '-' prefix for uc-profile-load to handle
+      names=( $namespec )
+    fi
 
-    # XXX:
-    fnmatch "\**" "$name" && name=-${name:1}
+    for name in ${names[*]}
+    do
+      # uc_profile_load already does the same envvar name building,
+      # but we want to pick up any setting left by profile here
+      : "${name^^}"
+      envvar=UC_PROFILE_D_${_//[^A-Z0-9_]/_}
+      >/dev/null 2>&1 unset $envvar stat
+      uc_profile_load "$name" $type || stat=$?
+      local _stat="${!envvar-}"
 
-    : "${name^^}"
-    envvar=UC_PROFILE_D_${_//[^A-Z0-9_]/_}
-    unset stat $envvar 2>&1 > /dev/null
-    uc_profile_load "$name" $type || stat=$?
+      # No such file, only list sourced files
+      test ${_stat:-0} -eq -1 && continue
 
-    local _stat="${!envvar-}"
+      # Append name to list, concat error code if there is one
+      names="${names:-}$name${stat:+":E"}${stat-} "
 
-    # No such file, only list sourced files
-    test ${_stat:-0} -eq -1 && continue
-
-    # Append name to list, concat error code if there is one
-    names="${names:-}$name${stat:+":E"}${stat-} "
-
-    # XXX: UC_BOOT_ABORT stops at first failing boot-item. Maybe set per-tabline
-    #test -z "${stat-}" || {
-    #  test $stat -eq $E_UC_PENDING || return $stat
-    #}
+      # XXX: UC_BOOT_ABORT stops at first failing boot-item. Maybe set per-tabline
+      #test -z "${stat-}" || {
+      #  test $stat -eq $E_UC_PENDING || return $stat
+      #}
+    done
   done <"$c"
   local context=
   ! "${DEBUG:-false}" || context="${names-}"
   $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "$context"
+}
+
+# 'Tagged' files are a sort of composite names. Normal acceptible names are
+# usually very limited. See the LANANA registries for example: LSB Init script
+# names `[-_.a-z0-9]+` and where providers must be `[a-z0-9]+`. Uc-profile uses
+# - to add prefix and suffix keys, and uses '_' prefix for local overrides.
+# Also Uc-profile uses + and , as a sort of name modifiers, these are tagged
+# names.
+
+# At the system level (in /etc/profile.d) the same rules can be applied if
+# uc-profile is installed.
+
+uc_profile_dpaths () # ~ <Glob> <Basedir> [<Tags...>]
+{
+  : "${1:?uc-profile-bootd: Glob expression}"
+  : "${2:?uc-profile-bootd: Basedir}"
+  local x name{spec,} envvar
+  #[[ $# -gt 2 ]] || set --
+  for x in ${2}/${1}{,+*,\,*}.sh
+  do
+    # if we dont have nullglob on...
+    [ -e "$x" ] || continue
+
+    : "${x##*/}"
+    namespec=${_%.sh}
+    # XXX: is basename simply strip of all tags/alts?
+    name=${namespec%%[,+]*}
+    : "${name^^}"
+    envvar=UC_PROFILE_D_${_//[^A-Z0-9_]/_}
+    [ -z "${!envvar-}" ] || continue
+
+    if [ -r "$x" ]; then
+      echo "$x"
+    else
+      $LOG warn :acl "$0: $_: no permissions" "$x"
+    fi
+  done
 }
 
 uc_profile__record_env__diff_keys () # ~ FROM TO
@@ -473,7 +554,7 @@ sys_uc_source_trace () # ~ [<Head>] [<Msg>] [<Offset=2>] [ <var-names...> ]
   do
     if_ok "$(declare -p ${!var})" &&
     fnmatch "declare -n *" "$_" && {
-      printf '- %s\n  %s\n' "$_" "${!var}: ${var@Q}"
+      printf -- '- %s\n  %s\n' "$_" "${!var}: ${var@Q}"
     } || echo "$_"
   done | sed 's/^/  /'
 }
@@ -534,7 +615,7 @@ uc_var_reset ()
 {
   args_uc__argc :uc-var-reset $# eq 1 || return
   local def_key def_val
-  def_key="DEFAULT_$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+  def_key="DEFAULT_${1^^}"
   def_val="${!def_key?Cannot reset user env $1}"
   test -n "$def_val" || return
   eval "$1=\"$def_val\""
@@ -543,7 +624,8 @@ uc_var_reset ()
 uc_var_update () # ~ <Var>
 {
   args_uc__argc :uc-var-update $# eq 1 || return
-  local varname="$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+  local varname="${1^^}"
+  # XXX: str-upper and lower tooling? (echo "$1" | tr '[:lower:]' '[:upper:]')"
   uc_fun var_${varname}_update && {
 
     var_${varname}_update || return
@@ -584,6 +666,30 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
   esac
 }
 
+os_lookup_add () # ~ <Var> <Prepend> <Append>
+{
+  : source "u-c:script/uc-profile.lib.sh"
+  : copy "os.lib.sh"
+  [ -e "$2" -o -e "${3-}" ] || {
+    >&2 echo "os_path_add: No such file or directory '$*'"
+    return 1
+  }
+  local -n __path=${1?}
+  [ -n "${2-}" ] && {
+    case "$__path" in
+      $2:* | *:$2 | *:$2:* ) ;;
+      * ) __path=$2${__path:+:}$__path ;;
+    esac
+  } || {
+    test -n "${2:?}" && {
+      case "$__path" in
+        $3:* | *:$3 | *:$3:* ) ;;
+        * ) __path=$__path${__path:+:}}$3 ;;
+      esac
+    }
+  }
+}
+
 # Store variables (name and current value) at associative array
 sys_aarrv () # ~ <Array> <Vars...>
 {
@@ -616,6 +722,17 @@ sh_fun ()
 {
   : source "u-c:script/uc-profile.lib.sh"
   declare -F "${1:?}" > /dev/null
+}
+
+sys_astat () # ~ ( <Test-flag> <Test-value> )*
+{
+  local stat=$?
+  while [[ $# -gt 0 ]]
+  do
+    test $stat "$1" "$2" || return $stat
+    shift 2
+  done
+  : source "u-c:script/uc-profile.lib.sh"
 }
 
 # Id: User-Conf:uc-profile.lib
