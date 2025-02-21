@@ -331,7 +331,7 @@ stdlog_uc__syslog_colorize ()
 
     # Color rest of logger line, including our stdlog '<context>' part
     # <date-time dark> <sylog-tag default/normal> <message bold> '<'<context green>'>'
-    printf "$rest\n" | sed -E '
+    printf -- "%s\n" "$rest" | sed -E '
 s/\<E[0-9]+\>/'${y}'&'${g}'/g
 s/^([^ ]+ [0-9]+ [0-9:]+) ([A-Za-z_])/\1 '${n}'\2/g
 s/: ([^<]*)/'$bb': '${n}${b}'\1'${n}'/g

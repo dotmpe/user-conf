@@ -249,7 +249,8 @@ lib_uc_load () # <Names...>
     typeset -g ${lib_stat}=$?
     lib_loaded="${lib_loaded-}${lib_loaded:+ }$lib_name"
     [[ 0 -eq ${!lib_stat} ]] && continue
-    [[ ${_E_next:-196} -eq ${!lib_stat} || ${_E_retry:-198} -eq ${!lib_stat} ]] && retry=true || return ${!lib_stat}
+    [[ ${_E_next:-196} -eq ${!lib_stat} ||
+      ${_E_retry:-198} -eq ${!lib_stat} ]] && retry=true || return ${!lib_stat}
   done
   ! "${retry:-false}" || return ${_E_retry:-198}
 }
@@ -332,17 +333,17 @@ lib_uc_require () # ~ <Names...>
   [[ ${lib_load-} ]] && {
     # Already in load call; list unloaded libs and set as pending
     if_ok "$(filter_args "not lib_uc_loaded" "$@")" &&
-    set -- $_ || return
+    set -- $_ &&
     # Add pending libs and return
     LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
     [[ -z "$LIB_REQ" ]] && return || return ${_E_retry:-198}
   }
 
-  lib_loading= lib_load "$@" && return ||
+  lib_loading= lib_uc_load "$@" && return ||
     sys_astat -eq ${_E_retry:-198} ||
       $LOG error :uc:lib-require "During load" "E$?:$*" $? || return
 
-  : "${LIB_REQ:?"Expected LIB_REQ (after lib_load '$*')"}"
+  : "${LIB_REQ:?"Expected LIB_REQ (after lib_load '$*' E${_E_retry:-198})"}"
   until [[ -z "${LIB_REQ-}" ]]
   do
     $LOG info :uc:lib-require "Required:" "$LIB_REQ:for:$*"
