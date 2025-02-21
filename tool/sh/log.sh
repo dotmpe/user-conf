@@ -120,7 +120,7 @@ case "$0" in
 
   -* ) ;;
 
-  */$(basename "$UC_SELF") )
+  */$(basename "${UC_SELF?}") )
 
       case "${1:-}" in
 

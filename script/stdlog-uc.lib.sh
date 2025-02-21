@@ -299,9 +299,9 @@ stdlog_uc__syslog_colorize ()
         fname=$(syslog_facility_name "$flvl"|| echo "(unknown)")
         sname=$(syslog_level_name "$slvl"|| echo "(unknown)")
 
-        printf "$bb%2s\%1i.${n}" "$fname" "$flvl"
+        printf -- "$bb%2s\%1i.${n}" "$fname" "$flvl"
       } || {
-        printf "$bb%i.${n}" "$flvl"
+        printf -- "$bb%i.${n}" "$flvl"
       }
     }
 
@@ -321,13 +321,13 @@ stdlog_uc__syslog_colorize ()
     test "${STDLOG_UC_PRI:-1}" = "1" && {
       # Optionally display name-codes besides numral facility.severity levels
       test "${stdlog_uc__syslog_colorize__resolve_num:-0}" = 1 && {
-        printf "$slvlc%s\%i$bb" "$sname" "$slvl"
+        printf -- "$slvlc%s\%i$bb" "$sname" "$slvl"
       } || {
-        printf "$slvlc%i$bb" "$slvl"
+        printf -- "$slvlc%i$bb" "$slvl"
       }
     }
 
-    printf "$bb<${n}$slvlc$PRI$bb>"
+    printf -- "$bb<${n}$slvlc$PRI$bb>"
 
     # Color rest of logger line, including our stdlog '<context>' part
     # <date-time dark> <sylog-tag default/normal> <message bold> '<'<context green>'>'
