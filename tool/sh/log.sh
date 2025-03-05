@@ -2,6 +2,8 @@
 
 ### Executable script to handle logging
 
+#shellcheck disable=2128 # Using FUNCNAME shortcut to first element on array
+
 # TODO: move all functions to parts or lib
 
 ## Shell env defaults
@@ -11,8 +13,8 @@ test -d "/usr/lib/user-conf" && true "${U_C:="/usr/lib/user-conf"}"
 test -d "$HOME/.basher/cellar/packages/user-tools/user-conf/" && true "${U_C:="$HOME/.basher/cellar/packages/user-tools/user-conf"}"
 test -d "/src/local/user-conf" && true "${U_C:="/src/local/user-conf"}"
 
-test -d "$U_C" || {
-  echo "Unable to find Uc path <$U_C>" >&2
+[ -n "$U_C" ] && [ -d "$U_C" ] || {
+  >&2 echo "Unable to find Uc path <$U_C>"
   exit 1
 }
 
@@ -22,13 +24,52 @@ true "${UC_SELF:="$U_C/tool/sh/log.sh"}"
 
 ## Entrypoints if called as script.
 
-uc_log_env () # ~
+uc_log_env () # ~ [<Switch>]
 {
+  case "${1:-}" in
+  ( dyn )
+        # dump functions and declarations of dynamic setup
+        uc_log_init &&
+        : "${STDLOG_UC_LEVEL:=6}"
+        declare -p uc_log \
+          STDLOG_UC_LEVEL \
+          UC_LOG_LEVEL \
+          UC_SYSLOG_LEVEL &&
+        declare -f uc_log uc_syslog_1 \
+          syslog_logger_{prifmt,datetime,colorize}_filter \
+          stdlog_uc__syslog_colorize syslog_facility_name syslog_level_name \
+          stdlog_to_syslog \
+          syslog_level_num &&
+        echo "declare +x LOG" &&
+        echo "declare -- x LOG=uc_log" &&
+        cat <<EOM
+        # Defaults:
+        # STDLOG_UC_DT    :-1
+        # STDLOG_UC_ANSI  :-1
+        # STDLOG_UC_PRI   :-1
+        # STDLOG_UC_LEVEL :=6
+        # STDLOG_UC_EXITS :=5
+        # UC_QUIET        :=0
+        # UC_SYSLOG_{OFF,LEVEL}
+EOM
+      ;;
+
+  ( var )
+  cat <<EOM
+LOG="${LOG:-"$UC_PROFILE_SELF"}"
+uc_log="\$LOG"
+EOM
+    ;;
+
+  ( "" | static )
   cat <<EOM
 LOG="${LOG:-"$UC_PROFILE_SELF"}"
 uc_log="$LOG"
 EOM
-  exit
+    ;;
+
+   * ) >&2 echo "${ENV_CTX-}:${FUNCNAME}:$1: unrecognized switch"
+  esac
 }
 
 uc_main_log () # ~ (env|[log] <log-args>)
@@ -67,7 +108,7 @@ uc_main_log () # ~ (env|[log] <log-args>)
     * ) echo ":log()" "Expected priority, found '$1' ('$*')" >&2; return 60 ;;
   esac
 
-  $uc_log "$@"
+  "${uc_log:?}" "$@"
 }
 
 # Setup uc_log handler using syslog-uc.lib (and INIT_LOG but not LOG)
@@ -96,14 +137,13 @@ uc_log_init () # ~
   INIT_LOG=stderr_log
 
   # Make Uc-profile source all its parts
-  test "${UC_PROFILE_LOADED-}" = "0" || {
+  [ 0 = "${UC_PROFILE_STATUS}" ] || {
     #. "${U_C:?}/tool/sh/log-init.sh"
     . "${U_C}/script/uc-profile.lib.sh" &&
     uc_profile_boot_parts || return
   }
 
   # XXX: a bit of deferred uc-profile setup here
-
   local load_log_level
   ! "${LOG_DEBUG:-false}" && load_log_level=4 || load_log_level=${UC_LOG_LEVEL:?}
   v=${load_log_level} LOG=$INIT_LOG uc_profile_load_lib || return
@@ -111,8 +151,11 @@ uc_log_init () # ~
   # Setup logger (but not LOG)
   { uc_fun uc_log || syslog_uc_init uc_log
     } &&
-  true "${uc_log:=uc_log}"
-  args_uc__argc :log-init $#
+  : "${uc_log:=uc_log}"
+
+  #args_uc__argc $# ||
+  [ $# -eq 0 ] ||
+    _uconf_shell_log error ":log.sh:init" "$FUNCNAME: Expected no arguments $- 0:$0 *:$* ($#) (ignored)"
 }
 
 # Actual entry point for executable script

@@ -164,9 +164,8 @@ syslog_facility_num()
 uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=user [tags]]
 {
   [[ $# -ge 2 ]] || return 64
-  local lvl="${1:-notice}" msg="${2:?}"
+  local lvl="${1:-notice}" msg="${2:?}" fac="${3:-user}"
   shift 2
-  local fac="${1:-user}"
   [[ $# -eq 0 ]] || shift
 
   # First determine if we are going to generate a serial or syslog event at all
@@ -214,6 +213,7 @@ uc_syslog_1 () # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET} ~ [lvl=notice] msg [fac=
   #opts=$opts\ --rfc3164 # Adds host
   [[ $msg =~ ^- ]] && msg="\\$msg"
   : "${tags:0:$(( ${#tags} - 1 ))}"
+
   logger $opts -p "$fac.$lvl" -t "$_" "$msg" 2>&1
 }
 

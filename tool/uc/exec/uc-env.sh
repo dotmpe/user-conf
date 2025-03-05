@@ -14,6 +14,7 @@ uc_env_defcmd=short
 uc_env_maincmds=declare,help,knows,load,query,require
 uc_env_shortdescr=
 
+# TODO: transpile function from parts, see tool/uc/part/-env,func,uc.sh
 uc-env ()
 {
   : source "uc-env.sh"

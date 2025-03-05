@@ -4,7 +4,24 @@
 
 # 2006--2024,2025  Berend van Berkum <dev@dotmpe.com>
 
+: "${ENV_BASE:=rc}"
+: "${ENV_CTX:=$0[$$]:~/.bashrc}"
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.bashrc
+
+. /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
+
+# @ Inline: Shell:running-interactively
+# If not running interactively, then don't do any dynamic stuff either
+[[ ${PS1-} ]] || {
+  #
+  [[ "${ENV_BASE:0:2}" = "rc" ]] && {
+    uc_env +start rc -- $0 "$@"
+    _DEBUG "Started uc-env S$?"
+  } ||
+    _DEBUG "Not starting uc-env in base $ENV_BASE"
+
+  return
+}
 
 # If not running interactively, don't do anything
 case $- in
@@ -12,9 +29,33 @@ case $- in
       *) return;;
 esac
 
-: "${ENV_BASE:=rc}"
-: "${ENV_CTX:=$0[$$]:~/.bashrc}"
 
+### Run user-profile boot phases
+[[ ! ${UC_PROFILE_INIT-} ]] || {
+
+  # Include 'preload' group before Uc init
+  uc_profile_boot "$UC_TAB" preload || return
+
+  # Uc env and Ids
+  uc_profile_init mpe-rc || return
+}
+
+_IFDBG _DEBUG "Booting user RC session <$UC_TAB>"
+
+uc_profile_boot "$UC_TAB" rc || return
+
+
+### Command aliases
+test -n "${UC_SH_ALIASES-}" && {
+  _IFVBS _INFO "Shell aliases disabled per config <Uc-Sh-Aliases:${UC_SH_ALIASES:?}>"
+} || {
+  test ! -e ~/.alias && {
+    _IFDBG _WARN "No user aliases found"
+  } || {
+    _DEBUG "Sourcing user aliases..."
+    ${uc_source:-"."} ~/.alias
+  }
+}
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
@@ -126,13 +167,26 @@ fi
 # This is the last config statement for interactive non-login sessions.
 # Start non-login session now, or let profile handle start of login session
 
-[[ "${ENV_BASE:0:2}" != "rc" ]] && {
-    #[[ "${ENV_BASE:0:7}" = "profile" ]] && {
-    $uc_log info "${ENV_CTX}" "Load complete" "~/.bashrc"
+[[ "${ENV_BASE:0:2}" = "rc" ]] && {
+
+  _DEBUG "Loaded, starting now"
+  ! declare -F uc_env >/dev/null 2>&1 &&
+  _WARN "Missing uc-env profile" || {
+    uc_env +start rc -- $0 "$@"
+  }
+  _INFO "Load complete, starting..."
+  uc_profile_start
 
 } || {
-    $uc_log debug "${ENV_CTX}" "Loaded, starting now" "~/.bashrc"
-    uc_env +start rc -- $0 "$@"
+  [[ "${ENV_BASE:0:7}" = "profile" ]] &&
+  _INFO "Load complete (login)" || {
+    _WARN "Unrecognized env base: ${ENV_BASE}"
+    _INFO "Load complete, starting..."
+    uc_profile_start
+  }
+
 }
+
+_IFDBG _NOTICE "User Bash rc finished"
 
 # Id: -user-bashrc,uc ex:ft=bash:

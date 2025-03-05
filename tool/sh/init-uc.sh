@@ -11,8 +11,8 @@ true "${scriptpathname:="${0}"}"
 true "${UCONF:="$HOME/.conf"}"
 true "${scriptpath:=$HOME/.conf/script}"
 
-append_path "$U_S/src/sh/lib"
-append_path "$U_C/script"
+append_path "${U_S?init-uc.sh:U_S setting required}/src/sh/lib"
+append_path "${U_C?init-uc.sh:U_C setting required}/script"
 append_path "$scriptpath"
 export PATH
 

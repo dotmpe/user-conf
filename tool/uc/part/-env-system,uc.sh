@@ -4,17 +4,17 @@
 }
 
 #ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
-ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }us-system
+#ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }us-system
 
 [[ ${uc_env_parts[*]+set} ]] || {
   : "${ENV_BASE:=}"
-  declare -A uc_env_{hooks,parts,types}
-  declare -a uc_env_{locals,exports}
+  declare -gA uc_env_{hooks,parts,types}
+  declare -ga uc_env_{locals,exports}
 }
 
 case " ${ENV_BASE?} " in ( *" us-system "* )
   # Login sub-shells and interactive sub-shells will inevitably loop
-  >&2 echo "system.sh group already loaded"
+  _ALERT "system.sh group already loaded"
   return
 ;; esac
 
@@ -47,12 +47,25 @@ sh_vadd () # ~ <Variable-name> <Separator> <Value> ...
 
 # XXX: until core(s) are finished for profile, rc and other.. use @dev version
 #[[ "${U_C:-/src/local/user-conf+current}" ]] &&
-. "${U_C:-/src/local/user-conf+current}/tool/uc/part/-env,fun,uc.sh"
-
+: "${UC_ENV_PART:=${U_C:-/src/local/user-conf+current}/tool/uc/part/-env,fun,uc.sh}"
+. "${UC_ENV_PART}"
 
 # Register current part
 
 uc_env @part G us-system
+
+uc_env_continue ()
+{
+  ! >/dev/null 2>&1 declare -F uc:env:bash || {
+    >/dev/null 2>&1 declare -F uc_env || {
+      . "${UC_ENV_PART:?}"
+    }
+    uc_env +continue
+  }
+}
+
+uc_env_types["uc_env_continue"]=f
+uc_env_exports+=( uc_env_continue UC_ENV_PART )
 
 # Inline: uc-env-util
 
@@ -93,6 +106,7 @@ uc_env_types["_+"]=d
 uc_env_parts["_+.d"]=sh_vadd\ \"\$@\"
 
 uc_env_exports+=( sh_{als_exp,funbody,mapfile,vadd} uc_env )
+
 
 # Inline: uc-core
 
@@ -328,7 +342,7 @@ uc_env_exports+=(
 
 uc_env @part G uc-log
 
-uc_log_init ()
+uc_log_env ()
 {
   BASH_UC_SCRIPTNAME=Local
   BASH_UC_SCRIPTTAG=$0[$$]:local-env
@@ -340,7 +354,7 @@ uc_log_init ()
 uc_env @locals BASH_UC_{SCRIPTNAME,SCRIPTTAG}
 uc_env @exports LOG UC_LOG_BASE
 
-_+ "uc_env_hooks[\"start\"]" ' ' uc_log_init
+_+ "uc_env_hooks[\"start\"]" ' ' uc_log_env
 
 # TODO: configuration for $LOG
 
@@ -457,4 +471,4 @@ uc_env @part G uc-host
   }
 }
 
-# Id: -env-system,uc
+# Id: -env-system,uc /etc/profile.d/us-system

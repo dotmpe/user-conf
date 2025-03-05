@@ -1,8 +1,17 @@
 # Group function holding all user-conf env tools.
 # TODO: check with uc-env options
+# Prefixes:
+# - hide/exclude from argument values: use for flags and non-mutating commands
+# + change env state
+# @ include in global set
+# % change env
+# : other special or internal/private/local call
+#shellcheck disable=2128 # FUNCNAME is array, but just want first value os using
+# short notation
 uc_env ()
 {
   : "${1:?$ENV_CTX:$FUNCNAME: Switch expected}"
+  local lk="${lk-}:${ENV_CTX}:$FUNCNAME:$1"
   case "${1}" in
   ( -d- ) # ~~ [<Type-src>] # Generate definition statement(s)
     local -n _dmin_dt=${2:-uc_env_types}
@@ -122,7 +131,7 @@ EOM
     local -a _env_hooks
     for _env_hook in ${!uc_env_hooks[*]}
     do
-      _env_hooks=( ${uc_env_hooks["$_env_hook"]} )
+      read -a _env_hooks <<< "${uc_env_hooks["$_env_hook"]}"
       stderr echo "Hooks-$_env_hook-len: ${#_env_hooks[*]}"
     done
   ;;
@@ -134,9 +143,19 @@ EOM
     declare -gn "${2}"="${3% *}"
   ;;
   ( +continue ) # ~ .... #
+
+    uc:env:bash &&
+      _uconf_debug_ "Loaded uc-env export" ||
+      _uconf_notice_ "Continue existing uc-env"
+
     # run-defs without exports, just special attributes and other dyn. types
     if_ok "$(uc_env -dif%)" &&
-    eval "$_"
+    test -n "$_" && {
+      eval "$_" ||
+        _ERR "Failed to continue from env export: E$?" ||
+          ${uc_stat:-exit} $?
+    } ||
+      _uconf_warn_ "uc-env +continue: Nothing to continue from"
   ;;
   ( +d ) # ~~ <Type> <Id> [<Spec...>] # Declare & define
     uc_env @d:${1} "${@:2}" &&
@@ -167,23 +186,23 @@ EOM
           [[ ${uc_env_parts["$_env_key.n"]:+set} ]] || {
             if_ok "$(sh_funbody "$_env_key")" &&
             uc_env_parts["$_env_key.n"]=${_} ||
-              $uc_log alert : "Failed to retrieve dynamic function body" \
-                "E$?:$_env_key" $? || return
+              _uconf_alert_ "Failed to retrieve dynamic function body: E$?:$_env_key" $? || return
           }
         ;;
       esac
     done
   ;;
   ( +start ) # ~~ ... [ -- <ctx...> ] #
-    stderr echo "$0[$$]:$FUNCNAME$*"
     local _sh=${SHELL_NAME:-$0}
     [[ ${*:2:2} == "profile --" ]] && {
       uc_env :export
     }
     [[ ${*:2:2} == "rc --" ]] && {
-      stderr echo "$0[$$]:$FUNCNAME$1: Interactive auto-start of $_sh env"
+      _uconf_debug_ "Running uc-env rc init hooks"
+      #stderr echo "$0[$$]:$FUNCNAME$1: Interactive auto-start of $_sh env"
       uc_env :hooks:start
-    }
+    } ||
+      _uconf_info_ "No uc-env init hooks"
     # run-defs
     #if_ok "$(uc_env -dif%)" &&
     #eval "$_" &&
@@ -200,16 +219,16 @@ EOM
       declare -g${_env_type} $_env_key
     done
   ;;
-  ( :init | +continue ) # ~~ ... [ -- <ctx...> ]
-    stderr echo "[$0[$$]:$FUNCNAME$*"
+  ( :init ) # ~~ ... [ -- <ctx...> ]
+    #stderr echo "[$0[$$]:$FUNCNAME$*"
     : "${2:?$ENV_CTX:$FUNCNAME${1}: Tag expected}"
     if_ok "$(declare -F uc:env:bash)" && {
       uc:env:bash ||
-        $LOG info ":ucbuild[$$]:${2}-env" "Failed loading compiled env meta" \
-          "E$?" ${_E_ifenv:-121} || ${uc_stat:-exit} $?
+        _WARN "Failed loading compiled env meta: E$?" ||
+          ${uc_stat:-exit} $?
     }
     [[ ${uc_env_types["${2}"]-} = G ]] ||
-      stderr echo Group expected
+      _uconf_alert_ "Group expected $2:${uc_env_types["${2}"]} (ignored)"
     uc_env_init
   ;;
   ( :inline-part | @part ) # ~ <Type> <Id> ...

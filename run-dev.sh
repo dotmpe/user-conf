@@ -9,8 +9,9 @@ PWP=$(pwd -P)
 gh_keyfile=~/.ssh/id_rsa
 kbn=id_rsa
 set -x
+stderr echo "Starting docker..."
 docker run \
-  -ti \
+  -tiP \
   --rm \
   --name user-conf-dev \
   --volume /dev/log:/dev/log \
