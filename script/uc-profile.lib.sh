@@ -10,8 +10,7 @@ uc_profile_load_lib ()
   }
 
   test "0" = "${UC_PROFILE_SRC_LIB-}" || {
-    test -z "$_" ||
-      echo "Possible recursion at uc-profile-load-lib" >&2
+    [ -z "$_" ] || _CRIT "Possible recursion at uc-profile-load-lib" || return
     uc_profile_source_lib || return
   }
 }
@@ -32,7 +31,8 @@ uc_profile_boot_parts ()
 
 uc_cmd ()
 {
-  args_uc__argc :uc-cmd $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-cmd $# eq 1 || return
   test -x "$(command -v "$1")"
 }
 
@@ -78,23 +78,27 @@ uc_fun () # ~ <Function-name>
 # Same as uc-source but also take snapshot of env vars name-list
 uc_profile_import () # ~ [Source-Path]
 {
-  uc_source "${1:?"$(uc_exc uc:profile-import)"}" &&
+  uc_source "${1:?"$(uc_exc uc:profile-import)"}"
+  return
+
+  # XXX: see new uc-env for preemptive tracking
   : "${1//\//-}" &&
   #if_ok "$(uc_profile_mkid <<< "${_}" )" &&
   if_ok "$(echo "$_" | uc_profile_mkid )" &&
   uc_profile__record_env__keys "${_:?}" ||
-    $uc_log error ":import" "Loading shell file" "E$?:$1" $? ||
+    "${uc_log:-${LOG?}}" error ":import" "Loading shell file" "E$?:$1" $? ||
     return
 
   # TODO: record ENV-SRC snapshot as well.
   test -z "${USER_CONF_DEBUG-}" ||
-    $uc_log warn ":import" "New env loaded, keys stored" "$1"
+    "${uc_log:-${LOG?}}" warn ":import" "New env loaded, keys stored" "$1"
 }
 
 #
 uc_profile_mkid () # ~
 {
-  args_uc__argc :env-keys $# || return
+  [[ $# -eq 0 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :env-keys $# || return
   tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
 }
 
@@ -134,24 +138,29 @@ uc_profile_parts () # ~ <Namespec>
 # The actual source part for uc-profile-load-lib
 uc_profile_source_lib () # ~
 {
-  test -z "${UC_PROFILE_SRC_LIB-}" || {
-    echo "Possible recursion at uc-profile-source-lib" >&2
-    exit 3
+  [ -z "${UC_PROFILE_SRC_LIB-}" ] || {
+    _CRIT "Possible recursion at uc-profile-source-lib" || return
   }
   UC_PROFILE_SRC_LIB=1
 
-  : "${UC_LIB_PATH:=$U_C/script}"
-  . "${UC_LIB_PATH:?}/lib-uc.lib.sh" &&
-  lib_uc_lib__load &&
-  lib_uc_lib__init || return
+  >/dev/null 2>&1 declare -F lib_require || {
+    : "${U_C:-/src/local/user-conf+current}"
+    : "${UC_LIB_PATH:=$_/script}"
+    . "${UC_LIB_PATH:?}/lib-uc.lib.sh" &&
+    lib_uc_lib__load &&
+    lib_uc_lib__init || return
+  }
 
+  #_NOTICE "Ready to source libs and init"
   # FIXME: build proper cached profile...
   #test -n "${uc_lib_profile:-}" || . "${UCONF:?}/etc/profile.d/bash_fun.sh"
 
   # FIXME: lib-require in lib-init
   lib_require shell-uc str-uc syslog-uc &&
-    lib_init &&
-    lib_init
+  #_NOTICE "Initializing" &&
+  lib_init &&
+  #_NOTICE "Done"
+  true
 
   UC_PROFILE_SRC_LIB=$?
 
@@ -162,19 +171,20 @@ uc_profile_source_lib () # ~
 # when next to no profile whatsoever has been loaded.
 uc_profile_init () # ~
 {
-  INIT_LOG=$LOG
+  INIT_LOG=${LOG:?}
 
   uc_profile_load_lib || return
 
   # XXX: uc_ctx HOST PWD 0 - USER
 
-  args_uc__argc :init $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :init $# eq 1 || return
 
   set -- $(printf -- '%s:' $(hostname -s) $USER $(basename -- "$SHELL") $$ "$1")
   export UC_SH_ID="${1:0:-1}"
 
   # Comply with dynamic init of non-interactive shell, but be more cautious
-  test -z "${PS1-}" && {
+  [ -z "${PS1-}" ] && {
     # Don't try to exit in the middle of a script
     UC_LOG_EXITS=-1
   } || {
@@ -184,7 +194,7 @@ uc_profile_init () # ~
       set -h # Remember the location of commands as they are looked up. (same as hashall)
       set -E # If set, the ERR trap is inherited by shell functions.
       set -T
-      set -e
+      #set -e
       set -u # Treat unset variables as an error when substituting. (same as nounset)
       set -o pipefail #
       shopt -s extdebug
@@ -192,7 +202,7 @@ uc_profile_init () # ~
   }
 
   uc_log_init && {
-    $uc_log "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
+    "${uc_log:-${LOG?}}" "info" ":init" "U-c profile init has started dynamic shell setup" "-:$-"
     : "${LOG:=uc_log}"
 
   } || {
@@ -206,13 +216,14 @@ uc_profile_init () # ~
   test "0" = "${UC_FAIL:-0}" || return $_
   unset INIT_LOG
   UC_PROFILE_INIT=1
-  $uc_log "info" ":init" "U-c profile init done, proceeding"
+  "${uc_log:-${LOG?}}" "info" ":init" "U-c profile init done, proceeding"
 }
 
 # Finalize init for shell session
 uc_profile_start () # ~
 {
-  args_uc__argc :start $# || return
+  #args_uc__argc :start $# || return
+  [[ $# -eq 0 ]] || return ${_E_GAE:-193}
 
   # Be nice and switch logger back to exec script
   export LOG="${UC_PROFILE_SELF}"
@@ -241,15 +252,16 @@ uc_profile_start () # ~
 
   typeset bootsec=$(( $(date +%s) - uc_profile_start ))
   [[ $bootsec -le 2 ]] && : "" || : " after ${bootsec}s"
-  $uc_log "notice" ":start" "Session ready$_" "$ctx"
+  "${uc_log:-${LOG?}}" "notice" ":start" "Session ready$_" "$ctx"
 }
 
 # Add parts (scripts) to shell session
 uc_profile_load () # ~ NAME [TAG]
 {
-  args_uc__argc :load $# gt || return
+  #args_uc__argc :load $# gt || return
+  [[ $# -gt 0 ]] || return ${_E_GAE:-193}
   ! "${DEBUG:-false}" ||
-    $uc_log debug :load "Start loading part" "$#:$*"
+    "${uc_log:-${LOG?}}" debug :load "Start loading part" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
   fnmatch "-*" "$1" && {
@@ -279,15 +291,15 @@ uc_profile_load () # ~ NAME [TAG]
     # error unless '*<name>' was specified
     test $uc_profile_part_exists -eq 0 && return 255 # ie. -1
     #>&2 echo "No such part found $uc_profile_partname"
-    $uc_log "error" ":load" "Error: no uc-source" "name:$uc_profile_partname;*:$*"
+    "${uc_log:-${LOG?}}" "error" ":load" "Error: no uc-source" "name:$uc_profile_partname;*:$*"
     return 6
   }
 
   ! "${DEBUG:-false}" ||
-    $uc_log debug ":load" "Loading part" "$*:$uc_profile_partname"
+    "${uc_log:-${LOG?}}" debug ":load" "Loading part" "$*:$uc_profile_partname"
   uc_source "$uc_profile_load_path"
   uc_profile_part_ret=$?
-  $uc_log debug ":load" "Loaded part" "$*:$uc_profile_partname:E$uc_profile_part_ret"
+  "${uc_log:-${LOG?}}" debug ":load" "Loaded part" "$*:$uc_profile_partname:E$uc_profile_part_ret"
 
   local _stat="${!uc_profile_part_envvar-}"
 
@@ -321,8 +333,8 @@ uc_profile_cleanup_SH ()
   local rs=${?:-0}
   test $rs -eq 0 || {
     uc_signal_exit $rs && {
-      $uc_log "warn" ":cleanup" "Some command exited after signal $signal_name ($exit_signal) [$rs]"
-    } || $uc_log "warn" ":cleanup" "Some command exited with code [$rs]"
+      "${uc_log:-${LOG?}}" "warn" ":cleanup" "Some command exited after signal $signal_name ($exit_signal) [$rs]"
+    } || "${uc_log:-${LOG?}}" "warn" ":cleanup" "Some command exited with code [$rs]"
   }
   uc_profile_cleanup
 }
@@ -332,8 +344,8 @@ uc_profile_cleanup_BASH ()
   local lc="$BASH_COMMAND" rs=${?:-0}
   test $rs -eq 0 || {
     uc_signal_exit $rs && {
-      $uc_log "warn" ":cleanup" "Command [$lc] exited after signal $signal_name ($exit_signal) [$rs]"
-    } || $uc_log "warn" ":cleanup" "Command [$lc] exited with code [$rs]"
+      "${uc_log:-${LOG?}}" "warn" ":cleanup" "Command [$lc] exited after signal $signal_name ($exit_signal) [$rs]"
+    } || "${uc_log:-${LOG?}}" "warn" ":cleanup" "Command [$lc] exited with code [$rs]"
   }
   uc_profile_cleanup
 }
@@ -341,9 +353,10 @@ uc_profile_cleanup_BASH ()
 # Record env keys only; assuming thats safe, no literal dump b/c of secrets
 uc_profile__record_env__keys ()
 {
-  args_uc__argc_n :record-env:keys $# eq 1 || return
-  test ! -e "$SD_SHELL_DIR/$UC_SH_ID:$1.sh" || {
-    $uc_log "error" ":record-env:keys" "Keys already exist" "$1"
+  [ $# -eq 1 ] || return ${_E_GAE:-193}
+  #args_uc__argc_n :record-env:keys $# eq 1 || return
+  [ ! -e "$SD_SHELL_DIR/$UC_SH_ID:$1.sh" ] || {
+    "${uc_log:-${LOG?}}" "error" ":record-env:keys" "Keys already exist" "$1"
     return 1
   }
   env_keys > "$SD_SHELL_DIR/$UC_SH_ID:$1.sh"
@@ -351,7 +364,8 @@ uc_profile__record_env__keys ()
 
 uc_profile__record_env__ls ()
 {
-  args_uc__argc_n :record-env-ls $# || return
+  [[ $# -eq 0 ]] || return ${_E_GAE:-193}
+  #args_uc__argc_n :record-env-ls $# || return
   for name in "$SD_SHELL_DIR/$UC_SH_ID"*
   do
     echo "$(ls -la "$name") $( count_lines "$name") keys"
@@ -366,7 +380,7 @@ uc_profile_boot () # TAB [types...]
   : "${uc_profile_start:=$(date +%s)}"
   test -n "${1-}" || set -- "${UC_TAB:?}" "${@:2}"
   test -s "${1-}" || {
-    $uc_log "crit" ":boot" "Missing or empty profile table" "${1-}"
+    "${uc_log:-${LOG?}}" "crit" ":boot" "Missing or empty profile table" "${1-}"
     return
   }
 
@@ -384,7 +398,7 @@ uc_profile_boot () # TAB [types...]
     grep -v -e '^ *#' -e '^ *$' "$tab" >"$c"
   }
 
-  $uc_log "info" ":boot" "Start sourcing profile.tab parts" "$*:wcl=$(wc -l "$c")"
+  "${uc_log:-${LOG?}}" "info" ":boot" "Start sourcing profile.tab parts" "$*:wcl=$(wc -l "$c")"
 
   local name{,s,spec} type rest
   while read -r namespec type rest
@@ -396,7 +410,7 @@ uc_profile_boot () # TAB [types...]
 
       test $m -eq 1 || {
         test -z "${USER_CONF_DEBUG-}" ||
-          $uc_log warn ":boot<>$namespec" "Skipped profile.tab entry" "$type not in $*"
+          "${uc_log:-${LOG?}}" warn ":boot<>$namespec" "Skipped profile.tab entry" "$type not in $*"
         continue
       }
     }
@@ -410,7 +424,7 @@ uc_profile_boot () # TAB [types...]
         require=false namespec=${namespec:1} || require=true
       mapfile -t names <<< "$(uc_profile_partnames "$namespec")"
       [ "${require}" = false ] || [ ${#names[*]} -gt 0 ] ||
-        $uc_log "error" ":load" "Error: no uc-source" \
+        "${uc_log:-${LOG?}}" "error" ":load" "Error: no uc-source" \
           "name:$namespec;*:$*" 6 || return
     else
       # Can leave '-' prefix for uc-profile-load to handle
@@ -441,7 +455,7 @@ uc_profile_boot () # TAB [types...]
   done <"$c"
   local context=
   ! "${DEBUG:-false}" || context="${names-}"
-  $uc_log notice ":boot" "Bootstrapped '$*' from user's profile.tab" "$context"
+  "${uc_log:-${LOG?}}" notice ":boot" "Bootstrapped '$*' from user's profile.tab" "$context"
 }
 
 # 'Tagged' files are a sort of composite names. Normal acceptible names are
@@ -485,7 +499,8 @@ uc_profile__record_env__diff_keys () # ~ FROM TO
 {
   test -n "${1-}" || set -- "$(ls "$SD_SHELL_DIR" | head -n 1)" "${2-}"
   test -n "${2-}" || set -- "$1" "$(ls "$SD_SHELL_DIR" | tail -n 1)"
-  args_uc__argc_n :env-diff-keys $# eq 2 || return
+  [[ $# -eq 2 ]] || return ${_E_GAE:-193}
+  #args_uc__argc_n :env-diff-keys $# eq 2 || return
 
   comm -23 "$SD_SHELL_DIR/$2" "$SD_SHELL_DIR/$1"
 }
@@ -519,7 +534,7 @@ uc_signal_exit ()
 uc_source () # ~ [Source-Path]
 {
   test $# -gt 0 -a -n "${1-}" || {
-    $uc_log error ":source" "Expected file argument" "$1"; return 64
+    "${uc_log:-${LOG?}}" error ":source" "Expected file argument" "$1"; return 64
   }
 
   local rs
@@ -529,10 +544,10 @@ uc_source () # ~ [Source-Path]
 
   test $rs -eq 0 && {
     test -z "${USER_CONF_DEBUG-}" ||
-      $uc_log "debug" ":source" "Done sourcing" "$1"
+      "${uc_log:-${LOG?}}" "debug" ":source" "Done sourcing" "$1"
   } || {
    test $rs -eq $E_UC_PENDING ||
-     $uc_log "error" ":source" "Error ($rs) sourcing" "$1"
+     "${uc_log:-${LOG?}}" "error" ":source" "Error ($rs) sourcing" "$1"
   }
   return $rs
 }
@@ -564,19 +579,21 @@ sys_uc_source_trace () # ~ [<Head>] [<Msg>] [<Offset=2>] [ <var-names...> ]
 
 uc_user_init ()
 {
-  args_uc__argc :uc-user-init $# || return
+  [[ $# -eq 0 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-user-init $# || return
   local key= value=
   for key in ${UC_USER_EXPORT:-}
   do
     uc_var_update "$key" || {
-      $uc_log "error" "" "Missing user env" "$key"
+      "${uc_log:-${LOG?}}" "error" "" "Missing user env" "$key"
     }
   done
 }
 
 uc_var ()
 {
-  args_uc__argc :uc-var $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-var $# eq 1 || return
   local val upd
 
   # Force update or try existing value first
@@ -599,7 +616,8 @@ uc_var ()
 # function body
 uc_var_define ()
 {
-  args_uc__argc :uc-var-define $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-var-define $# eq 1 || return
   local varname="${1:?}"
   eval "$(cat <<EOM
 
@@ -615,7 +633,8 @@ EOM
 # TODO: deprecate DEFAULT_
 uc_var_reset ()
 {
-  args_uc__argc :uc-var-reset $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-var-reset $# eq 1 || return
   local def_key def_val
   def_key="DEFAULT_${1^^}"
   def_val="${!def_key?Cannot reset user env $1}"
@@ -625,7 +644,8 @@ uc_var_reset ()
 
 uc_var_update () # ~ <Var>
 {
-  args_uc__argc :uc-var-update $# eq 1 || return
+  [[ $# -eq 1 ]] || return ${_E_GAE:-193}
+  #args_uc__argc :uc-var-update $# eq 1 || return
   local varname="${1^^}"
   # XXX: str-upper and lower tooling? (echo "$1" | tr '[:lower:]' '[:upper:]')"
   uc_fun var_${varname}_update && {

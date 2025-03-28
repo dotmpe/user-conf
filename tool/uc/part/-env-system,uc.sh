@@ -1,5 +1,5 @@
 [[ ${BASH+set} ]] || {
-  >&2 echo "-env-system,uc.sh part is incompatible with shell ${SHELL:-(unspecified)}"
+  _CRIT "-env-system,uc.sh part is incompatible with shell ${SHELL:-(unspecified)}"
   return
 }
 
@@ -338,25 +338,38 @@ uc_env_exports+=(
   str_{{glob,word}match,{v,}word}
 )
 
-# Inline: uc-log
+# Inline: sys-log
 
-uc_env @part G uc-log
+uc_env @part G sys-log
 
-uc_log_env ()
-{
-  BASH_UC_SCRIPTNAME=Local
-  BASH_UC_SCRIPTTAG=$0[$$]:local-env
-  UC_LOG_BASE=$BASH_UC_SCRIPTTAG
+[[ ! -s /etc/uc/log ]] || {
 
-  : "${LOG:=/etc/profile.d/uc-profile.sh}"
+  # XXX: pre-export any other vrs
+  : "$(grep -v '^\(#.*\|[ $'\t\n\r']*\)$' /etc/uc/log)"
+  test -z "$_" || {
+    : "$(<<< "$_" sed 's/^\([A-Za-z_][A-Z0-9a-z_]*\)=.*$/\1/')"
+    <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports
+  }
 }
 
-uc_env @locals BASH_UC_{SCRIPTNAME,SCRIPTTAG}
+sys_log_env ()
+{
+  [[ ! -s /etc/uc/log ]] || {
+    : "$(grep -v '^\(#.*\|[ $'\t\n\r']*\)$' /etc/uc/log)"
+    test -z "$_" || {
+      eval "$_" ||
+      _CRIT "UC log settings failed: E$? /etc/uc/log"
+    }
+  }
+  : "${LOG:=/etc/profile.d/uc-profile.sh}"
+}
+uc_env_types["sys_log_env"]=f
+uc_env_exports+=( sys_log_env )
+
+#uc_env @locals BASH_UC_{SCRIPTNAME,SCRIPTTAG}
 uc_env @exports LOG UC_LOG_BASE
 
-_+ "uc_env_hooks[\"start\"]" ' ' uc_log_env
-
-# TODO: configuration for $LOG
+_+ "uc_env_hooks[\"start\"]" ' ' sys_log_env
 
 # Inline: os-release
 
@@ -371,7 +384,8 @@ uc_env @part G os-release
   test -z "$_" || {
     <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports
     : "$(sed 's/^/OS_/g' /etc/os-release)"
-    eval "$_"
+    eval "$_" ||
+      _CRIT "OS release failed: E$? /etc/os-release"
   }
   # Typical values for ubuntu and debian based
   # are OS_{NAME,ID{,_LIKE},VERSION{,_{CODENAME,ID}}} and others
@@ -460,15 +474,17 @@ uc_env_exports+=( os_{,path_}add )
 
 uc_env @part G uc-host
 
-[[ ! -s /etc/uc-host ]] || {
+[[ ! -s /etc/uc/host ]] || {
 
   # XXX: It's not very nice, but simple and effective for now
-  : "$(grep -v '^\(#.*\|[ $'\t\n\r']*\)$' /etc/uc-host)"
+  : "$(grep -v '^\(#.*\|[ $'\t\n\r']*\)$' /etc/uc/host)"
   test -z "$_" || {
-    eval "$_"
-    : "$(<<< "$_" sed 's/^\([A-Za-z_][A-Z0-9a-z_]*\)=.*$/\1/')"
-    <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports
+    eval "$_" &&
+    : "$(<<< "$_" sed 's/^\([A-Za-z_][A-Z0-9a-z_]*\)=.*$/\1/')" &&
+    <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports ||
+      _CRIT "UC host settings failed: E$? /etc/uc/host"
   }
 }
 
-# Id: -env-system,uc /etc/profile.d/us-system
+_INFO "Loaded -env-system,uc"
+# Id: -env-system,uc /etc/profile.d/us-system.sh

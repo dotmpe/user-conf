@@ -52,6 +52,13 @@ append_path () # ~ <DIR> # PATH helper (does not export PATH!)
     test 1 -eq $? || return $_
 }
 
+fnmatch ()
+{
+  : copy "str.lib.sh"
+  _IFDBG _ALERT "Deprecated: ${FUNCNAME[*]}"
+  case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
+}
+
 add_path ()
 {
   : about "Simple PATH helper to append only new, unique instance"
@@ -86,13 +93,15 @@ export PATH
   ! _uconf_shell_isdebug ||
     _INFO "Starting Bash uc-profile"
 
-  export -f append_path add_path
+  export -f append_path add_path fnmatch
 
   . /etc/profile.d/uc-profile.sh ||
     _FATAL "Expected uc-profile.sh part installed" || return
 
-  uc_log_init && LOG=uc_log ||
-    _WARN "Failed interactive log init (ignored): E$?"
+  [ -n "${LOG-}" ] || {
+    uc_log_init && LOG=uc_log ||
+      _WARN "Failed interactive log init (ignored): E$?"
+  }
 
   # XXX: If non-interactive (or interactive setup fails), try static config and export working LOG now.
   #LOG=/etc/profile.d/uc-profile.sh
@@ -226,6 +235,6 @@ fi
 
 # TODO: uc-env-{export,init,start} trigger env, see home/user parts
 
-_NOTICE "System profile finished"
+_IFVBS _NOTICE "System profile finished"
 
 # ex:ft=sh:

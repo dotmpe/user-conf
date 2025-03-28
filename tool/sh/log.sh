@@ -24,7 +24,7 @@ true "${UC_SELF:="$U_C/tool/sh/log.sh"}"
 
 ## Entrypoints if called as script.
 
-uc_log_env () # ~ [<Switch>]
+uc_log_main_env () # ~ [<Switch>]
 {
   case "${1:-}" in
   ( dyn )
@@ -95,8 +95,8 @@ uc_main_log () # ~ (env|[log] <log-args>)
     uc_log=uc_faillog
   }
 
-  # Check arguments, if libs are loaded
-  uc_fun args_uc__argc && { args_uc__argc :uc-main-log $# gt || return; }
+  # TODO: Check arguments, if libs are loaded
+  #uc_fun args_uc__argc && { args_uc__argc :uc-main-log $# gt || return; }
 
   # Check arguments, perform, exit.
   test "$1" = "log" && shift
@@ -146,7 +146,8 @@ uc_log_init () # ~
   # XXX: a bit of deferred uc-profile setup here
   local load_log_level
   ! "${LOG_DEBUG:-false}" && load_log_level=4 || load_log_level=${UC_LOG_LEVEL:?}
-  v=${load_log_level} LOG=$INIT_LOG uc_profile_load_lib || return
+  v=${load_log_level} LOG=$INIT_LOG uc_profile_load_lib ||
+    _CRIT "Failed uc-profile-load-lib E$?" || return
 
   # Setup logger (but not LOG)
   { uc_fun uc_log || syslog_uc_init uc_log
@@ -169,7 +170,7 @@ case "$0" in
 
         ( "" ) exit 1 ;;
 
-        ( env ) shift; uc_log_env "$@"; exit $? ;;
+        ( env ) shift; uc_log_main_env "$@"; exit $? ;;
         ( log | * )
           uc_main_log "$@"; exit $? ;;
       esac

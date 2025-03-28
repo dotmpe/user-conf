@@ -2,7 +2,7 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples [Debian]
 
-# 2006--2024,2025  Berend van Berkum <dev@dotmpe.com>
+# 2006--2025  Berend van Berkum <dev@dotmpe.com>
 
 : "${ENV_BASE:=rc}"
 : "${ENV_CTX:=$0[$$]:~/.bashrc}"
@@ -12,6 +12,10 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.bashrc
 
 # @ Inline: Shell:running-interactively
 # If not running interactively, then don't do any dynamic stuff either
+#case $- in
+#    *i*) ;;
+#      *) return;;
+#esac
 [[ ${PS1-} ]] || {
   #
   [[ "${ENV_BASE:0:2}" = "rc" ]] && {
@@ -20,18 +24,12 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.bashrc
   } ||
     _DEBUG "Not starting uc-env in base $ENV_BASE"
 
-  return
+  return 0
 }
-
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
 
 
 ### Run user-profile boot phases
-[[ ! ${UC_PROFILE_INIT-} ]] || {
+[[ -n ${UC_PROFILE_INIT-} ]] || {
 
   # Include 'preload' group before Uc init
   uc_profile_boot "$UC_TAB" preload || return
@@ -41,19 +39,20 @@ esac
 }
 
 _IFDBG _DEBUG "Booting user RC session <$UC_TAB>"
-
 uc_profile_boot "$UC_TAB" rc || return
 
 
 ### Command aliases
-test -n "${UC_SH_ALIASES-}" && {
+[ -n "${UC_SH_ALIASES-}" ] && {
   _IFVBS _INFO "Shell aliases disabled per config <Uc-Sh-Aliases:${UC_SH_ALIASES:?}>"
 } || {
-  test ! -e ~/.alias && {
+  [ ! -e ~/.alias ] && {
     _IFDBG _WARN "No user aliases found"
   } || {
-    _DEBUG "Sourcing user aliases..."
-    ${uc_source:-"."} ~/.alias
+    _IFDBG _DEBUG "Sourcing user aliases..."
+    "${uc_source:-"."}" ~/.alias &&
+    _INFO "User aliases OK" ||
+    _WARN "User aliases E$?"
   }
 }
 # don't put duplicate lines or lines starting with space in the history.
@@ -169,19 +168,19 @@ fi
 
 [[ "${ENV_BASE:0:2}" = "rc" ]] && {
 
-  _DEBUG "Loaded, starting now"
-  ! declare -F uc_env >/dev/null 2>&1 &&
+  _DEBUG "Loaded rc, starting now"
+  >/dev/null 2>&1 ! declare -F uc_env &&
   _WARN "Missing uc-env profile" || {
     uc_env +start rc -- $0 "$@"
   }
-  _INFO "Load complete, starting..."
+  _IFDBG _INFO "Load complete, starting..."
   uc_profile_start
 
 } || {
   [[ "${ENV_BASE:0:7}" = "profile" ]] &&
   _INFO "Load complete (login)" || {
     _WARN "Unrecognized env base: ${ENV_BASE}"
-    _INFO "Load complete, starting..."
+    _INFO "Load complete, starting rc..."
     uc_profile_start
   }
 

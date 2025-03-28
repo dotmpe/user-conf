@@ -151,9 +151,10 @@ EOM
     # run-defs without exports, just special attributes and other dyn. types
     if_ok "$(uc_env -dif%)" &&
     test -n "$_" && {
-      eval "$_" ||
-        _ERR "Failed to continue from env export: E$?" ||
-          ${uc_stat:-exit} $?
+      eval "$_" || {
+        _uconf_err_ "Failed to continue from env export: E$?" ||
+          "${uc_stat:-exit}" $?
+      }
     } ||
       _uconf_warn_ "uc-env +continue: Nothing to continue from"
   ;;
@@ -220,12 +221,12 @@ EOM
     done
   ;;
   ( :init ) # ~~ ... [ -- <ctx...> ]
-    #stderr echo "[$0[$$]:$FUNCNAME$*"
     : "${2:?$ENV_CTX:$FUNCNAME${1}: Tag expected}"
     if_ok "$(declare -F uc:env:bash)" && {
-      uc:env:bash ||
-        _WARN "Failed loading compiled env meta: E$?" ||
-          ${uc_stat:-exit} $?
+      uc:env:bash || {
+        _uconf_warn_ "Failed loading compiled env meta: E$?" ||
+          "${uc_stat:-exit}" $?
+      }
     }
     [[ ${uc_env_types["${2}"]-} = G ]] ||
       _uconf_alert_ "Group expected $2:${uc_env_types["${2}"]} (ignored)"
@@ -252,8 +253,10 @@ EOM
     for _ucenv_hook in ${uc_env_hooks["${_ucenv_hookseq}"]}
     do
       : "${_ucenv_hook:?$ENV_CTX:$FUNCNAME$1: Empty env key in hook sequence $_ucenv_hookseq}"
-      "${_ucenv_hook}" -- ${FUNCNAME}${1} "${@:2}"
-      stderr echo "E$? - $_ucenv_hook"
+      "${_ucenv_hook}" -- ${FUNCNAME}${1} "${@:2}" &&
+      _uconf_info_ "Hook $_ucenv_hook OK" || {
+        _uconf_warn_ "Hook $_ucenv_hook E$?" || true
+      }
     done
   ;;
   ( :unexport-parts | @locals )
@@ -296,8 +299,11 @@ EOM
       : "${_%\}}  : :#: Local-env append: "
       echo  "$_"
       : "${*:2}"
-      stderr printf 'TODO: incremental dump, context: %s\nenv base: %s\n' \
-        "${_@Q}" "${ENV_BASE-(unset)}"
+      # XXX: cleanup
+      #$LOG "warn" ":uc-env:dump+bash" \
+      _uconf_warn_ "TODO: incremental dump ${_@Q},base:${ENV_BASE-(unset)}"
+      #stderr printf 'TODO: incremental dump, context: %s\nenv base: %s\n' \
+      #  "${_@Q}" "${ENV_BASE-(unset)}"
 
     } || {
       echo "  : :#: Local-env root: "

@@ -23,13 +23,10 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 [[ ${PS1-} ]] || return
 
 ENV_BASE=${ENV_BASE-}${ENV_BASE:+ }rc
+#ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }bashrc
 : "${ENV_CTX:=$0[$$]:bashrc}"}
 
 ### Load static helper env
-test -n "${uc_log-}" || {
-  . /etc/profile.d/uc-profile.sh || return
-  uc_log_init
-}
 
 
 ### Default bash.bashrc
