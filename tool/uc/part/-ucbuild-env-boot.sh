@@ -37,7 +37,7 @@ done && [[ -s $__ ]] && . "$__" ||
   "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info ":ucbuild[$$]:env-boot" "Bootable env ready"
+  $LOG info ":ucbuild[$$]:env-boot" "Bootable env start"
 
 # Boilerplate end:
 

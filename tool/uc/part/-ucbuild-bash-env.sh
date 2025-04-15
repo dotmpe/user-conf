@@ -21,33 +21,49 @@
 # Stop subshells from restarting this script. We'll export any bits when needed.
 unset BASH_ENV 2>/dev/null || true
 
-# This env trigger depends on uc-env or a minimal user-script env being
-# established first.
+# This env trigger depends on uc-env
 
 #uc-env -q uc:env && {
-if_ok "$(declare -F uc:env:bash)" && {
-  uc_env +continue ||
-    $LOG info ":ucbuild[$$]:bash-env" "Failed starting from compiled env" \
-      "E$?" ${_E_ifenv:-121} || ${uc_stat:-exit} $?
+if_ok "$(declare -F uc_env)" && {
+  if_ok "$(declare -F uc:env:bash)" && {
+    uc_env +continue ||
+      $LOG info ":ucbuild[$$]:bash-env" "Failed starting from compiled env" \
+        "E$?" ${_E_ifenv:-121} || ${uc_stat:-exit} $?
+  } || {
+    declare -gA uc_env{,_{parts,types}}
+    declare -ga uc_env_exports
+    # XXX: dyanmic setup disabled for now, see local-env
+  }
 } || {
-  declare -gA uc_env{,_{parts,types}}
-  declare -ga uc_env_exports
-  # XXX: dyanmic setup disabled for now, see local-env
+  # XXX: we need to fork the entire process to get env
+  uc-env -R uc:env || exit $?
 }
 
-# TODO: run callbacks
-[[ ! ${uc_env_parts['local']+set} ]] || {
-  stderr echo "Found local exports"
-  return
-}
+# If the right env is already provided, we just run the
+# start hooks.
+#uc_env -qs local base=${EWD:?} && {
+#  uc_env :hooks:start
+#  return
+#}
+# This can happen if another script takes control of the
+# env, or if a parent shell loaded a static or cached slice.
+#for __static in ${EWD:?}/{,.}{,_}static.sh
+#do
+#  declare -p __static
+#  #[[ -e $static ]]
+#done
+
+
+# To get the local env, we need data of which we don't know
+# yet. The key here is we need a pending attribute for the
+# current base, which is then used as the us env squence below.
 
 ! "${DEBUG:-false}" || {
-    declare -x US_DEBUG=${US_DEBUG:-false}
-    declare -x UC_DEBUG=${UC_DEBUG:-false}
+  declare -x US_DEBUG=${US_DEBUG:-false}
+  declare -x UC_DEBUG=${UC_DEBUG:-false}
 }
 
-: "${ENV_PEND=local}"
-declare +x ENV_PEND
+#: "${ENV_PEND=local}"
 
 : "${BASH_UC_SCRIPTNAME:=Local}"
 : "${BASH_UC_SCRIPTTAG:=$0[$$]:bash-env}"
@@ -114,5 +130,9 @@ eval "uc:env:bash () {
     done)
 }"
 declare -xf uc:env:bash
+
+: "${ENV_PEND=local}"
+declare +x ENV_PEND
+>&2 declare -p ENV_PEND
 
 #

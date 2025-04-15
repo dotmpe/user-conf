@@ -11,7 +11,7 @@
 uc_env ()
 {
   : "${1:?$ENV_CTX:$FUNCNAME: Switch expected}"
-  local lk="${lk-}:${ENV_CTX}:$FUNCNAME:$1"
+  local lk="${lk-}:$ENV_CTX:$FUNCNAME:$1"
   case "${1}" in
   ( -d- ) # ~~ [<Type-src>] # Generate definition statement(s)
     local -n _dmin_dt=${2:-uc_env_types}
@@ -348,6 +348,11 @@ EOM
     ( * ) false ;;
     esac &&
     _dtype_sref="declare -g${_dtype_sref}"
+  ;;
+  ( :query | -q ) # ~~ <Names...>
+    for name
+    do [[ ${uc_env_parts[${name:?}]} ]] || return
+    done
   ;;
   ( :type ) # ~~ <Name> <Dest> ...
     : "${2:?$ENV_CTX:$FUNCNAME${1}: Part name expected}"

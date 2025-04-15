@@ -15,12 +15,11 @@ uc_env_maincmds=declare,help,knows,load,query,require
 uc_env_shortdescr=
 
 # TODO: transpile function from parts, see tool/uc/part/-env,func,uc.sh
-uc-env ()
+uc-env () # @uc/base
 {
   : source "uc-env.sh"
-  #[[ ${uc_node[*]+set} ]] || uc_env_loadenv ||
   local args
-  case "${*:?}" in
+  case "${*:?${ENV_CTX:-$0[$$]}:uc-env Arguments expected}" in
   ( -h|-?|--help )
       cat <<EOM
 Command
