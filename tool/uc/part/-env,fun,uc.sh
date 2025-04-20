@@ -351,7 +351,7 @@ EOM
   ;;
   ( :query | -q ) # ~~ <Names...>
     for name
-    do [[ ${uc_env_parts[${name:?}]} ]] || return
+    do [[ ${uc_env_parts[${name:?}]+set} ]] || return
     done
   ;;
   ( :type ) # ~~ <Name> <Dest> ...

@@ -103,10 +103,10 @@ done && [[ -s $__ ]] && . "$__" ||
 
 # Export env and env metadata
 
-for __env_key in "${uc_env_exports[@]}"
-do
-  declare -x${uc_env_types["$__env_key"]-} $__env_key
-done
+#for __env_key in "${uc_env_exports[@]}"
+#do
+#  declare -x${uc_env_types["$__env_key"]-} $__env_key
+#done
 
 # XXX: cant think of way to do this incrementally, so need to dump everything
 #if_ok "$(declare -f uc:env:bash)" && {
