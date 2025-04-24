@@ -7,9 +7,14 @@
 # Id: -uc-global-profile.sh, version:XXX ex:ft=sh:
 
 export UC_SYSLOG_LEVEL=4
-export uc_stat=return
 
 ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
+
+case "${0##*/}" in
+  ( *-session | Xsession ) export QUIET=true ;;
+esac
+
+export uc_stat=return
 
 . /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
 
@@ -198,8 +203,7 @@ then
         #"${DEBUG:-false}" || continue
 
         : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
-        #echo "$0: $_: source '$i' returned E$? (ignored)" >&2
-        $LOG warn :source "$0: $_: source failed" "E$s:$i" $s
+        _WARN "$0: $_: source returned non-zero E$s:$i (ignored)"
       }
     fi
   done
