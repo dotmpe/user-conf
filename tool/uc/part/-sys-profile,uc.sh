@@ -217,6 +217,8 @@ else
 
   # Run the normal non-Bash profile.d sequence
   if [ -d /etc/profile.d ]; then
+    # TODO: add to ENV_BASE? or track otherwise
+    # XXX: read overrides instead
     for i in /etc/profile.d/*.sh; do
       if [ -r $i ]; then
         . "$i" && {
