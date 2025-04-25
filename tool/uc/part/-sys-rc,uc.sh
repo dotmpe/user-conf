@@ -14,11 +14,11 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 
 [ "${ENV_BASE:0:7}" = "profile" ] || {
 
-  >/dev/null 1>&2 declare -F uc_env_continue ||
+  >/dev/null 2>&1 declare -F uc_env_continue ||
     . /etc/profile.d/us-system.sh
 
   # Assumed here is that us-system has been loaded already by parent and
-  # exported for use by all subs. XXX: ssh exception above...
+  # exported for use by all subs. XXX: exception for SSH above...
   uc_env_continue &&
   _INFO "Continued existing uc-env to load rc" ||
     _ERR "Failed to resume existing uc-env: E$? ($ENV_SRC)"
