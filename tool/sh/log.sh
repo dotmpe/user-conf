@@ -42,6 +42,7 @@ uc_log_main_env () # ~ [<Switch>]
           syslog_level_num &&
         echo "declare +x LOG" &&
         echo "declare -- x LOG=uc_log" &&
+        echo "declare -- x uc_log=uc_log" &&
         cat <<EOM
         # Defaults:
         # STDLOG_UC_DT    :-1
@@ -57,14 +58,12 @@ EOM
   ( var )
   cat <<EOM
 LOG="${LOG:-"$UC_PROFILE_SELF"}"
-uc_log="\$LOG"
 EOM
     ;;
 
   ( "" | static )
   cat <<EOM
 LOG="${LOG:-"$UC_PROFILE_SELF"}"
-uc_log="$LOG"
 EOM
     ;;
 
