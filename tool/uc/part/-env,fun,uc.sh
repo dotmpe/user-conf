@@ -149,12 +149,15 @@ EOM
       _uconf_notice_ "Continue existing uc-env"
 
     # run-defs without exports, just special attributes and other dyn. types
-    if_ok "$(uc_env -dif%)" &&
-    test -n "$_" && {
-      eval "$_" || {
+    local env_defs
+    env_defs="$(uc_env -dif%)" &&
+    [[ -n "$env_defs" ]] && {
+      _uconf_info_ "Evaluating uc-env..."
+      eval "$env_defs" || {
         _uconf_err_ "Failed to continue from env export: E$?" ||
           "${uc_stat:-exit}" $?
       }
+      _uconf_info_ "Done evaluating uc-env"
     } ||
       _uconf_warn_ "uc-env +continue: Nothing to continue from"
   ;;
@@ -206,9 +209,15 @@ EOM
       _uconf_info_ "No uc-env init hooks"
     # run-defs
     #if_ok "$(uc_env -dif%)" &&
-    #eval "$_" &&
-    if_ok "$(uc_env :dump+${SHELL_NAME:-bash} -- "$@" )" &&
-    eval "$_"
+    local __uc_env_start
+    __uc_env_start="$(uc_env :dump+${SHELL_NAME:-bash} -- "$@" )" &&
+    eval "$__uc_env_start" || {
+      local __uc_env_dump __stat=$?
+      __uc_env_dump=/tmp/uc-env.err.$$
+      echo "$__uc_env_start" > $__uc_env_dump
+      _uconf_err_ "uc:env start failure E$__stat <$__uc_env_dump>"
+      return ${__stat}
+    }
   ;;
   ( :export ) # ~ ... # Mark all variables and functions as exported
     local _env_{key,type}
@@ -295,15 +304,13 @@ EOM
   ( :dump+bash )
     echo $'uc:env:bash ()\n{'
     if_ok "$(declare -f uc:env:bash)" && {
-      : "${_#uc:env:bash ()$'*\n\{*\n'}" &&
+
+      : "${_#uc:env:bash ()*$'\n'\{*$'\n'}"
       : "${_%\}}  : :#: Local-env append: "
       echo  "$_"
+
       : "${*:2}"
-      # XXX: cleanup
-      #$LOG "warn" ":uc-env:dump+bash" \
       _uconf_warn_ "TODO: incremental dump ${_@Q},base:${ENV_BASE-(unset)}"
-      #stderr printf 'TODO: incremental dump, context: %s\nenv base: %s\n' \
-      #  "${_@Q}" "${ENV_BASE-(unset)}"
 
     } || {
       echo "  : :#: Local-env root: "
@@ -400,3 +407,4 @@ EOM
   ;;
   esac
 }
+# ex:ft=bash:
