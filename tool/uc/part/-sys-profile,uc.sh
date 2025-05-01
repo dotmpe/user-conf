@@ -2,20 +2,34 @@
 # /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
 # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
 #
+# The system profile configuration sets up a login shell session, and exports
+# the environment for a user. For new user shell session, only the rc file
+# should be sourced (but only for interactive sessions normally). uc integrates
+# everything using the us-system.sh group and uc-env tools.
+#
+# No this isn't POSIX compatible scripting, and it is really written for Bash
+# shells (currently).
+#
 # TODO: build seed file, this is copy of uconf:etc/sh/user-profile
 # Part of a set of generic Bash shell configuration scripts.
 # Id: -uc-global-profile.sh, version:XXX ex:ft=sh:
 
-export UC_SYSLOG_LEVEL=4
+: "${UC_SYSLOG_LEVEL:=4}"
 
 ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
 
+# Found this log config appropiate here for desktop environments
+# Specifically, some login managers will present dialogs after logging in
+# with standard error, if produced by any of the profile or rc files.
 case "${0##*/}" in
   ( *-session | Xsession ) export QUIET=true ;;
 esac
 
-export uc_stat=return
+: "${uc_stat:=return}"
+export UC_SYSLOG_LEVEL=$UC_SYSLOG_LEVEL uc_stat=$uc_stat
 
+# uconf-shell-log always loads completely on source, but does
+# load-once-then-refresh handling too
 . /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
 
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
@@ -25,10 +39,11 @@ fi
 if [ -n "${ENV_BASE-}" ]
 then
   _ALERT "-uc-system-profile.sh recursive call ${ENV_BASE:?}"
-  #return
+  return
 fi
 
 if [ -n "${BASH_VERSION-}" ] || [ -n "$BASH" ]; then
+  # Managed by uc.
   # Initialize from uc-dump if not already done
   2>&1 >/dev/null declare -F uc_env_continue && {
     uc_env_continue &&
@@ -57,13 +72,6 @@ append_path () # ~ <DIR> # PATH helper (does not export PATH!)
     test 1 -eq $? || return $_
 }
 
-fnmatch ()
-{
-  : copy "str.lib.sh"
-  _IFDBG _ALERT "Deprecated: ${FUNCNAME[*]}"
-  case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
-}
-
 add_path ()
 {
   : about "Simple PATH helper to append only new, unique instance"
@@ -83,13 +91,26 @@ add_path ()
   esac
 }
 
+
 ## Reset PATH value
-if [ "$(id -u)" -eq 0 ]; then
-  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-else
-  PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+
+# FIXME: A login shell needs to setup for the correct user, and so is what
+# /etc/profile should manage. But uc will also try to continue an existing
+# context if we inherit one (from exports), and will assume the PATH is exported
+# and valid too.
+
+if [ -z "${PATH-}" ] || [ "${PATH-}" = /usr/local/bin:/usr/bin:/bin:/usr/games ]
+then
+  if [ "$(id -u)" -eq 0 ]; then
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  else
+    PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+  fi
+  export PATH
 fi
-export PATH
+
+
+## Setup logger
 
 [ -z "${BASH-}" ] && {
   _ALERT "Unknown shell, no uc-profile available"
@@ -141,8 +162,7 @@ if [ "${PS1-}" ]; then
     . /etc/profile.d/us-system.sh ||
       _FATAL "Expected uc-system.sh part installed" || return
 
-    # The file bash.bashrc already sets the default PS1.
-    # PS1='\h:\w\$ '
+    : "${PS1:='\h:\w\$ '}"
     if [ -f /etc/bash.bashrc ]; then
       . /etc/bash.bashrc ||
         _ERR "Bash system rc returned non-zero: E$? (ignored)"
@@ -167,17 +187,16 @@ fi
 ## Load all system profile parts
 
 # Normally, /etc/profile loads /etc/profile.d/*.sh here. But uc-profile uses
-# tagged files, and potentially files from other directories as well. Still,
+# tagged files, and potentially files from other directories as well. Also,
 # there is a difference between sourcing in a function and sourcing in the
 # global scope: declare statements are (default) global or local.
 
+# XXX: for systems that cannot control what is in /etc/profile.d, wrapping in a
+# function could break some scripts (ie. those using declare, but expecting
+# global is default).
 
-
-# XXX: for systems that cannot control what is in /etc/profile.d (ie. need to
-# deal with incompatible source files) the source must be inline here.
-
-# But uc-profile instead uses a utility function here: to load all names from
-# the primary includes directory.
+# uc-profile instead uses a utility function here
+# to load all names from the primary includes directory.
 
 
 if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ] || [ -n "${BASH_VERSION-}" ]
@@ -235,9 +254,9 @@ else
     _DEBUG "Finished profile.d source sequence"
 fi
 
-# NOTE: this user-conf profile is incomplete. Intentionally as this is the
-# global system part, and the user-profile part loaded after this should kick
-# things off.
+# NOTE: this user-conf profile is incomplete, as uc-env isnt initialized yet.
+# That is intentionally as this is always the global system part, and a per user
+# profile part loaded after this should kick things off.
 
 # TODO: uc-env-{export,init,start} trigger env, see home/user parts
 
