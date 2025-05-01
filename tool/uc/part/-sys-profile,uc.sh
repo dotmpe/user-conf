@@ -72,6 +72,13 @@ append_path () # ~ <DIR> # PATH helper (does not export PATH!)
     test 1 -eq $? || return $_
 }
 
+fnmatch ()
+{
+  : copy "str.lib.sh"
+  _IFDBG _ALERT "Deprecated: ${FUNCNAME[*]}"
+  case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
+}
+
 add_path ()
 {
   : about "Simple PATH helper to append only new, unique instance"
