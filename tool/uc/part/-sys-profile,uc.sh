@@ -32,6 +32,8 @@ export UC_SYSLOG_LEVEL=$UC_SYSLOG_LEVEL uc_stat=$uc_stat
 # load-once-then-refresh handling too
 . /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
 
+_IFDBG _DEBUG "/etc/profile: System login env \$ $$ [-$-] $0 (#$#) ~ $*"
+
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
   _WARN "-uc-system-profile.sh loading in sh-mode! ${SHELL:-(unspecified)}"
 fi
@@ -45,10 +47,12 @@ fi
 if [ -n "${BASH_VERSION-}" ] || [ -n "$BASH" ]; then
   # Managed by uc.
   # Initialize from uc-dump if not already done
-  2>&1 >/dev/null declare -F uc_env_continue && {
+  >/dev/null 2>&1 declare -F uc_env_continue && {
     uc_env_continue &&
-    _INFO "Continued existing uc-env" ||
-      _ERR "Failed to resume existing uc-env: E$?"
+    _INFO "Continued existing uc-env" || {
+      _ERR "Failed to resume existing uc-env: E$?" ||
+        ${uc_stat:-return} $?
+    }
   } || {
     _DEBUG "No uc-env found yet, waiting for interactive or static init to complete"
     declare -gA uc_env_{hooks,parts,types}
