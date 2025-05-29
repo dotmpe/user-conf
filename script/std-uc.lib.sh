@@ -80,7 +80,10 @@ std_uc_env_def ()
   #: "${_E_cont:=100}"
   : "${_E_recursion:=111}" # unwanted recursion detected
 
+  : "${_E_no_path:=120}" # non-regular (dir, other) missing
+
   : "${_E_no_file:=124}" # no-such-file(set): file missing or nullglob
+  : "${_E_missing:=125}" # missing, not implemented or to-do
   : "${_E_not_exec:=126}" # NEXEC not-executable
   : "${_E_not_found:=127}" # NSFC no-such-file-or-command
   # XXX: 128 is free?
