@@ -378,12 +378,13 @@ uc_script_load () # (scr_ext=sh} ~ <Src-name...>
         $LOG debug "$lk" "Skipping sourced script" "$scr_name"
     } || {
       ! uc_debug ||
-        $LOG info "$lk" "Sourcing script" "$scr_name"
+        $LOG info "$lk" "Sourcing script" "$scr_name:$scr_path"
       lk=$lk:$scr_name \
       . "$scr_path"
       eval ${scr_st}=$?
       ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$scr_path"
-      [[ 0 -eq ${!scr_st:?} ]] || {
+      [[ 0 -eq ${!scr_st:?} ]] &&
+        $LOG info "$lk" "Script source" "OK:$scr_name" || {
         $LOG warn "$lk" "Script source" "E${!scr_st}:$scr_name" ${!scr_st} || return
       }
     }

@@ -18,21 +18,16 @@
 
 ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
 
-# Found this log config appropiate here for desktop environments
-# Specifically, some login managers will present dialogs after logging in
-# with standard error, if produced by any of the profile or rc files.
-case "${0##*/}" in
-  ( *-session | Xsession ) export QUIET=true ;;
-esac
-
 : "${uc_stat:=return}"
 export UC_SYSLOG_LEVEL=$UC_SYSLOG_LEVEL uc_stat=$uc_stat
 
+# XXX: should see us-env
+declare +x v UC_SHELL_DEBUG UC_DEBUG DEBUG VERBOSE QUIET
 # uconf-shell-log always loads completely on source, but does
 # load-once-then-refresh handling too
 . /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
 
-_IFDBG _DEBUG "/etc/profile: System login env \$ $$ [-$-] $0 (#$#) ~ $*"
+_IFDBG _DEBUG "/etc/profile: System login env user $USER \$ $$ [-$-] $0 (#$#) ~ $*"
 
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
   _WARN "-uc-system-profile.sh loading in sh-mode! ${SHELL:-(unspecified)}"
@@ -54,6 +49,7 @@ if [ -n "${BASH_VERSION-}" ] || [ -n "$BASH" ]; then
         ${uc_stat:-return} $?
     }
   } || {
+
     _DEBUG "No uc-env found yet, waiting for interactive or static init to complete"
     declare -gA uc_env_{hooks,parts,types}
     declare -ga uc_env_{locals,exports}
@@ -79,7 +75,6 @@ append_path () # ~ <DIR> # PATH helper (does not export PATH!)
 fnmatch ()
 {
   : copy "str.lib.sh"
-  _IFDBG _ALERT "Deprecated: ${FUNCNAME[*]}"
   case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
 }
 
@@ -124,13 +119,13 @@ fi
 ## Setup logger
 
 [ -z "${BASH-}" ] && {
-  _ALERT "Unknown shell, no uc-profile available"
+  _ALERT "Unknown shell, no uc-profile available!"
 
 } || {
+  export -f append_path add_path fnmatch
+
   ! _uconf_shell_isdebug ||
     _INFO "Starting Bash uc-profile"
-
-  export -f append_path add_path fnmatch
 
   . /etc/profile.d/uc-profile.sh ||
     _FATAL "Expected uc-profile.sh part installed" || return
@@ -191,7 +186,7 @@ if [ "${PS1-}" ]; then
   fi
 else
   ! _uconf_shell_isdebug ||
-    __DEBUG "Not interactive, no PS1 setting"
+    _DEBUG "Not interactive, no PS1 setting"
 fi
 
 

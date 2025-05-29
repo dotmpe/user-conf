@@ -59,7 +59,7 @@ uc_exc () # ~ <Head>: <Label> # Format exception-id and message
   local \
     uc_sys_exc_id=${1:-uc:exc:$0:${*// /:}} \
     uc_sys_exc_msg=${2-Expected}
-  ! "${DEBUG:-false}" &&
+  ! uc_debug &&
   echo "$uc_sys_exc_id${uc_sys_exc_msg:+: $uc_sys_exc_msg}" ||
     "${uc_sys_on_exc:-uc_sys_source_trace}" "$uc_sys_exc_id" "$uc_sys_exc_msg" 3 "${@:3}"
 }
@@ -90,7 +90,7 @@ uc_profile_import () # ~ [Source-Path]
     return
 
   # TODO: record ENV-SRC snapshot as well.
-  test -z "${USER_CONF_DEBUG-}" ||
+  ! uc_debug ||
     "${uc_log:-${LOG?}}" warn ":import" "New env loaded, keys stored" "$1"
 }
 
@@ -260,7 +260,7 @@ uc_profile_load () # ~ NAME [TAG]
 {
   #args_uc__argc :load $# gt || return
   [[ $# -gt 0 ]] || return ${_E_GAE:-193}
-  ! "${DEBUG:-false}" ||
+  ! uc_debug ||
     "${uc_log:-${LOG?}}" debug :load "Start loading part" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
@@ -295,7 +295,7 @@ uc_profile_load () # ~ NAME [TAG]
     return 6
   }
 
-  ! "${DEBUG:-false}" ||
+  ! uc_debug ||
     "${uc_log:-${LOG?}}" debug ":load" "Loading part" "$*:$uc_profile_partname"
   uc_source "$uc_profile_load_path"
   uc_profile_part_ret=$?
@@ -409,7 +409,7 @@ uc_profile_boot () # TAB [types...]
       for tp in "$@"; do fnmatch "* $tp *" " $type " && m=1 || continue; done
 
       test $m -eq 1 || {
-        test -z "${USER_CONF_DEBUG-}" ||
+        ! uc_debug ||
           "${uc_log:-${LOG?}}" warn ":boot<>$namespec" "Skipped profile.tab entry" "$type not in $*"
         continue
       }
@@ -454,7 +454,7 @@ uc_profile_boot () # TAB [types...]
     done
   done <"$c"
   local context=
-  ! "${DEBUG:-false}" || context="${names-}"
+  ! uc_debug || context="${names-}"
   "${uc_log:-${LOG?}}" notice ":boot" "Bootstrapped '$*' from user's profile.tab" "$context"
 }
 
@@ -533,21 +533,22 @@ uc_signal_exit ()
 # Source file (with UC-DEBUG option and updates ENV-SRC)
 uc_source () # ~ [Source-Path]
 {
-  test $# -gt 0 -a -n "${1-}" || {
+  [ $# -gt 0 ] && [ -n "${1-}" ] || {
     "${uc_log:-${LOG?}}" error ":source" "Expected file argument" "$1"; return 64
   }
 
   local rs
-  . "$1"
+  . "${1:?}"
   rs=$?
   ENV_SRC="${ENV_SRC:-}${ENV_SRC:+ }$1"
 
-  test $rs -eq 0 && {
-    test -z "${USER_CONF_DEBUG-}" ||
+  [ $rs -eq 0 ] && {
+    ! uc_debug ||
       "${uc_log:-${LOG?}}" "debug" ":source" "Done sourcing" "$1"
   } || {
-   test $rs -eq $E_UC_PENDING ||
-     "${uc_log:-${LOG?}}" "error" ":source" "Error ($rs) sourcing" "$1"
+   [ $rs -eq ${E_UC_PENDING:?} ] &&
+     "${uc_log:-${LOG?}}" "warn" ":source" "Pending (E$rs) sourcing" "$1" ||
+     "${uc_log:-${LOG?}}" "error" ":source" "Error (E$rs) sourcing" "$1"
   }
   return $rs
 }

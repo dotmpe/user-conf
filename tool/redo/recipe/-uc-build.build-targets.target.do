@@ -42,7 +42,7 @@ case "$target_item" in
   ;;
 
 ( *" ${REDO_TARGET}.do: "* )
-    _ucbuild_build_targets_target_ do "$@"
+    _ucbuild_build_targets_target_ "do" "$@"
   ;;
 
 ( *" ${REDO_TARGET}.fun: "* )
@@ -67,7 +67,7 @@ case "$target_item" in
   ;;
 
 ( *" ${REDO_TARGET}.rule: "* )
-    _ucbuild_build_targets_target_ rule
+    _ucbuild_build_targets_target_ "rule"
   ;;
 
 
