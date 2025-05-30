@@ -14,49 +14,45 @@
 # Part of a set of generic Bash shell configuration scripts.
 # Id: -uc-global-profile.sh, version:XXX ex:ft=sh:
 
-: "${UC_SYSLOG_LEVEL:=4}"
-
 ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
 
-: "${uc_stat:=return}"
-export UC_SYSLOG_LEVEL=$UC_SYSLOG_LEVEL uc_stat=$uc_stat
+. /usr/share/uc/-uconf-shell-core.sh
 
-# XXX: should see us-env
-declare +x v UC_SHELL_DEBUG UC_DEBUG DEBUG VERBOSE QUIET
-# uconf-shell-log always loads completely on source, but does
-# load-once-then-refresh handling too
-. /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
+_etc_profile=/etc/profile,uc
+_etc_profile_a=id
+_etc_profile_id=user-conf:$_etc_profile
 
-_IFDBG _DEBUG "/etc/profile: System login env user $USER \$ $$ [-$-] $0 (#$#) ~ $*"
+_IFDBG _DEBUG "$_etc_profile: System login env user $USER \$ $$ [-$-] $0 (#$#) ~ $*"
 
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
-  _WARN "-uc-system-profile.sh loading in sh-mode! ${SHELL:-(unspecified)}"
+  _WARN "$_etc_profile: loading in sh-mode! ${SHELL:-(unspecified)}"
 fi
 
-if [ -n "${ENV_BASE-}" ]
+if [ -n "${ENV_BASE-}" ] && fnmatch "* profile *" " $ENV_BASE "
 then
-  _ALERT "-uc-system-profile.sh recursive call ${ENV_BASE:?}"
+  _ALERT "$_etc_profile: recursive call ${ENV_BASE:?}"
   return
 fi
 
 if [ -n "${BASH_VERSION-}" ] || [ -n "$BASH" ]; then
   # Managed by uc.
-  # Initialize from uc-dump if not already done
-  >/dev/null 2>&1 declare -F uc_env_continue && {
+  is_fun uc_env_continue && {
+    # Initialize from uc-dump if not already done
     uc_env_continue &&
-    _INFO "Continued existing uc-env" || {
-      _ERR "Failed to resume existing uc-env: E$?" ||
+    _INFO "$_etc_profile: Continued existing uc-env" || {
+      _ERR "$_etc_profile: Failed to resume existing uc-env: E$?" ||
         ${uc_stat:-return} $?
     }
   } || {
 
-    _DEBUG "No uc-env found yet, waiting for interactive or static init to complete"
+    _IFDBG _DEBUG \
+    "$_etc_profile: No uc-env found yet, waiting for interactive or static init to complete"
     declare -gA uc_env_{hooks,parts,types}
     declare -ga uc_env_{locals,exports}
     # Wait for us-system to load, later
   }
 else
-  _WARN "Cannot start uc-env for unknown shell ${SHELL-(unset)}"
+  _WARN "$_etc_profile: Cannot start uc-env for unknown shell ${SHELL-(unset)}"
 fi
 
 # TODO: check if already on...
@@ -64,18 +60,13 @@ fi
 ENV_BASE=${ENV_BASE-}${ENV_BASE:+ }profile
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/profile
 
+
 # I prefer os_path_add or even add_path but this is default (on Debian)
 append_path () # ~ <DIR> # PATH helper (does not export PATH!)
 {
   : source "/etc/profile"
   add_path "$@" ||
     test 1 -eq $? || return $_
-}
-
-fnmatch ()
-{
-  : copy "str.lib.sh"
-  case "$2" in $1 ) return 0 ;; *) return 1 ;; esac
 }
 
 add_path ()
@@ -116,23 +107,22 @@ then
 fi
 
 
-## Setup logger
+## Preload env for user rc
 
 [ -z "${BASH-}" ] && {
-  _ALERT "Unknown shell, no uc-profile available!"
+  _ALERT "$_etc_profile: Unknown shell, no uc-profile available!"
 
 } || {
   export -f append_path add_path fnmatch
 
-  ! _uconf_shell_isdebug ||
-    _INFO "Starting Bash uc-profile"
+  _IFDBG _INFO "$_etc_profile: Starting Bash uc-profile"
 
   . /etc/profile.d/uc-profile.sh ||
-    _FATAL "Expected uc-profile.sh part installed" || return
+    _FATAL "$_etc_profile: Expected uc-profile.sh part installed" || return
 
   [ -n "${LOG-}" ] || {
     uc_log_init && LOG=uc_log ||
-      _WARN "Failed interactive log init (ignored): E$?"
+      _WARN "$_etc_profile: Failed interactive log init (ignored): E$?"
   }
 
   # XXX: If non-interactive (or interactive setup fails), try static config and export working LOG now.
@@ -157,8 +147,7 @@ fi
   #  uc_log=$LOG
   #}
 
-  ! _uconf_shell_isdebug ||
-  _DEBUG "Acquired LOG=$LOG"
+  _IFDBG _DEBUG "$_etc_profile: Acquired LOG=$LOG"
 }
 
 ## Load shell settings
@@ -166,14 +155,14 @@ if [ "${PS1-}" ]; then
   if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
 
     . /etc/profile.d/us-system.sh ||
-      _FATAL "Expected uc-system.sh part installed" || return
+      _FATAL "$_etc_profile: Expected uc-system.sh part installed" || return
 
     : "${PS1:='\h:\w\$ '}"
     if [ -f /etc/bash.bashrc ]; then
       . /etc/bash.bashrc ||
-        _ERR "Bash system rc returned non-zero: E$? (ignored)"
+        _ERR "$_etc_profile: Bash system rc returned non-zero: E$? (ignored)"
     else
-      _ALERT "Bash system rc missing!"
+      _ALERT "$_etc_profile: Bash system rc missing!"
     fi
   else
     if [ "$(id -u)" -eq 0 ]; then
@@ -181,12 +170,10 @@ if [ "${PS1-}" ]; then
     else
       PS1='$ '
     fi
-    ! _uconf_shell_isdebug ||
-      _DEBUG "Configured PS1 for other shells"
+    _IFDBG _DEBUG "$_etc_profile: Configured PS1 for other shells"
   fi
 else
-  ! _uconf_shell_isdebug ||
-    _DEBUG "Not interactive, no PS1 setting"
+  _IFDBG _DEBUG "$_etc_profile: Not interactive, no PS1 setting"
 fi
 
 
@@ -207,8 +194,7 @@ fi
 
 if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ] || [ -n "${BASH_VERSION-}" ]
 then
-  ! _uconf_shell_isdebug ||
-    _DEBUG "Starting primary profile.d source sequence"
+  _IFDBG _DEBUG "$_etc_profile: Starting primary profile.d source sequence"
 
   : "${UC_PROFILE_D%%:*}"
   mapfile -t ucp_paths <<< "$(uc_profile_dpaths '*' "$_")"
@@ -217,10 +203,8 @@ then
     if [ -r $i ]; then
 
       . $i && {
-        ! _uconf_shell_isdebug || {
-          : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
-          $LOG debug :source "$0: $_: source complete" "$i"
-        }
+        : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
+        _IFDBG _DEBUG "$_etc_profile: $_: Source complete"
       } || { s=$?
         # TODO: rename incubator to US2,
         #"${US_DEV:-false}" ||
@@ -228,17 +212,16 @@ then
         #"${DEBUG:-false}" || continue
 
         : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
-        _WARN "$0: $_: source returned non-zero E$s:$i (ignored)"
+        _WARN "$_etc_profile: $_: source returned non-zero E$s:$i (ignored)"
       }
     fi
   done
-  ! _uconf_shell_isdebug ||
-    _INFO "Finished ${#ucp_paths[*]} profile.d sources"
+  _IFDBG _INFO "$_etc_profile: Finished ${#ucp_paths[*]} profile.d sources"
   unset i s ucp_paths
 
 else
-  ! _uconf_shell_isdebug ||
-    _INFO "Starting primary profile.d source sequence (non-Bash)"
+  _IFDBG \
+    _INFO "$_etc_profile: Starting primary profile.d source sequence (non-Bash)"
 
   # Run the normal non-Bash profile.d sequence
   if [ -d /etc/profile.d ]; then
@@ -247,17 +230,15 @@ else
     for i in /etc/profile.d/*.sh; do
       if [ -r $i ]; then
         . "$i" && {
-          ! _uconf_shell_isdebug ||
-            _DEBUG "profile.d source complete" "$i"
+          _IFDBG _DEBUG "$_etc_profile: profile.d source complete" "$i"
         } || { s=$?
-          _WARN "profile.d source failed" "E$s:$i"
+          _WARN "$_etc_profile: profile.d source failed" "E$s:$i"
         }
       fi
     done
     unset i s
   fi
-  ! _uconf_shell_isdebug ||
-    _DEBUG "Finished profile.d source sequence"
+  _IFDBG _DEBUG "$_etc_profile: Finished profile.d source sequence"
 fi
 
 # NOTE: this user-conf profile is incomplete, as uc-env isnt initialized yet.
@@ -266,6 +247,6 @@ fi
 
 # TODO: uc-env-{export,init,start} trigger env, see home/user parts
 
-_IFVBS _NOTICE "System profile finished"
+_IFVBS _NOTICE "System profile ($_etc_profile) finished"
 
 # ex:ft=sh:
