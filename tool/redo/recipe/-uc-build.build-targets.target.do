@@ -36,9 +36,10 @@ case "$target_item" in
 # Basic target types
 
 ( *" ${REDO_TARGET}.alias: "* )
-    targets=${target_item#*" ${REDO_TARGET}.alias: "}
-    $LOG info ":$REDO_TARGET" "Building aliased target(s)..." "$targets"
-    "${BUILD_TOOL?}"-ifchange $targets
+    : "${target_item#*" ${REDO_TARGET}.alias: "}"
+    read -a targets <<< "$_"
+    $LOG info ":$REDO_TARGET" "Building aliased target(s)..." "${#targets[@]}"
+    "${BUILD_TOOL?}"-ifchange "${targets[@]}"
   ;;
 
 ( *" ${REDO_TARGET}.do: "* )
