@@ -63,21 +63,24 @@ ucbuild_core_sldef=(
   ".env-pack.sh" "${U_C:?}/tool/uc/part/-ucbuild-env-pack.sh"
 
 
-  "@build.@/date/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.date-fmt.bash.do"
+  "@build:/date:/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.date-fmt.bash.do"
 
-  "@build.@/filestat,os/default.do" "../../tool/redo/recipe/&default.filestat.os.do"
+  "@build:/filestat,os:/default.do" "../../tool/redo/recipe/&default.filestat.os.do"
 
-  "@build.@/filestat,os/index.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
+  "@build:/filestat,os:/index.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
   "index.filestat.userdir.os.do" "tool/redo/recipe/&default.filestat.os.do"
 
-  "@build.@/filestat,os/default.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
+  "@build:/filestat,os:/default.userdir.do" "../../tool/redo/recipe/&default.filestat.os.do"
   "default.filestat.userdir.os.do" "tool/redo/recipe/&default.filestat.os.do"
 
-  "@build.@/make/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.make-basedir.bash.do"
+  "@build:/make:/default.do" "${U_C:?}/tool/redo/recipe/-uc-build.make-basedir.bash.do"
 
-  "@build.@/user/default.user-screenshots.do" "../../tool/redo/recipe/&default.user-screenshots.do"
+  "@build:/user:/default.user-screenshots.do" "../../tool/redo/recipe/&default.user-screenshots.do"
 
-  "@build.@/bittorrent/default.do" "../../tool/redo/recipe/&default.transmission-bt.do"
+  "@build:/dedupe,sha1:/default.do" "../../tool/redo/recipe/&default.dedupe-sha1.do"
+  "@build:/dedupe,sha1:./default.do" "../../tool/redo/recipe/&default.dedupe-sha1.do"
+
+  "@build:/bittorrent:/default.do" "../../tool/redo/recipe/&default.transmission-bt.do"
 
   "default.class.target.do" "tool/redo/recipe/&default.class.target.bash.do"
 
@@ -88,6 +91,7 @@ ucbuild_core_sldef=(
   "tool/redo/recipe/&default.filestat.os.do" "${UCONF:?}/tool/redo/recipe/-os-filestat.bash.do"
   "tool/redo/recipe/&default.transmission-bt.do" "${UCONF:?}/tool/redo/recipe/-bt-transmission.bash.do"
   "tool/redo/recipe/&default.user-screenshots.do" "${UCONF:?}/tool/redo/recipe/-user-screenshots.bash.do"
+  "tool/redo/recipe/&default.dedupe-sha1.do" "${UCONF:?}/tool/redo/recipe/-uc-dedupe,sha1.do"
 )
 
 for ((i=0; i<${#ucbuild_core_sldef[*]}; i+=2))
@@ -96,7 +100,7 @@ do
     # Remove if broken symlink
     [[ ! -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
       >&2 rm -v "${EWD:?}/${ucbuild_core_sldef[i]}" || {
-        $LOG alert ":" "Failed removing symlink" "${ucbuild_core_sldef[i]}"
+        _ALERT "Failed removing symlink" "${ucbuild_core_sldef[i]}"
         exit 3
       }
     }
@@ -108,7 +112,9 @@ do
 done
 
 # Process local BuildTargets file
-[[ ! -s ${BUILD_TARGETS:?} ]] || {
+[[ ! -s ${BUILD_TARGETS:?} ]] &&
+_IFVBS _WARN "Empty or missing build targets file <$BUILD_TARGETS>" || {
+
   if_ok "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
   for tag in $_
   do
