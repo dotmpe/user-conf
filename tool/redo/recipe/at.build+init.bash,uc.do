@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# The @build+init is a global, universal target with a specific, bespoke
+# implementation. Current version monitors symlinks specified inline with
+# ucbuild_core_sldef[<Name>]=<Target>, and checks targets in root BuildTargets
+# for names matching existing parts and symlinks those.
+
+# Later work should move functions in to a universal @auto and @conf{,ig} target
+# and resipe, and to rewrite this to be more metadata driven.
+
 set -eETuo pipefail
 
 [[ ${REDO_RUNID-} && ${REDO_TARGET} = @build+init ]] || {
@@ -11,16 +19,17 @@ set -eETuo pipefail
 [[ -h @build+init.do ]] || {
   ! "${DEV:-false}" && {
     ! "${DEBUG:-false}" || {
-      stderr diff -bqr @build+init.do \
+      >&2 diff -bqr @build+init.do \
       "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do ||
         $LOG alert : "Local recipe is OOD" "E122:doenv/req" 122 || exit $?
     }
+
   } || {
 
-    stderr diff -bqr @build+init.do \
+    >&2 diff -bqr @build+init.do \
       "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do || {
 
-      stderr cp -v "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do @build+init.do && {
+      >&2 cp -v "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do @build+init.do && {
         $LOG warn : "Local recipe was OOD" "E123:noenv/pend" 123 || exit $?
       } ||
         $LOG alert : "Local recipe update failed" "E121:ifenv/bug" 121 || exit $?
@@ -43,7 +52,7 @@ set -eETuo pipefail
 #us-env -r uc-build &&
 #redo-ifdone \$config+build+init &&
 
-stderr mkdir -vp "${METADIR?}"/build/data
+>&2 mkdir -vp "${METADIR?}"/build/data
 
 ucbuild_core_sldef=(
   ".bash-env.sh" "${U_C:?}/tool/uc/part/-ucbuild-bash-env.sh"
@@ -83,34 +92,34 @@ ucbuild_core_sldef=(
 
 for ((i=0; i<${#ucbuild_core_sldef[*]}; i+=2))
 do
-  { [[ -e "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
-      # Remove if broken symlink
-      [[ ! -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
-        stderr rm -v "${EWD:?}/${ucbuild_core_sldef[i]}" || {
-          $LOG alert ":" "Failed removing symlink" "${ucbuild_core_sldef[i]}"
-          exit 3
-        }
+  [[ -e "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
+    # Remove if broken symlink
+    [[ ! -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] || {
+      >&2 rm -v "${EWD:?}/${ucbuild_core_sldef[i]}" || {
+        $LOG alert ":" "Failed removing symlink" "${ucbuild_core_sldef[i]}"
+        exit 3
       }
     }
-  } && {
-    [[ -d "$(dirname "${EWD:?}/${ucbuild_core_sldef[i]}")" ]] ||
-      stderr mkdir -vp "$(dirname "${EWD:?}/${ucbuild_core_sldef[i]}")"
-  } && {
-    [[ -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] ||
-      stderr ln -vs "${ucbuild_core_sldef[i+1]}" "${EWD:?}/${ucbuild_core_sldef[i]}"
   }
+  [[ -d "$(dirname "${EWD:?}/${ucbuild_core_sldef[i]}")" ]] ||
+    >&2 mkdir -vp "$(dirname "${EWD:?}/${ucbuild_core_sldef[i]}")"
+  [[ -h "${EWD:?}/${ucbuild_core_sldef[i]}" ]] ||
+    >&2 ln -vs "${ucbuild_core_sldef[i+1]}" "${EWD:?}/${ucbuild_core_sldef[i]}"
 done
 
+# Process local BuildTargets file
 [[ ! -s ${BUILD_TARGETS:?} ]] || {
   if_ok "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
   for tag in $_
   do
+    # XXX: Easiest is to just re-link so... should probably rewrite
     [[ -e "${EWD:?}/${tag:?}.do" ]] || {
-      [[ -h "${EWD:?}/${tag:?}.do" ]] && stderr rm -v "${EWD:?}/${tag:?}.do"
+      [[ -h "${EWD:?}/${tag:?}.do" ]] && >&2 rm -v "${EWD:?}/${tag:?}.do"
     }
     [[ -h "${EWD:?}/${tag:?}.do" ]] ||
-      stderr ln -vs "tool/redo/recipe/&uc-build.build-targets.target.do" \
+      >&2 ln -vs "tool/redo/recipe/&uc-build.build-targets.target.do" \
       "${EWD:?}/$tag.do"
   done && unset tag
 }
-#
+
+# ex:ft=bash:

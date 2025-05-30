@@ -66,7 +66,7 @@ add_env_path_lookup() # Var-Name Prepend-Value Append-Value
   local val="$(eval echo "\${$1-}")"
   test -e "$2" -o -e "${3-}" || {
     echo "No such file or directory '$*'" >&2
-    return 1
+    return ${_E_no_path:-120}
   }
   test -n "$2" && {
     case "$val" in
