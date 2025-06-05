@@ -1,3 +1,5 @@
+#
+# /usr/share/uc/-uconf-shell-core.sh
 : "${UC_SYSLOG_LEVEL:=4}"
 : "${uc_stat:=return}"
 export UC_SYSLOG_LEVEL=$UC_SYSLOG_LEVEL uc_stat=$uc_stat
