@@ -6,10 +6,10 @@
 # @ include in global set
 # % change env
 # : other special or internal/private/local call
-#shellcheck disable=2128 # FUNCNAME is array, but just want first value os using
-# short notation
+#shellcheck disable=2128 # FUNCNAME is array, but just want first value anyway
 uc_env ()
 {
+  local ENV_CTX=${ENV_CTX:-$0[$$]}
   : "${1:?$ENV_CTX:$FUNCNAME: Switch expected}"
   local lk="${lk-}:$ENV_CTX:$FUNCNAME:$1"
   case "${1}" in
@@ -23,6 +23,14 @@ uc_env ()
         continue
       echo "$_dmin_stmt"
     done
+  ;;
+  ( -gi ) # ~~  <group>
+    # XXX: temporary routine for inspect
+    echo group: $2
+    echo type spec: ${uc_env_types["$2"]}
+    echo part spec: ${uc_env_parts["$2.G"]}
+    read -r _bi _ti _ei <<< "${uc_env_parts["$2.G"]}"
+    echo Base: ${ENV_BASE:$_bi}
   ;;
   ( -d-* ) # ~~ [<Type-src>] # Generate definition statement(s)
     false
@@ -229,7 +237,7 @@ EOM
       declare -g${_env_type} $_env_key
     done
   ;;
-  ( :init ) # ~~ ... [ -- <ctx...> ]
+  ( :init ) # ~ <key>
     : "${2:?$ENV_CTX:$FUNCNAME${1}: Tag expected}"
     if_ok "$(declare -F uc:env:bash)" && {
       uc:env:bash || {
@@ -239,13 +247,13 @@ EOM
     }
     [[ ${uc_env_types["${2}"]-} = G ]] ||
       _uconf_alert_ "Group expected $2:${uc_env_types["${2}"]} (ignored)"
-    uc_env_init
+    TODO "uc-env:env-init, see +continue"
   ;;
   ( :inline-part | @part ) # ~ <Type> <Id> ...
     : "${2?$ENV_CTX:$FUNCNAME${1}: Type expected}"
     : "${3:?$ENV_CTX:$FUNCNAME${1}: Id expected}"
     uc_env_types["${3}"]=${2}
-    uc_env_parts["${3}.${2}"]=${#ENV_BASE}\ ${#uc_env_locals[*]}\ ${#uc_env_exports[*]}
+    uc_env_parts["${3}.${2}"]=${#ENV_BASE}\ ${#uc_env_types[*]}\ ${#uc_env_exports[*]}
     sh_vadd ENV_BASE ' ' "${3}"
   ;;
   ( :redefine-export | +increment )
@@ -282,11 +290,12 @@ EOM
     local -n _del_ref=${3}
   ;;
   ( :attr ) # ~~ <Spec> <Key>
+    : about "Toggle attribute <Spec> for part <Key>"
     : "${2:?$ENV_CTX:$FUNCNAME${1}: Spec expected}"
     : "${3:?$ENV_CTX:$FUNCNAME${1}: Key expected}"
     case "${2}" in
     ( -* )
-      local _def
+      local _define
       uc_env :type "${3}" _def &&
       uc_env :vfl-default "${2:2}" _def &&
       uc_env_types["${3}"]=${_def}
@@ -324,8 +333,8 @@ EOM
     : about 'Build declaration statement for dynamic symbol'
     : extended 'All simple Bash variables and functions can be exported, but'
     : extended ' without attributes. No arrays. And no special function names. '
-    : "${2:?$ENV_CTX:$FUNCNAME${1}: Part name expected}"
-    : "${3:?$ENV_CTX:$FUNCNAME${1}: Dest var expected}"
+    : param "${2:?$ENV_CTX:$FUNCNAME${1}: Part name expected}"
+    : param "${3:?$ENV_CTX:$FUNCNAME${1}: Dest var expected}"
     local -n _dtype_sref=${3}
     local _dtype_tp
     [[ ${4:-} ]] && _dtype_tp=${4} || uc_env :type "${2}" _dtype_tp
@@ -403,7 +412,7 @@ EOM
     esac
   ;;
   ( * )
-    sh_abort "${ENV_CTX:-$0[$$]}:${FUNCNAME[0]}:${1}?" "Unsupported"
+    sh_abort "$ENV_CTX:${FUNCNAME[0]}:${1}?" "Unsupported"
   ;;
   esac
 }
