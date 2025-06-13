@@ -136,7 +136,7 @@ uc_log_init () # ~
   INIT_LOG=stderr_log
 
   # Make Uc-profile source all its parts
-  [ 0 = "${UC_PROFILE_STATUS}" ] || {
+  [ 0 = "${UC_PROFILE_READY-}" ] || {
     #. "${U_C:?}/tool/sh/log-init.sh"
     . "${U_C}/script/uc-profile.lib.sh" &&
     uc_profile_boot_parts || return

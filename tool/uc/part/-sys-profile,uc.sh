@@ -16,6 +16,8 @@
 
 ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
 
+#[ -r /etc/uc ] &&
+#[ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] &&
 . /usr/share/uc/-uconf-shell-core.sh
 
 _etc_profile=/etc/profile,uc
@@ -28,65 +30,18 @@ if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
   _WARN "$_etc_profile: loading in sh-mode! ${SHELL:-(unspecified)}"
 fi
 
-if [ -n "${ENV_BASE-}" ] && fnmatch "* profile *" " $ENV_BASE "
+if [ -n "${ENV_BASE-}" ] && :fnMatch "* profile *" " $ENV_BASE "
 then
   _ALERT "$_etc_profile: recursive call ${ENV_BASE:?}"
   return
 fi
 
-if [ -n "${BASH_VERSION-}" ] || [ -n "$BASH" ]; then
-  # Managed by uc.
-  is_fun uc_env_continue && {
-    # Initialize from uc-dump if not already done
-    uc_env_continue &&
-    _INFO "$_etc_profile: Continued existing uc-env" || {
-      _ERR "$_etc_profile: Failed to resume existing uc-env: E$?" ||
-        ${uc_stat:-return} $?
-    }
-  } || {
-
-    _IFDBG _DEBUG \
-    "$_etc_profile: No uc-env found yet, waiting for interactive or static init to complete"
-    declare -gA uc_env_{hooks,parts,types}
-    declare -ga uc_env_{locals,exports}
-    # Wait for us-system to load, later
-  }
-else
-  _WARN "$_etc_profile: Cannot start uc-env for unknown shell ${SHELL-(unset)}"
-fi
+#uc_env @part G uc:env:base
 
 # TODO: check if already on...
 #: "${ENV_BASE:=profile}"
 ENV_BASE=${ENV_BASE-}${ENV_BASE:+ }profile
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/profile
-
-
-# I prefer os_path_add or even add_path but this is default (on Debian)
-append_path () # ~ <DIR> # PATH helper (does not export PATH!)
-{
-  : source "/etc/profile"
-  add_path "$@" ||
-    test 1 -eq $? || return $_
-}
-
-add_path ()
-{
-  : about "Simple PATH helper to append only new, unique instance"
-  : param "<DIR>" "Should be a directory, but this is not verified"
-  : extended "Using this helps keeping PATH cleaner, but it is intentionally a "
-  : extended "very simple implementation of this type of heuristic. "
-  : extended "For similar functions see uc and us sys.lib add-env-path"
-  : notes TODO "Really should write sys-wordv-add or something"
-  : notes XXX "This does not export PATH"
-  : notes : "Exactly the same implementation as shipped with Debian/Ubuntu"
-  : source "/etc/profile"
-  case ":$PATH:" in
-  ( *:"${1:?}":*) # XXX: false
-    ;;
-  ( * )
-      PATH="${PATH:+$PATH:}${1:?}"
-  esac
-}
 
 
 ## Reset PATH value
@@ -113,7 +68,6 @@ fi
   _ALERT "$_etc_profile: Unknown shell, no uc-profile available!"
 
 } || {
-  export -f append_path add_path fnmatch
 
   _IFDBG _INFO "$_etc_profile: Starting Bash uc-profile"
 
@@ -150,7 +104,7 @@ fi
   _IFDBG _DEBUG "$_etc_profile: Acquired LOG=$LOG"
 }
 
-## Load shell settings
+## Load shell settings ('rc' group)
 if [ "${PS1-}" ]; then
   if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
 
@@ -249,4 +203,4 @@ fi
 
 _IFVBS _NOTICE "System profile ($_etc_profile) finished"
 
-# ex:ft=sh:
+# Id: uc:sys:profile /etc/profile ex:ft=bash:

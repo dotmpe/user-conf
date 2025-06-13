@@ -65,51 +65,58 @@ std_uc_lib__init ()
 
 std_uc_env_def ()
 {
-  : "${_E_fail:=1}"
+  : "${_E_fail:=1}" # @define
   # 1: fail: generic non-success status, not an error per se
-  : "${_E_script:=2}"
+  : "${_E_script:=2}" # @define
   # 2: script: error caused by broken syntax or script misbehavior
-  : "${_E_user:=3}"
+  : "${_E_user:=3}" # @define
   # 3: user: usage error or faulty data (less serious than 2, but ie. grep uses
 
-  : "${_E_nsk:=67}"
+  : "${_E_nsk:=67}" # @define
   # 67: nsk: no such key
-  : "${_E_nsa:=68}"
+  : "${_E_nsa:=68}" # @define
   # 68: nsa: no such action
+  : "${_E_nss:=69}" # @define
+  # 69: nss: no such switch
 
   #: "${_E_cont:=100}"
-  : "${_E_recursion:=111}" # unwanted recursion detected
+  : "${_E_recursion:=111}" # unwanted recursion detected @define
 
-  : "${_E_no_path:=120}" # non-regular (dir, other) missing
+  : "${_E_no_path:=120}" # non-regular (dir, other) missing @define
 
-  : "${_E_no_file:=124}" # no-such-file(set): file missing or nullglob
-  : "${_E_missing:=125}" # missing, not implemented or to-do
-  : "${_E_not_exec:=126}" # NEXEC not-executable
-  : "${_E_not_found:=127}" # NSFC no-such-file-or-command
+  # rather see ns{k,a,s}
+  #: "${_E_no_part:=121}" # @draft
+  #: "${_E_no_arg:=122}" # @draft
+  #: "${_E_no_option:=123}" # @draft
+
+  : "${_E_no_file:=124}" # no-such-file(set): file missing or nullglob @define
+  : "${_E_missing:=125}" # missing, not implemented or to-do @define
+  : "${_E_not_exec:=126}" # NEXEC not-executable @define
+  : "${_E_not_found:=127}" # NSFC no-such-file-or-command @define
   # XXX: 128 is free?
 
-  : "${_E_sighup:=129}" # 1:
-  : "${_E_sigint:=130}" # 2: response to ctrl-c
-  : "${_E_sigquit:=131}" # 3:
-  : "${_E_sigill:=132}" # 4: illegal instruction?
-  : "${_E_sigtrap:=133}" # 5: trace/breakpoint trap
+  : "${_E_sighup:=129}" # 1: @define
+  : "${_E_sigint:=130}" # 2: response to ctrl-c @define
+  : "${_E_sigquit:=131}" # 3: @define
+  : "${_E_sigill:=132}" # 4: illegal instruction? @define
+  : "${_E_sigtrap:=133}" # 5: trace/breakpoint trap @define
 
   # 128+(1--64) is mapped for signals (see trap -l), ie. `kill -1 $PID` produces
   # exit status 129, inserting Ctrl-C in a shell terminal produces exit 131,
   # etc. On debian linux last mapped number is 192: RTMAX (ie. 128+64).
 
-  : "${_E_GAE:=193}" # Generic Argument Error.
-  : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error.
+  : "${_E_GAE:=193}" # Generic Argument Error. @define
+  : "${_E_MA:=194}" # Arguments Expected (Missing Argument(s)) Error. @define
   # See rules
   # E:continue 195: unfinished; in loop or batch sequence keep going until break
   # or done.
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
-  : "${_E_next:=196}"
+  : "${_E_next:=196}" # @define
   # E:stop     197:
-  : "${_E_stop:=197}" # abort or fatal step
+  : "${_E_stop:=197}" # abort or fatal step @define
   # E:retry    198: pending; not 195/196 but can retry later this loop/batch
   # E:break    limit    199: limit; like 198 but some throttling was initiated as well
-  : "${_E_done:=200}"
+  : "${_E_done:=200}" # @define
   # E:done     200: break; OK, but if loop/batch then terminate, stop when first convenient
   # E:more     201: more; partially completed ?
 }

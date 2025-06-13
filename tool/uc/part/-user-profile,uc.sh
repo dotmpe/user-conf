@@ -11,26 +11,34 @@
 
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.profile
 
-. /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
+__profile=~/.profile,uc.sh
 
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
-  _WARN "user-profile loading in sh-mode! ${SHELL:-(unspecified)}"
+  _WARN "$__profile: user-profile loading in sh-mode! ${SHELL:-(unspecified)}"
 
 elif [ -z "${BASH_VERSION-}" ] && [ -z "${BASH-}" ]; then
-  _ALERT "user-profile is incompatible with shell ${SHELL:-(unspecified)}"
+  _ALERT "$__profile: user-profile is incompatible with shell ${SHELL:-(unspecified)}"
   return
 fi
 
-if [[ ! ${uc_env_parts[*]+set} || ! ${uc_env_parts["us-system.G"]+set} ]]
+if [[ ! ${uc_env_parts[*]+set} ]] && >/dev/null declare -F uc_fun
 then
-  _WARN "Warning: -user-profile.sh did not find host profile part; base=${ENV_BASE:-(unspecified)}"
+  _WARN "Warning: $__profile incomplete or missing uc env; base=${ENV_BASE:-(unspecified)}"
+fi
+if [[ ! ${uc_env_parts["profile.G"]+set} ]]
+then
+  _WARN "Warning: $__profile missing host profile group; base=${ENV_BASE:-(unspecified)}"
+fi
+if [[ ! ${uc_env_parts["us-system.G"]+set} ]]
+then
+  _WARN "Warning: $__profile missing user-script system group; base=${ENV_BASE:-(unspecified)}"
 fi
 
 : "${ENV_BASE:=profile}"
 : "${ENV_CTX:=$0[$$]:~/.profile}"
 if [ -z "${uc_log-}" ]
 then
-  _IFDBG _ALERT "uc-user-profile.sh did not find uc-log setup; base=${ENV_BASE:-(unspecified)}"
+  _IFDBG _ALERT "$__profile: did not find uc-log setup; base=${ENV_BASE:-(unspecified)}"
 fi
 
 export CAL_DEF=dutch\ german\ debian
@@ -69,7 +77,7 @@ fi
 } || {
 
   # Nothing to do for a non-login user profile setup
-  _IFDB _INFO "Non-login '${USER?}' user shell session"
+  _IFDBG _INFO "Non-login '${USER?}' user shell session"
 
 }
 
@@ -77,7 +85,7 @@ _IFDBG _WARN "Default user profile executing"
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+    PATH="$PATH:$HOME/bin"
 fi
 
 # set PATH so it includes user's private bin if it exists
@@ -87,16 +95,21 @@ fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.basher/cellar/bin" ] ; then
-    PATH="$HOME/.basher/cellar/packages/bin:$HOME/.basher/cellar/bin:$PATH"
+    PATH="$PATH:$HOME/.basher/bin:$HOME/.basher/cellar/bin"
 fi
 
-if [ -d "$HOME/.conf/path/Generic" ] ; then
-    PATH="$HOME/.conf/path/Generic:$PATH"
+if [ -d "$HOME/.local/tool/sh/exec" ] ; then
+    PATH="$PATH:$HOME/.local/tool/sh/exec"
 fi
 
-if [ -d "$HOME/.conf/path/Linux" ] ; then
-    PATH="$HOME/.conf/path/Linux:$PATH"
+if [ -d "$HOME/.local/etc/path/Generic" ] ; then
+    PATH="$PATH:$HOME/.local/etc/path/Generic"
 fi
+
+if [ -d "$HOME/.local/etc/path/${OS_UNAME:-Linux}" ] ; then
+    PATH="$HOME/.local/etc/path/${OS_UNAME:-Linux}:$PATH"
+fi
+
 
 # XXX: generic calls?
 #_IFDBG _INFO "UC profile load complete, starting..."

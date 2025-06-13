@@ -19,7 +19,7 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 
   # Assumed here is that us-system has been loaded already by parent and
   # exported for use by all subs. XXX: exception for SSH above...
-  uc_env_continue &&
+  uc_env +continue &&
   _INFO "Continued existing uc-env to load rc" ||
     _ERR "Failed to resume existing uc-env: E$? ($ENV_SRC)"
 }

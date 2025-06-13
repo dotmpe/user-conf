@@ -18,15 +18,28 @@ str_uc_lib__init ()
 # see also fnmatch and wordmatch
 str_globmatch () # ~ <String> <Glob-patterns...>
 {
+  : about "Match string against all or any pattern"
+  : param "<String> <Patterns...>"
   [[ 2 -le $# ]] || return ${_E_GAE:-193}
+  : input "${1:?$ENV_CTX:$FUNCNAME: String value expected}"
+  : input "${2:?$ENV_CTX:$FUNCNAME: $1: One or more glob patterns expected}"
   declare str=${1:?"$(sys_exc str-globmatch:str@_1 "String expected")"}
   shift
   while [[ $# -gt 0 ]]
   do
-    case "$str" in ( ${1:?} ) return ;; * ) ${any:-true} || return 1 ;; esac
-    shift
+    case "$str" in ( ${1:?} ) return ;; * ) ${any:-true} ;; esac &&
+    shift || return
   done
-  return 1
+  false
+}
+
+str_globmatch_one ()
+{
+  : about "Inline glob match of String to Pattern"
+  : param "<Pattern> <String> ..."
+  : input "${1:?$ENV_CTX:$FUNCNAME: Pattern expected}"
+  : input "${2:?$ENV_CTX:$FUNCNAME: $1: String value expected}"
+  case "${2}" in ( ${1} ) ;; * ) false ;; esac
 }
 
 str_suffix () # (s) ~ <Suffix-str>

@@ -6,114 +6,65 @@
 #ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
 #ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }us-system
 
-[[ ${uc_env_parts[*]+set} ]] || {
-  : "${ENV_BASE:=}"
-  declare -gA uc_env_{hooks,parts,types}
-  declare -ga uc_env_{locals,exports}
-}
-
 case " ${ENV_BASE?} " in ( *" us-system "* )
   # Login sub-shells and interactive sub-shells will inevitably loop
-  _ALERT "system.sh group already loaded"
+  _ALERT "-env-system,uc.sh: group is already loaded"
   return
 ;; esac
 
-# Builtin utils
+uc_env @part G us-system /etc/profile.d/us-system.sh
+# ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
 
-sh_mapfile () # ~ <Array-name> <Cmd...> # Read stdout (lines) into array
+# Inline: uc-sh-util
+
+uc_env @part G uc-sh-util
+
+_Sh_Als_Exp ()
 {
-  : "${1:?$ENV_CTX:$FUNCNAME: Array name required}"
-  : "${2:?$ENV_CTX:$FUNCNAME: Command required to read $1}"
-  local __sh_mapfile_{offset,outname}
-  __sh_mapfile_outname=${1}
-  local -n __sh_mapfile_arr=${__sh_mapfile_outname}
-  [[ ${__sh_mapfile_arr[*]:+set} ]] &&
-  __sh_mapfile_offset=${#__sh_mapfile_arr[@]} || __sh_mapfile_offset=0
-  if_ok "$("${@:2}")" &&
-  test -n "$_" &&
-  <<< "$_" mapfile -O ${__sh_mapfile_offset} \
-  ${mapfile_f:--t} ${__sh_mapfile_outname}
-}
-# Derive sys-exec-mapfile
-
-sh_vadd () # ~ <Variable-name> <Separator> <Value> ...
-{
-  : "${1:?$ENV_CTX:$FUNCNAME: Variable name expected}"
-  : "${2:?$ENV_CTX:$FUNCNAME: Separator expected for $1}"
-  : "${3:?$ENV_CTX:$FUNCNAME: Append value expected for $1}"
-  local -n _var=${1}
-  _var=${_var-}${_var:+${2}}${3}
-}
-
-# XXX: until core(s) are finished for profile, rc and other.. use @dev version
-#[[ "${U_C:-/src/local/user-conf+current}" ]] &&
-: "${UC_ENV_PART:=${U_C:-/src/local/user-conf+current}/tool/uc/part/-env,fun,uc.sh}"
-. "${UC_ENV_PART}"
-
-# Register current part
-
-uc_env @part G us-system
-
-uc_env_continue ()
-{
-  ! >/dev/null 2>&1 declare -F uc:env:bash || {
-    >/dev/null 2>&1 declare -F uc_env || {
-      . "${UC_ENV_PART:?}"
-    }
-    uc_env +continue
-  }
-}
-
-uc_env_types["uc_env_continue"]=f
-uc_env_exports+=( uc_env_continue UC_ENV_PART )
-
-# Inline: uc-env-util
-
-uc_env @part G uc-env-util
-
-uc_env_types["uc_env"]=f
-uc_env_types["sh_mapfile"]=f
-uc_env_types["sh_vadd"]=f
-
-sh_als_exp ()
-{
-  : "${1:?$ENV_CTX:$FUNCNAME: Aliased name expected}"
+  : about "Expand alias to full script"
+  : extended "This will only work if aliases are completely loaded"
+  : src us-system.sh
+  : input "${1:?$ENV_CTX:$FUNCNAME: Alias name expected}"
   local fun=__fun_tmp_${RANDOM:?}
   eval "$fun ()
 {
   ${1}
 }" &&
-  sh_funbody "$fun" &&
+  _Sh_Fun_Body "$fun" &&
   unset -f "$fun"
 }
-uc_env_types["sh_als_exp"]=f
+uc_env_types["_Sh_Als_Exp"]=f
 
-sh_funbody ()
+_Sh_Caller ()
 {
-  : "${1:?$ENV_CTX:$FUNCNAME: Function name expected}"
-  if_ok "$(typeset -f "$_")" || return
-  : "${_#* () }"
-  : "${_:4:-2}"
+  : param '~ [<Frame=0>]'
+  : src us-system.sh
+  : "$(( ${1:-0} + 1 ))"
+  :pass "$(caller $_)" || return
+  : "${_#* }"
+  : "${_% *}"
   echo "$_"
 }
-uc_env_types["sh_funbody"]=f
+uc_env_types["_Sh_Caller"]=f
 
-_+ ()
+_Sh_Callers ()
 {
-  sh_vadd "$@"
+  : about "List function call stack"
+  : param '~ [<Start-frame=0>]'
+  : src us-system.sh
+  local i
+  for (( i=${1-0}; 1; i++ ))
+  do caller $i || break
+  done
 }
-uc_env_types["_+"]=d
-uc_env_parts["_+.d"]=sh_vadd\ \"\$@\"
+uc_env_types["_Sh_Callers"]=f
 
-uc_env_exports+=( sh_{als_exp,funbody,mapfile,vadd} uc_env )
+uc_env_exports+=( _Sh_{Als_Exp,Caller{,s}} )
 
 
 # Inline: uc-core
 
 uc_env @part G uc-core
-
-uc_stat=return
-uc_env_types["uc_stat"]=X
 
 # Verbose non-zero for script-related status, default to E:script.
 sh_abort () # ~ <Key> <Message> [<Status>] [<Vars>] [<Types>]
@@ -164,18 +115,10 @@ uc_env_exports+=(
   sh_{abort,exc,stop,vstat}
 )
 
+
 # Inline: uc-base
 
 uc_env @part G uc-base
-
-if_ok () # ~ <-> ...
-{
-  : ${1?$(sh_exc us-system:$FUNCNAME "Dynamic setting expected")} $?
-  return $_
-}
-uc_env_types["if_ok"]=f
-# Group: compo:inc:sh-userutil
-# Copy: compo:inc:if-ok
 
 incr () # ~ <Variable-name> [<Increment-value>] ...
 {
@@ -206,15 +149,6 @@ sh_arr () # ~ <Varname> ...
 uc_env_types["sh_arr"]=f
 # Group: compo:inc:sh-meta
 # Copy: compo:inc:sh-arr
-
-sh_fun () # ~ <Name> ...
-{
-  : "${1:?$(sh_exc us-system:$FUNCNAME "Function name expected")}"
-  declare -F "${1}" 2>/dev/null >&2
-}
-uc_env_types["sh_fun"]=f
-# Group: compo:inc:sh-type
-# Copy: compo:inc:sh-fun
 
 sh_iarr () # ~ <Name> ... # Test for index-array symbol
 {
@@ -369,7 +303,7 @@ uc_env_exports+=( sys_log_env )
 #uc_env @locals BASH_UC_{SCRIPTNAME,SCRIPTTAG}
 uc_env @exports LOG UC_LOG_BASE
 
-_+ "uc_env_hooks[\"start\"]" ' ' sys_log_env
+_. "uc_env_hooks[\"start\"]" ' ' sys_log_env
 
 # Inline: os-release
 
@@ -417,39 +351,8 @@ uc_env_exports+=(
 
 uc_env @part G os-path
 
-os_add ()
-{
-  : about "Simple PATH helper to append only new, unique instance"
-  : param "<DIRPATH>" "Should be a directory, but this is not verified"
-  : extended "Using this helps keeping PATH cleaner, but it is intentionally a "
-  : extended "very simple implementation of this type of heuristic. "
-  : extended "For similar functions see uc and us sys.lib add-env-path"
-  : notes TODO "Really should write sys-wordv-add or something"
-  : notes XXX "This does not export PATH"
-  : notes : "Exactly the same implementation as shipped with Debian/Ubuntu"
-  case ":$PATH:" in
-  ( *:"${1:?}":*) false
-    ;;
-  ( * )
-      PATH="${PATH:+$PATH:}${1:?}"
-  esac
-}
-uc_env_types["os_add"]=f
-
-os_path_add ()
-{
-  : param '<VAR>'
-  : param '<DIRPATH>'
-  local -n _PATH=${1:?Variable name expected}
-  case ":$_PATH:" in
-  ( *:"${2:?}":*) false
-    ;;
-  ( * )
-      _PATH="${_PATH:+$_PATH:}${2:?}"
-  esac
-}
-uc_env_types["os_path_add"]=f
-uc_env_exports+=( os_{,path_}add )
+uc_env +d dx os_add '_OS_Path_Add "$@" || true'
+uc_env +d dx os_path_add '_OS_Path_Add "$@"'
 
 [[ ${OS_OVERRIDE:-false} != true ]] || {
   os_prefix ()
