@@ -126,6 +126,16 @@ EOM
     # TODO: print sorted by base, and propagate group end-index, ie. at
     # .end attribute
   ;;
+  ( -l | --load )
+    : param '~~ <Name ...>'
+    : input ${2:?Expected part name(s), $ENV_CTX:$FUNCNAME:$1}
+    local _pn
+    for _pn in "${@:2}"
+    do
+      [[ ${uc_env_types["$_pn"]+set} ]] ||
+          uc_env :load-part "$_pn" || return
+    done
+  ;;
   ( -pretty )
     uc_env @uc/env
     declare -
@@ -149,6 +159,13 @@ EOM
       echo "  [\"$k\"]=${_arr["$k"]@Q}"
     done
     echo ")"
+  ;;
+  ( -q | :query )
+    : param '~~ <Names...>'
+    local _pn
+    for _pn in "${@:2}"
+    do [[ ${uc_env_parts[${_pn:?}]+set} ]] || return
+    done
   ;;
   ( -summary )
     >&2 echo "Env-ctx: ${ENV_CTX-(unset)}"
@@ -185,16 +202,12 @@ EOM
     set -- ENV_{BASE,CTX,LIB,SRC} uc_env_{exports,hooks,parts,types}
     declare -p  "$@"
   ;;
-  ( -r ) # ~~ <Name ...>
-    shift
-    while [[ $# -gt 0 ]]
-    do
-      [[ ${uc_env_types["$1"]+set} ]] ||
-        _ERR "uc env type missing" || return
-      [[ ${uc_env_parts["$1.c"]+set} ]] && {
-        uc-env::${1} || return
-      }
-      shift
+  ( -r | --require | :require-parts )
+    : param '~~ <Name ...>'
+    : input ${2:?Expected part name(s), $ENV_CTX:$FUNCNAME:$1}
+    local _pn
+    for _pn in "${@:2}"
+    do uc_env :require-part "$_pn" || return
     done
   ;;
   ( @by-name ) # ~~ <Name> <To-name> [<Part-spec-reset...>]
@@ -376,6 +389,13 @@ EOM
     _Sh_ByName_Add ENV_BASE ' ' "${3}"
     declare -g _prev_group=${3}
   ;;
+  ( :load-part )
+    : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
+    [[ ${uc_env_types["${2}"]+set} ]] || {
+      :isFun uc-env::${2} ||
+          . "${2}.inc.sh" || _ERR "uc env '${2}' not found"
+    }
+  ;;
   ( :redefine-export | +increment )
     :pass "$(declare -f uc:env:${SHELL_NAME:-bash})" && {
       : "${_#uc:env:${SHELL_NAME:-bash} ()$'*\n\{*\n'}" &&
@@ -484,10 +504,35 @@ EOM
     }
     echo $'}\ndeclare -xf uc:env:bash'
   ;;
-  ( :query | -q ) # ~~ <Names...>
-    for name
-    do [[ ${uc_env_parts[${name:?}]+set} ]] || return
+  ( :metafor )
+    : input ${2:?Expected field name, $ENV_CTX:$FUNCNAME:$1}
+    sed -n "/${2} / s/['\";]*\$//;s/^[ 	]*\(: _\)*${2} ['\"]*\([^([].*\)*\$/\2/p"
+  ;;
+  ( :part-attr )
+    : param '<Part> <Array> <Fields...>'
+    : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
+    : input ${3:?Expected array name, $ENV_CTX:$FUNCNAME:$1}
+    : input ${4:?Expected attribute name(s), $ENV_CTX:$FUNCNAME:$1}
+
+    local -n __uc_env_pa_out=${3}
+    local _an _fundecl
+    _fundecl="$(declare -f uc-env::${2})" &&
+    for _an in "${@:4}"
+    do
+      :pass "$(<<< "${_fundecl}" uc_env :metafor ${_an})" || return
+      __uc_env_pa_out[${_an}]=${_}
     done
+  ;;
+  ( :require-part )
+    : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
+    uc_env :load-part "${2}" &&
+    [[ ${uc_env_parts["${2}.c"]+set} ]] && {
+      local _rp_attr
+      ! uc_env :part-attr "${2}" _rp_attr super ||
+          uc_env :load-part "${_rp_attr['super']}" ||
+              return
+      uc-env::${2} || return
+    }
   ;;
   ( :register-part )
     : param "~~ <Id> <Spec> ..."
