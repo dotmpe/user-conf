@@ -14,8 +14,9 @@
 # Part of a set of generic Bash shell configuration scripts.
 # Id: -uc-global-profile.sh, version:XXX ex:ft=sh:
 
-ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }profile
+ENV_CTX=${ENV_CTX:-$0[$$]}-login
 
+[ -n "${_uconf_shell_core_-}" ] ||
 #[ -r /etc/uc ] &&
 #[ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] &&
 . /usr/share/uc/-uconf-shell-core.sh
@@ -36,12 +37,10 @@ then
   return
 fi
 
-#uc_env @part G uc:env:base
+uc_env @part G profile /etc/profile
+uc_env @part G uc-env-core /usr/share/uc/-uconf-shell-core.sh
 
-# TODO: check if already on...
-#: "${ENV_BASE:=profile}"
-ENV_BASE=${ENV_BASE-}${ENV_BASE:+ }profile
-ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/profile
+uc_env -r bwc-dx
 
 
 ## Reset PATH value
@@ -107,10 +106,6 @@ fi
 ## Load shell settings ('rc' group)
 if [ "${PS1-}" ]; then
   if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
-
-    . /etc/profile.d/us-system.sh ||
-      _FATAL "$_etc_profile: Expected uc-system.sh part installed" || return
-
     : "${PS1:='\h:\w\$ '}"
     if [ -f /etc/bash.bashrc ]; then
       . /etc/bash.bashrc ||
@@ -157,16 +152,9 @@ then
     if [ -r $i ]; then
 
       . $i && {
-        : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
-        _IFDBG _DEBUG "$_etc_profile: $_: Source complete"
+        _IFDBG _DEBUG "$_etc_profile: $i: Source complete"
       } || { s=$?
-        # TODO: rename incubator to US2,
-        #"${US_DEV:-false}" ||
-        #"${US_STRICT:-false}" ||
-        #"${DEBUG:-false}" || continue
-
-        : "${BASH_SOURCE[$(( ${#BASH_LINENO[*]} - 1 ))]}"
-        _WARN "$_etc_profile: $_: source returned non-zero E$s:$i (ignored)"
+        _WARN "$_etc_profile: source returned non-zero E$s:$i (ignored)"
       }
     fi
   done

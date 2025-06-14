@@ -8,14 +8,15 @@
 # Part of a set of generic Bash shell configuration scripts.
 #
 
+ENV_CTX=${ENV_CTX:-$0[$$]}-interactive
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 
-. /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
+#[ -r /etc/uc ] &&
+[[ ${_uconf_shell_core-} ]] ||
+. /usr/share/uc/-uconf-shell-core.sh
 
+# XXX: cleanup
 [ "${ENV_BASE:0:7}" = "profile" ] || {
-
-  >/dev/null 2>&1 declare -F uc_env_continue ||
-    . /etc/profile.d/us-system.sh
 
   # Assumed here is that us-system has been loaded already by parent and
   # exported for use by all subs. XXX: exception for SSH above...
@@ -28,11 +29,7 @@ ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 # If not running interactively, don't do any dynamic stuff
 [[ ${PS1-} ]] || return
 
-ENV_BASE=${ENV_BASE-}${ENV_BASE:+ }rc
-#ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }bashrc
-: "${ENV_CTX:=$0[$$]:bashrc}"}
-
-### Load static helper env
+uc_env @part G rc /etc/bash.bashrc
 
 
 ### Default bash.bashrc

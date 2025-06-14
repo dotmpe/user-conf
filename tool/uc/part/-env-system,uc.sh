@@ -1,10 +1,7 @@
-[[ ${BASH+set} ]] || {
+[ -n "${BASH+set}" ] || {
   _CRIT "-env-system,uc.sh part is incompatible with shell ${SHELL:-(unspecified)}"
   return
 }
-
-#ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
-#ENV_CTX=${ENV_CTX:-$0[$$]:}${ENV_CTX:+ }us-system
 
 case " ${ENV_BASE?} " in ( *" us-system "* )
   # Login sub-shells and interactive sub-shells will inevitably loop
@@ -14,6 +11,7 @@ case " ${ENV_BASE?} " in ( *" us-system "* )
 
 uc_env @part G us-system /etc/profile.d/us-system.sh
 # ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
+
 
 # Inline: uc-sh-util
 
@@ -272,6 +270,7 @@ uc_env_exports+=(
   str_{{glob,word}match,{v,}word}
 )
 
+
 # Inline: sys-log
 
 uc_env @part G sys-log
@@ -303,7 +302,8 @@ uc_env_exports+=( sys_log_env )
 #uc_env @locals BASH_UC_{SCRIPTNAME,SCRIPTTAG}
 uc_env @exports LOG UC_LOG_BASE
 
-_. "uc_env_hooks[\"start\"]" ' ' sys_log_env
+_Sh_ByName_Add "uc_env_hooks[\"start\"]" ' ' sys_log_env
+
 
 # Inline: os-release
 
