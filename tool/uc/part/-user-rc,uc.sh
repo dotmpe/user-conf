@@ -8,7 +8,6 @@
 : "${ENV_CTX:=$0[$$]:~/.bashrc}"
 ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }${HOME:-~}/.bashrc
 
-. /srv/conf-local/tool/uconf/part/-uconf-shell-log.sh
 
 # @ Inline: Shell:running-interactively
 # If not running interactively, then don't do any dynamic stuff either
@@ -43,13 +42,13 @@ uc_profile_boot "$UC_TAB" rc || return
 
 
 ### Command aliases
-[ -n "${UC_SH_ALIASES-}" ] && {
+[ "${UC_SH_ALIASES-}" = false ] && {
   _IFVBS _INFO "Shell aliases disabled per config <Uc-Sh-Aliases:${UC_SH_ALIASES:?}>"
 } || {
   [ ! -e ~/.alias ] && {
     _IFDBG _WARN "No user aliases found"
   } || {
-    _IFDBG _DEBUG "Sourcing user aliases..."
+    _ _IFDBG _DEBUG "Sourcing user aliases..."
     "${uc_source:-"."}" ~/.alias &&
     _INFO "User aliases OK" ||
     _WARN "User aliases E$?"
@@ -173,13 +172,14 @@ fi
   _WARN "Missing uc-env profile" || {
     uc_env +start rc -- $0 "$@"
   }
+
   _IFDBG _INFO "Load complete, starting..."
   uc_profile_start
 
 } || {
   [[ "${ENV_BASE:0:7}" = "profile" ]] &&
   _INFO "Load complete (login)" || {
-    _WARN "Unrecognized env base: ${ENV_BASE}"
+    _ _WARN "Unrecognized env base: ${ENV_BASE}"
     _INFO "Load complete, starting rc..."
     uc_profile_start
   }

@@ -36,7 +36,9 @@ stdlog_uc_lib__init ()
 
 stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
 {
-  args_uc__argc_n :stdlog-init $# ge 2 || return
+  : input "${1:?Handler name expected}"
+  : input "${2:?Logger name expected}"
+  #args_uc__argc_n :stdlog-init $# ge 2 || return
   local name="$1" logger="$2" filters
   shift 2
   while test $# -gt 0
@@ -264,9 +266,9 @@ stdlog_to_syslog () # {slog,r} ~ [Line-Type] [Header] Msg [Ctx] [Exit]
   local lt lt="${1:-notice}"
 
   test -z "${4-}" && {
-    $slog "$lt" "${3-}" "" "$2" || r=$?
+    "${slog:?}" "$lt" "${3-}" "" "$2" || r=$?
   } || {
-    $slog "$lt" "$3 <$4>" "" "$2" || r=$?
+    "${slog:?}" "$lt" "$3 <$4>" "" "$2" || r=$?
   }
 }
 

@@ -400,8 +400,8 @@ uc_profile_boot () # TAB [types...]
 
   "${uc_log:-${LOG?}}" "info" ":boot" "Start sourcing profile.tab parts" "$*:wcl=$(wc -l "$c")"
 
-  local name{,s,spec} type rest
-  while read -r namespec type rest
+  local name{,s,spec} type
+  while read -r namespec type
   do
     test -n "$type" -a $# -gt 0 && {
       # Skip entry unless '$*' matches any type for entry
@@ -422,7 +422,10 @@ uc_profile_boot () # TAB [types...]
       # Also '-' prefix must be handled here
       fnmatch "-*" "$namespec" &&
         require=false namespec=${namespec:1} || require=true
-      mapfile -t names <<< "$(uc_profile_partnames "$namespec")"
+
+      :pass "$(uc_profile_partnames "$namespec")" &&
+      mapfile -t names <<< "${_}" || names=()
+
       [ "${require}" = false ] || [ ${#names[*]} -gt 0 ] ||
         "${uc_log:-${LOG?}}" "error" ":load" "Error: no uc-source" \
           "name:$namespec;*:$*" 6 || return

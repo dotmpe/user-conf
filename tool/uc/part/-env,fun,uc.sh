@@ -108,9 +108,10 @@ EOM
   ( -gi | :group-info )
     : param '~~ <Group-name> ...'
     : input "${2:?Group name expected: $*, $ENV_CTX:$FUNCNAME${1}}"
+    local -n _type="uc_env_types[\"${2}\"]"
+    uc_env :assert-type G "${!_type}" || return
     local _spec _{b,t,e}i
-    : ${uc_env_types["${2}"]}
-    _spec=${_#G}
+    _spec=${_type#G}
     test -z "$_spec" && \
       echo -n "Regular group ${2}" ||
       echo -n "Group ${2} -$_spec"
@@ -124,6 +125,15 @@ EOM
     test -z "${uc_env_parts["${2}.src"]-}" || echo -n " <$_>"
     test -z "${uc_env_parts["${2}.ctx"]-}" || echo -n " Context: $_"
     echo
+  ;;
+  ( :info )
+    : param '~~ <Part-name> ...'
+    : input "${2:?Part name expected: $*, $ENV_CTX:$FUNCNAME${1}}"
+    local -n _type="uc_env_types[\"${2}\"]"
+    uc_env :assert-exists "${!_type}" || return
+    echo part ${2} type=$_type
+    local -n _part="uc_env_parts[\"${2}.${_type:1:1}\"]"
+    ! [[ ${part:+set} ]] || echo part=$_part
   ;;
   ( -h | -\? | --help | :help-summary )
     cat <<EOM
@@ -164,7 +174,8 @@ EOM
     # TODO: print sorted by base, and propagate group end-index, ie. at
     # .end attribute
   ;;
-  ( -l | --load )
+  ( -i | --include | \
+    -l | --load )
     : param '~~ <Name ...>'
     : input ${2:?Expected part name(s), $ENV_CTX:$FUNCNAME:$1}
     local _pn
@@ -177,7 +188,7 @@ EOM
   ( -pi | :part-info )
     : param '~~ <Name> [<Type-spec>]'
     local _ts
-    [[ ${3-} ]] && _ts=${3} || uc_env :xtype "${2}" _ts
+    [[ ${3-} ]] && _ts=${3} || uc_env :type "${2}" _ts
     local _type=${_ts:0:1} _spec=${_ts:1} label=part
     ! [[ $_spec ]] &&
     echo "Regular $_type $label ${2}" ||
@@ -193,23 +204,22 @@ EOM
   ;;
   ( -pr | :pretty )
     : param '~ ~ ...'
-    : param '~ -pretty.<Type> <Array-mame> ...'
-    uc_env @uc/env
-    declare -
-    uc_env -pretty.a uc_env_exports
-    uc_env -pretty.A uc_env_{types,parts,hooks}
+    : param '~ :pretty.<Type> <Array-name> ...'
+    uc_env :pretty.a uc_env_exports
+    local -a _arrs=( uc_env_{types,parts,hooks} )
+    _Sys_Exec_Apply uc_env :pretty.A _arrs
   ;;
-  ( -pretty.a )
+  ( :pretty.a )
     : param '~ ~ <Array-name> ...'
     local -n _arr=${2}
     echo "declare -a ${2}=("
     for k in "${!_arr[@]}"
     do
-      echo "  [\"$k\"]=${_arr[k]@Q}"
+      echo "  [$k]=${_arr[k]@Q}"
     done
     echo ")"
   ;;
-  ( -pretty.A )
+  ( :pretty.A )
     : param '~ ~ <Array-name> ...'
     local -n _arr=${2}
     echo "declare -A ${2}=("
@@ -219,21 +229,26 @@ EOM
     done
     echo ")"
   ;;
+  ( -Q )
+    : param '~~ <Type> <Name> ...'
+    ! _OS_Fun_Exists uc-env::${3} ||
+        [[ ${uc_env_parts["${3}.${2}"]:+set} ]] ||
+            uc_env @d:${2} ${3} "$(declare -f uc-env::${3})"
+  ;;
   ( -q | :query )
     : param '~~ <Names...>'
     local _pn
     for _pn in "${@:2}"
     do [[ ${uc_env_parts[${_pn:?}]+set} ]] || return
     done
+    #local -n "uc_env_parts[\"\${_pn:?}\"]"
   ;;
   ( -r | --require | :require-parts )
     : about 'Require env parts'
     : param '~~ <Name ...>'
     : input ${2:?Expected part name(s), $ENV_CTX:$FUNCNAME:$1}
-    local _pn
-    for _pn in "${@:2}"
-    do uc_env :require-part "$_pn" || return
-    done
+    local -a _parts=( "${@:2}" )
+    _Sys_Exec_Apply --all uc_env :require-part _parts
   ;;
   ( -rld | :reload )
     : param '...'
@@ -242,10 +257,10 @@ EOM
   ( -summary )
     >&2 echo "Env-ctx: ${ENV_CTX-(unset)}"
     local -a _env_{base,ctx,lib,src}
-    _Sys_Exec_Map _env_base printf -- '%s\n' ${ENV_BASE-}
-    _Sys_Exec_Map _env_ctx printf -- '%s\n' ${ENV_CTX-}
-    _Sys_Exec_Map _env_lib printf -- '%s\n' ${ENV_LIB-}
-    _Sys_Exec_Map _env_src printf -- '%s\n' ${ENV_SRC-}
+    _Sys_Read_Exec _env_base printf -- '%s\n' ${ENV_BASE-}
+    _Sys_Read_Exec _env_ctx printf -- '%s\n' ${ENV_CTX-}
+    _Sys_Read_Exec _env_lib printf -- '%s\n' ${ENV_LIB-}
+    _Sys_Read_Exec _env_src printf -- '%s\n' ${ENV_SRC-}
     >&2 echo "Env-base-current: ${ENV_BASE//* }"
     >&2 echo "Env-base-len: ${#_env_base[*]}"
     >&2 echo "Env-ctx-len: ${#_env_ctx[*]}"
@@ -258,7 +273,7 @@ EOM
     #>&2 echo "Export-len: ${#uc_env_exports[*]}"
     #>&2 echo "Hook-seqs: ${!uc_env_hooks[*]}"
     {
-      env_uc -typeset.hooks
+      uc_env -typeset.hooks
     } | IF_LANG=bash ${PAGER:?}
   ;;
   ( -typeset )
@@ -268,7 +283,7 @@ EOM
   ( -typeset.hooks )
     local _env_hook
     local -a _env_hooks
-    uc_env -pretty.A uc_env_hooks
+    uc_env :pretty.A uc_env_hooks
     for _env_hook in ${!uc_env_hooks[*]}
     do
       read -a _env_hooks <<< "${uc_env_hooks["$_env_hook"]}"
@@ -281,22 +296,34 @@ EOM
     : about "Declare & define by-name variable"
     uc_env +d n "${@:2}"
   ;;
-  ( @contexts ) # ~~ <Name ...>
+  ( @contexts )
+    : param '~~ <Name ...>'
+    : about 'Record given names as us env context'
+    : extended 'Helper to register uc env component parts'
     shift
     local ctx
     for ctx
     do
-      uc_env +d dx "uc-env::${ctx}" "$(_Sh_Fun_Body "uc-env::${ctx}")"
-      #super=$(metafor super <<< "$_")
+      #uc_cmp :define-context "${ctx}"
 
-      uc_env +d c "${ctx}" "uc-env::"
+      # Store like dynfun, but lazy-eval hook only upon -r
+      :pass "$(_Sh_Fun_Body "uc-env::${ctx}")" &&
+      #uc_env +d dx "uc-env::${ctx}" "${_}" &&
+      #super=$(metafor super <<< "$ctx")
+      # Register as component type of part
+      uc_env @d:c "${ctx}" "${_}" ||
+      #uc_env +d c "${ctx}" "uc-env::" ||
+        _WARN "Failed adding context ${ctx}: E$?, $ENV_CTX:$FUNCNAME@contexts"
+
+      uc_env -gi "${ctx}"
     done
   ;;
-  ( +continue ) # ~ .... #
+  ( +continue )
+    : param '...'
     : about "Reload uc env from export, and redeclare dynamic parts"
     uc:env:${SHELL_NAME:-bash} &&
-      _uconf_debug_ "Loaded uc_env export" ||
-      _uconf_warn_ "Failed loading compiled env meta: E$?"
+    _INFO "Loaded compiled env" ||
+      _WARN "Failed loading compiled env: E$?" || return
     # run-defs without exports, just special attributes and other dyn. types
     local env_defs
     env_defs="$(uc_env -dif%)" &&
@@ -310,7 +337,11 @@ EOM
     } ||
       _uconf_warn_ "uc_env +continue: Nothing to continue from"
   ;;
-  ( +d ) # ~~ <Type> <Id> [<Spec...>] # Declare & define
+  ( +d )
+    : param '~~ <Type> <Id> [<Spec...>]'
+    : about 'Declare & define'
+    : extended 'See @d:* for registration, and +d.* for definition'
+    : extended 'Some types currently use custom spec'
     uc_env @d:${2} "${@:3}" &&
     uc_env +d.${2} "${3}"
   ;;
@@ -334,13 +365,16 @@ EOM
     _Sh_ByName_Add ENV_CTX ' ' "$5"
   ;;
   ( @d:n* )
+    # XXX: should need this for n
     : input "${2?:Variable name expected: $*, $ENV_CTX:$FUNCNAME}"
     uc_env :register-part "${2}" "${1#@d\:}" "${@:4}"
     [[ $# -eq 2 ]] && return
     : input "${3?:Reference name expected: $*, $ENV_CTX:$FUNCNAME}"
     uc_env_parts["$2.n"]=${3}
   ;;
-  ( @d:* ) # ~ ~:[<Type>] <Id> [<Spec...>] # Generic declare
+  ( @d:* )
+    : param '~ ~:[<Type>] <Id> [<Spec...>]'
+    : about 'Generic declare'
     uc_env :register-part "${2}" "${1#@d\:}" "${@:3}"
   ;;
   #( +d.n* )
@@ -350,13 +384,14 @@ EOM
     : param '~ ~.[<Type>] <Id> ...'
     : about 'Evalute definition (ie. re-apply from uc_env meta)'
     : input "${2?:Part name expected: $*, $ENV_CTX:$FUNCNAME}"
+    # TODO: reval only when dirty
     uc_env :reval "${1#+d.}" "${2}"
   ;;
   ( +eval | :reval )
-    : param '<Type> <Name>'
+    : param '<Type> <Name> [<Pref] [<Suf>]'
     local _dtype_stmt
     uc_env :dtype "${3}" _dtype_stmt ${2} &&
-    eval "${_dtype_stmt:?}"
+    eval "${4-}${_dtype_stmt:?}${5-}"
   ;;
   ( @exports )
     : param '...'
@@ -376,8 +411,12 @@ EOM
   ( @hooks:* )
     : param '~ ~<Set> <Handlers...>'
     : about 'Declare additional hooks'
-    local hookset=${1#@hooks:}
-    _Sh_ByName_Add "uc_env_hooks[\"$hookset\"]" ' ' "${*:2}"
+    local hookset=${1#@hooks:} hook
+    local -n hooks="uc_env_hooks[\"${hookset}\"]"
+    for hook in "${@:2}"
+    do _Str_Glob_Match "*,${hook},*" ",${hooks}," && continue
+      _Sh_ByName_Add "${!hooks}" ',' "${hook}"
+    done
   ;;
   ( +if-init )
     : param '...'
@@ -411,15 +450,14 @@ EOM
     : extended "After normal export (vars, functions), run 'start' hook,"
     : extended "followed by dump, and export for current uc_env state."
     local _sh=${SHELL_NAME:-$0}
-    [[ ${*:2:2} == "profile --" ]] && {
+    if [[ ${*:2:2} == "profile --" ]]
+    then
       uc_env :export
-    }
-    [[ ${*:2:2} == "rc --" ]] && {
-      _uconf_debug_ "Running uc_env rc init hooks"
-      #>&2 echo "$0[$$]:$FUNCNAME$1: Interactive auto-start of $_sh env"
+    elif [[ ${*:2:2} == "rc --" ]]
+    then
+      _uconf_debug_ "Running uc env 'start' hooks"
       uc_env :hooks:start
-    } ||
-      _uconf_info_ "No uc_env init hooks"
+    fi
     # run-defs
     #:pass "$(uc_env -dif%)" &&
     local __uc_env_start
@@ -445,12 +483,23 @@ EOM
     : about "Declare all exported variables and functions"
     : param "~~ ..."
     local _env_{key,type}
-    for _env_key in "${uc_env_exports[@]}"
+    [[ $# -gt 1 ]] || set -- "$1" "${uc_env_exports[@]}"
+    for _env_key in "${@:2}"
     do
       : "${_env_key:?$0[$$]:$FUNCNAME$1: Empty env key in uc_env_exports}"
-      uc_env :xtype "${_env_key}" _env_type || continue
-      _env_type=${_env_type/v}
-      declare -g${_env_type} $_env_key
+      uc_env :type "${_env_key}" _env_type || continue
+      case "${_env_type/x}" in
+      ( v* )
+          declare -gx $_env_key
+        ;;
+      ( [df]* )
+          declare -gfx $_env_key
+        ;;
+      ( [ns]* )
+        ;;
+      ( * )
+          >&2 echo unhandled env export ${_env_key}: ${_env_type/x}
+      esac
     done
   ;;
   ( :inline-part | @part )
@@ -467,10 +516,10 @@ EOM
     declare -g _prev_group=${3}
   ;;
   ( :load-part )
+    : extended 'See :require-part for post-load init'
     : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
     [[ ${uc_env_types["${2}"]+set} ]] || {
-      :isFun uc-env::${2} ||
-          . "${2}.inc.sh" || _ERR "uc env '${2}' not found"
+      . "${2}.inc.sh" || _ERR "uc env '${2}' not found"
     }
   ;;
   ( :redefine-export | +increment )
@@ -484,14 +533,16 @@ EOM
   ( :hooks:* ) # ~~ ... [ -- <ctx...> ] # Run callbacks group
     local _ucenv_hook{,seq}
     _ucenv_hookseq=${1#:hooks:}
-    for _ucenv_hook in ${uc_env_hooks["${_ucenv_hookseq}"]}
+    local -n _ucenv_hooks="uc_env_hooks[\"${_ucenv_hookseq}\"]"
+    [[ ${_ucenv_hooks:+set} ]] &&
+    for _ucenv_hook in ${_ucenv_hooks//,/ }
     do
-      : "${_ucenv_hook:?$ENV_CTX:$FUNCNAME$1: Empty env key in hook sequence $_ucenv_hookseq}"
+      : "${_ucenv_hook:?Empty env key in hook sequence $_ucenv_hookseq, $ENV_CTX:$FUNCNAME$1}"
       "${_ucenv_hook}" -- ${FUNCNAME}${1} "${@:2}" &&
-      _uconf_info_ "Hook $_ucenv_hook OK" || {
-        _uconf_warn_ "Hook $_ucenv_hook E$?" || true
-      }
-    done
+      _uconf_info_ "Hook $_ucenv_hook OK" ||
+        _ _uconf_warn_ "Hook $_ucenv_hook E$?"
+    done ||
+      _ _uconf_warn_ "No uc env ${_ucenv_hookseq@Q} hooks"
   ;;
   ( :unexport-parts | @locals )
     : "${2?:Keys expected: $*, $ENV_CTX:$FUNCNAME}"
@@ -524,33 +575,37 @@ EOM
       uc_env_types["${3}"]=${_def}
       return
     ( * )
-      _ERROR "$FUNCNAME:$1?"
+      _uconf_alert_ "${1}? Unsupported, $ENV_CTX:${FUNCNAME[0]}"
+      #_ERR "$FUNCNAME:$1?"
     esac
   ;;
-  ( :dtype ) # ~~ <Name> <Dest-ref> [<Type-spec>] ...
+  ( :dtype )
+    : param '~~ <Name> <Dest-ref> [<Type-spec>] ...'
     : about 'Build declaration statement for dynamic symbol'
     : extended 'All simple Bash variables and functions can be exported, but'
-    : extended ' without attributes. No arrays. And no special function names. '
+    : extended ' without attributes. No arrays. And limited special function names. '
     : input "${2?:Part name expected: $*, $ENV_CTX:$FUNCNAME}"
     : input "${3?:Dest var expected: $*, $ENV_CTX:$FUNCNAME}"
     local -n _dtype_sref=${3}
     local _dtype_tp
     [[ ${4:-} ]] && _dtype_tp=${4} || uc_env :type "${2}" _dtype_tp
-    _dtype_sref=${_dtype_tp?$0[$$] uc-env$1: Require type for ${2:?}${4:+: ${4}}}
+    : "${_dtype_tp:?$0[$$] uc-env$1: Require type for ${2:?}${4:+: ${4}}}"
+    _dtype_sref=${_dtype_tp%% *}
     case "${_dtype_sref}" in
     ( *G* ) false ;; # no export for groups here
     #( *f* ) [[ ${_dtype_sref/f} != x ]] ;; # special case: xf we can just skip
     esac &&
     case "${_dtype_sref}" in
     ( *s* ) # static script symbol
-      local _dtype_target=${uc_env_parts["${2}.s"]}
+      local -n _dtype_target="uc_env_parts[\"${2}.s\"]"
+      : "${_dtype_target:?Expected script part for ${2} ($_dtype_sref)}"
       _dtype_sref="alias ${2}=${_dtype_target}"
       return ;;
     ( *d* ) # dynamic symbol
       # name could be alias, function maybe even temp/trans cmd?
       local _dtype_body=${uc_env_parts["${2}.d"]}
       _dtype_sref="${2} () {
-  ${_dtype_body}
+  ${_dtype_body:?}
 }"
       return ;;
     ( *n* ) # by-name variable
@@ -561,7 +616,7 @@ EOM
       _dtype_sref="${_dtype_sref} ${2}" ;;
     ( * ) false ;;
     esac &&
-    _dtype_sref="declare -g${_dtype_sref}"
+    _dtype_sref="declare -g${_dtype_sref:?}"
   ;;
   ( :dump+bash )
     echo $'uc:env:bash ()\n{'
@@ -581,10 +636,6 @@ EOM
     }
     echo $'}\ndeclare -xf uc:env:bash'
   ;;
-  ( :metafor )
-    : input ${2:?Expected field name, $ENV_CTX:$FUNCNAME:$1}
-    sed -n "/${2} / s/['\";]*\$//;s/^[ 	]*\(: _\)*${2} ['\"]*\([^([].*\)*\$/\2/p"
-  ;;
   ( :part-attr )
     : param '<Part> <Array> <Fields...>'
     : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
@@ -596,27 +647,66 @@ EOM
     _fundecl="$(declare -f uc-env::${2})" &&
     for _an in "${@:4}"
     do
-      :pass "$(<<< "${_fundecl}" uc_env :metafor ${_an})" || return
+      :pass "$(<<< "${_fundecl}" uc_cmp :metafor ${_an})" || return
       __uc_env_pa_out[${_an}]=${_}
     done
   ;;
+  ( :part-names )
+    : param '~ ~ <Dest> ...'
+    : about 'Get actual list of all part names'
+    : extended 'Tracked parts must be either registered with type or as export'
+    : extended 'ie. in uc-env-types or uc-env-exports'
+    # uc env registration can be incomplete: 1, the default type is v for
+    # variable and those can exist in the env and as export only (so no type or
+    # parts), and 2, normal external functions similary exists. And neither
+    # is necessarily exported.
+    local -n _dest_arr=${2}
+    local -a _parts=( "${!uc_env_types[@]}" )
+    _Sys_Arr_Union _parts uc_env_exports _dest_arr
+  ;;
   ( :require-part )
     : input ${2:?Expected part name, $ENV_CTX:$FUNCNAME:$1}
-    uc_env :load-part "${2}" &&
-    [[ ${uc_env_parts["${2}.c"]+set} ]] && {
-      local _rp_attr
-      ! uc_env :part-attr "${2}" _rp_attr super ||
-          uc_env :load-part "${_rp_attr['super']}" ||
-              return
-      uc-env::${2} || return
-    }
+    #_Str_Glob_Match " $ENV_BASE " "* ${2} *" && return
+    _Sh_Fun_Exists uc-env::${2} ||
+      [[ ${uc_env_parts["${2}.c"]+set} ]] ||
+        uc_env :load-part "${2}" ||
+          _WARN "Unrecognized part ${2@Q}" ||
+            return
+    uc_cmp :define-context "${2}" &&
+    uc_cmp :resolve-context "${2}" && {
+      _Sh_ByName_Add ENV_BASE " " "${2}" || return 0
+      uc-env::${2}
+    } ||
+      _ERR "Require part ${2@Q} failed, E$?"
   ;;
   ( :register-part )
-    : param "~~ <Id> <Spec> ..."
+    : param '~~ <Id> <Spec> ...'
+    : extended 'Set type to full type-flag, and part to given spec'
     : input "${2?:Part name expected: $*, $ENV_CTX:$FUNCNAME}"
     : input "${3?:Spec/primary type expected: $*, $ENV_CTX:$FUNCNAME}"
     uc_env_types["${2}"]=${3}
     uc_env_parts["${2}.${3:0:1}"]="${*:4}"
+  ;;
+  ( +reset )
+    : param '...'
+    : extended 'This is just for testing purposes'
+    local _parts
+    uc_env :part-names _parts &&
+    _Sys_Exec_Apply --all uc_env +remove _parts
+    unset \
+      ENV_BASE \
+      uc_env_{hooks,parts,types} \
+      uc_env_exports
+  ;;
+  ( :assert-exists ) # ~~ <Type-ref>
+    local -n __type_ref=${2}
+    [[ ${__type_ref:+set} ]] || _WARN "No such uc env entity for ${2}"
+  ;;
+  ( :assert-type ) # ~~ <Flag> <Type-ref>
+    local -n __type_ref=${3}
+    uc_env :assert-exists "${3}" || return
+    [[ ${__type_ref:1:1} = ${2} ]]  ||
+      _WARN "No such ${2} entity (${3}='${__type_ref}')" || return
   ;;
   ( :type )
     : about 'Retrieve full uc env type for name'
@@ -624,8 +714,11 @@ EOM
     : input "${2?:Part name expected: $*, $ENV_CTX:$FUNCNAME}"
     : input "${3?:Dest var expected: $*, $ENV_CTX:$FUNCNAME}"
     local -n _uc_etp_dest=${3}
-    _uc_etp_dest=${uc_env_types["${2}"]:-vX}
-    uc_env :vfl-defstrip x X _uc_etp_dest
+    _uc_etp_dest=${uc_env_types["${2}"]:-v}
+    if _Sys_Arr_Find uc_env_exports "${2}"
+    then uc_env :vfl-defstrip x X _uc_etp_dest
+    else _uc_etp_dest=${_uc_etp_dest/x}
+    fi
   ;;
   ( :vfl-default )
     : about 'Add default flag unless complement flag is set'
@@ -645,43 +738,68 @@ EOM
     ( * ) _vfl_ref=${_vfl_ref/${2}}${2} ;;
     esac
   ;;
-  ( :xtype )
-    : param '~ ~ <Name> <Dest> ...'
+  ( +remove )
+    : param '~ ~ <Name> ...'
     : input "${2?:Part name expected: $*, $ENV_CTX:$FUNCNAME}"
-    : input "${3?:Dest var expected: $*, $ENV_CTX:$FUNCNAME}"
-    local _ref
-    local -n _xtype_ref=${3}
-    uc_env :type "${@:2}" &&
-    case "${_xtype_ref}" in
-    ( *x* ) _ref=${_xtype_ref/x} ;;
+    local __type
+    local -n __part
+    uc_env :type "${2}" __type &&
+    #__part="uc_env_parts[\"${1}.${__type:1:1}\"]" &&
+    case "${__type:-v}" in
+    ( *c* )
+      case "${__type}" in
+      ( *x* ) declare -f +x uc-env::${2} ;;
+      esac
+      unset -f uc-env::${2} ;;
+    ( *f* | *d* )
+      case "${__type}" in
+      ( *x* ) declare -f +x ${2} ;;
+      esac
+      unset -f ${2} ;;
+    ( *v* )
+      case "${__type}" in
+      ( *x* ) declare -f +x ${2} ;;
+      esac
+      unset ${2} ;;
     ( * ) false ;;
     esac &&
-    case "${_xtype_ref}" in
-    ( *f* ) ;;
-    ( *i* ) _ref=${_xtype_ref/i} ;;
-    ( *l* ) _ref=${_xtype_ref/l} ;;
-    ( *r* ) _ref=${_xtype_ref/r} ;;
-    ( *t* ) _ref=${_xtype_ref/t} ;;
-    ( *u* ) _ref=${_xtype_ref/u} ;;
-    ( *v* ) _ref=${_xtype_ref/v} ;;
-    ( * ) false ;;
-    esac
+    true
   ;;
 
   ( @uc/env )
-    : param '...'
-    compo_declare :declare "$1" \
-      v ENV_{BASE,CTX,LIB,SRC} -- \
-      a uc_env_exports -- \
-      A uc_env_{types,parts,hooks} --
+    #:ignore () { "$@" || uc_stats+=( "$?" ); }
+    :ignore () { "$@" || true; }
+    :pass () { return; }
+    :stat () { return ${1:?}; }
+
+    uc_env +if-init &&
+
+    uc_env +d dx :ignore '"${@}" || true' &&
+    uc_env +d dx :pass 'return' &&
+    uc_env +d dx :stat 'return ${1:?}' &&
+
+    #uc_cmp :init-includes uc-{afs,cmp,env}
+    uc-env::uconf-profile-dsl &&
+    uc-env::uconf-shell-log &&
+    uc_env -r uconf-shell{,-core-dsl} uconf-profile-dsl &&
+    #declare -gfx :ignore :pass :stat &&
+    # FIXME: scripts loaded *and* run during profile need to use us_env
+    # instead, but until support is rolled out simply export everything loaded
+    # until now from uconf-shell includes.
+    uc_env @exports \
+      _ _IF{_,DBG,VBS} _uconf_shell_is{debug,verbose} append_path \
+      :ignore :pass :stat &&
+    uc_env :export &&
+    true
   ;;
 
   ( @uc ) #XXX: registration
     : param '...'
   ;;
 
-  ( * ) false
+  ( * )
     _uconf_alert_ "${1}? Unsupported, $ENV_CTX:${FUNCNAME[0]}"
+    :stat ${_E_next:-196}
   ;;
   esac || return
 

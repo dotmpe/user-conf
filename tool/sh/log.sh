@@ -145,8 +145,10 @@ uc_log_init () # ~
   # XXX: a bit of deferred uc-profile setup here
   local load_log_level
   ! "${LOG_DEBUG:-false}" && load_log_level=4 || load_log_level=${UC_LOG_LEVEL:?}
-  v=${load_log_level} LOG=$INIT_LOG uc_profile_load_lib ||
-    _CRIT "Failed uc-profile-load-lib E$?" || return
+  v=${load_log_level} LOG=$INIT_LOG uc_profile_load_lib || {
+    >&2 echo "Failed uc-profile-load-lib E$?"
+    return 1
+  }
 
   # Setup logger (but not LOG)
   { uc_fun uc_log || syslog_uc_init uc_log
@@ -171,6 +173,8 @@ case "$0" in
 
         ( env ) shift; uc_log_main_env "$@"; exit $? ;;
         ( log | * )
+          _Sh_Fun_Exists _DEBUG || _UConf_Shell_Log_init
+
           uc_main_log "$@"; exit $? ;;
       esac
 

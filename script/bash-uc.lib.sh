@@ -41,15 +41,44 @@ bash_caller () # ~ <Frame>
   caller "$@"
 }
 
+bash_uc_log ()
+{
+  local logcmd
+  >/dev/null 2>&1 declare -F uc_log && logcmd=uc_log ||
+  >/dev/null 2>&1 declare -F _UConf_Shell_Log_ctx &&
+  logcmd=_UConf_Shell_Log_ctx ||
+  logcmd=$LOG
+  "${logcmd}" "${@}"
+}
+
+sys_callers () # ~ [<Frame>]
+{
+  : copy "sys.lib.sh"
+  local i
+  for (( i=${1-0}; 1; i++ ))
+  do caller $i || break
+  done
+}
+
+bash_status ()
+{
+  return "${1:?}"
+}
+
 bash_frames ()
 {
   echo "${!BASH_ARGC[*]}"
 }
 
-# Format bash-uc-trace to stderr
+# Direct bash-uc-trace to stderr
 bash_uc_errexit () # ~ <id> <msg> <frame-offset> ...
 {
-  bash_uc_trace "$@" >&2
+  #local err=$?
+  #! (( ${err} )) && return
+  #>&2 echo status E$err $FUNCNAME "$@"
+  #>&2 sys_callers
+  #bash_status "${err}"
+  >&2 bash_uc_trace "$@"
 }
 
 # Format Bash trace
@@ -110,7 +139,7 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
       case "$-" in ( *E* ) ;; ( * ) false ;; esac &&
       case "$-" in ( *T* ) ;; ( * ) false ;; esac
     } || {
-      $LOG warn ":bash-uc.lib:errexit" "Cannot display full trace without E/T?" "-=$-"
+      bash_uc_log warn ":bash-uc.lib:errexit" "Cannot display full trace without E/T?" "-=$-"
     }
   } || {
     # Bash manual notes setting extdebug after starting script or not at all

@@ -14,22 +14,31 @@
 # Part of a set of generic Bash shell configuration scripts.
 # Id: -uc-global-profile.sh, version:XXX ex:ft=sh:
 
-ENV_CTX=${ENV_CTX:-$0[$$]}-login
 
-[ -n "${_uconf_shell_core_-}" ] ||
-#[ -r /etc/uc ] &&
-#[ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] &&
-. /usr/share/uc/-uconf-shell-core.sh
+ENV_CTX=${ENV_CTX:-$0[$$]}
+
+[ "${_uconf_shell_core_-}" = "0" ] || {
+  [ -r /etc/uc ] &&
+  [ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] || return
+
+  . /usr/share/uc/-uconf-shell-core.sh
+}
+
+ENV_CTX=${ENV_CTX}-login
 
 _etc_profile=/etc/profile,uc
 _etc_profile_a=id
 _etc_profile_id=user-conf:$_etc_profile
+
+_NOTICE "Starting system login shell"
 
 _IFDBG _DEBUG "$_etc_profile: System login env user $USER \$ $$ [-$-] $0 (#$#) ~ $*"
 
 if [ "${BASH-}" ] && [ "$BASH" = "/bin/sh" ]; then
   _WARN "$_etc_profile: loading in sh-mode! ${SHELL:-(unspecified)}"
 fi
+
+# Start uc env groups
 
 if [ -n "${ENV_BASE-}" ] && :fnMatch "* profile *" " $ENV_BASE "
 then
@@ -40,7 +49,7 @@ fi
 uc_env @part G profile /etc/profile
 uc_env @part G uc-env-core /usr/share/uc/-uconf-shell-core.sh
 
-uc_env -r bwc-dx
+uc_env -r us-bwc-dx
 
 
 ## Reset PATH value
@@ -68,10 +77,10 @@ fi
 
 } || {
 
-  _IFDBG _INFO "$_etc_profile: Starting Bash uc-profile"
+  _ _IFDBG _INFO "$_etc_profile: Starting Bash uc-profile"
 
   . /etc/profile.d/uc-profile.sh ||
-    _FATAL "$_etc_profile: Expected uc-profile.sh part installed" || return
+    _ALERT "$_etc_profile: Unexpected uc-profile.sh E$?" || return
 
   [ -n "${LOG-}" ] || {
     uc_log_init && LOG=uc_log ||
@@ -109,9 +118,9 @@ if [ "${PS1-}" ]; then
     : "${PS1:='\h:\w\$ '}"
     if [ -f /etc/bash.bashrc ]; then
       . /etc/bash.bashrc ||
-        _ERR "$_etc_profile: Bash system rc returned non-zero: E$? (ignored)"
+        _ _ERR "$_etc_profile: Bash system rc returned non-zero: E$? (ignored)"
     else
-      _ALERT "$_etc_profile: Bash system rc missing!"
+      _ _ALERT "$_etc_profile: Bash system rc missing!"
     fi
   else
     if [ "$(id -u)" -eq 0 ]; then
@@ -119,10 +128,10 @@ if [ "${PS1-}" ]; then
     else
       PS1='$ '
     fi
-    _IFDBG _DEBUG "$_etc_profile: Configured PS1 for other shells"
+    _ _IFDBG _DEBUG "$_etc_profile: Configured PS1 for other shells"
   fi
 else
-  _IFDBG _DEBUG "$_etc_profile: Not interactive, no PS1 setting"
+  _ _IFDBG _DEBUG "$_etc_profile: Not interactive, no PS1 setting"
 fi
 
 
@@ -162,7 +171,7 @@ then
   unset i s ucp_paths
 
 else
-  _IFDBG \
+  _ _IFDBG \
     _INFO "$_etc_profile: Starting primary profile.d source sequence (non-Bash)"
 
   # Run the normal non-Bash profile.d sequence
@@ -188,7 +197,7 @@ fi
 # profile part loaded after this should kick things off.
 
 # TODO: uc-env-{export,init,start} trigger env, see home/user parts
-
-_IFVBS _NOTICE "System profile ($_etc_profile) finished"
+# should finalize etc-profile group here, to indicate it finished properly
+_NOTICE "System profile ($_etc_profile) finished"
 
 # Id: uc:sys:profile /etc/profile ex:ft=bash:

@@ -83,7 +83,7 @@
     case "${2}" in ( ${1} ) ;; * ) false ;; esac
   }
 
-  _Sys_Exec_Map ()
+  _Sys_Read_Exec ()
   {
     : about "Read command standard ouput (lines) into array"
     : param "~ <Array-name> <Cmd...>"
@@ -129,7 +129,7 @@
     uc_env +d dx :body '_Sh_Fun_Body "${@}"'
     uc_env +d dx :fnMatch '_Str_Glob_Match "${2}" "${1}"'
     uc_env +d dx :isFun '_Sh_Fun_Exists "${@}"'
-    uc_env +d dx :mapExec '_Sys_Exec_Map "${@}"'
+    uc_env +d dx :mapExec '_Sys_Read_Exec "${@}"'
     uc_env +d dx :mkFun '_Sh_Fun_Eval "${@}"'
     uc_env +d dx :pass 'return'
   }
@@ -161,7 +161,7 @@
     uc_env +d dx sh_fun '_Sh_Fun_Exists "${@}"'
     uc_env +d dx sh_vadd '_Sh_ByName_Add "${@}"'
     uc_env +d dx sh_funbody '_Sh_Fun_Body "${@}"'
-    uc_env +d dx sh_mapfile '_Sys_Exec_Map "${@}"'
+    uc_env +d dx sh_mapfile '_Sys_Read_Exec "${@}"'
     uc_env +d dx if_ok 'return'
     uc_env +d dx stderr '>&2 "${@}"'
   }
@@ -191,19 +191,9 @@ _OS_Path_Add "${@}" || true'
   #export DBUS_DEBUG=false
   #export DEBUG=true
 
-  set -- uc_env \
-    _OS_Path_Add \
-    _OS_Path_Assert \
-    _Sh_ByName_Add \
-    _Sh_Fun_Body \
-    _Sh_Fun_Eval \
-    _Sh_Fun_Exists \
-    _Str_Glob_Match \
-    _Sys_Exec_Map
-
-  uc_env @functions "$@"
-  uc_env @exports "$@"
-  uc_env :export
+  #uc_env @functions "$@"
+  #uc_env @exports "$@"
+  #uc_env :export
 
   _uconf_shell_core_=0 # Finish
 }

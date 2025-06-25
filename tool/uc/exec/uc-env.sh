@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+
 # XXX: should really want to compile this entire script, remove all deps
 #us-env -r user-script || ${uc_stat:-exit} $?
 #uc_script_load user-script || ${us_stat:-exit} $?
+
 
 uc_version=v0.2.1-dev
 
@@ -15,9 +17,9 @@ uc_env_maincmds=declare,help,knows,load,query,require
 uc_env_shortdescr=
 
 # TODO: transpile function from parts, see tool/uc/part/-env,func,uc.sh
-uc-env () # @uc/base
+_uc_env_ () # @uc/base
 {
-  : source "uc-env.sh"
+  : src "uc-env.sh"
   local args
   case "${*:?${ENV_CTX:-$0[$$]}:uc-env Arguments expected}" in
   ( -h|-?|--help )
@@ -43,10 +45,15 @@ EOM
   ( -d | --knows )
     ;;
   ( -l | --load )
-      #uc_script_load "$2"
+      uc_script_load "${2}.inc.sh"
     ;;
   ( -q | --query )
       if_ok "$(declare -F ${2:?}):bash"
+    ;;
+  ( -r | --require )
+      : about 'Check for or resolve given part name(s)'
+      : param '~ ~ <Part-name ...>'
+      : ${2:?Part name(s) expected, $ENV_CTX:$FUNCNAME:$1}
     ;;
    * ) $LOG error :uc-env "No such action" "$1" ${_E_nsa:-68}
   esac
@@ -85,7 +92,7 @@ case "$_" in
   ( uc-env ) SCRIPTNAME=uc-env.sh
 esac
 
-! script_isrunning "uc-env.sh" || {
+! script_isrunning "uc-env" .sh || {
   #user_script_load || ${uc_stat:-exit} $?
   ## Pre-parse arguments
   #if_ok "$(user_script_defarg "$@")" &&
