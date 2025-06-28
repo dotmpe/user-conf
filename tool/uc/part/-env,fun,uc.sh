@@ -321,7 +321,6 @@ EOM
   ( +continue )
     : param '...'
     : about "Reload uc env from export, and redeclare dynamic parts"
-    >&2 echo Continue $$...
     uc:env:${SHELL_NAME:-bash} &&
     _INFO "Loaded compiled env" ||
       _WARN "Failed loading compiled env: E$?" || return
