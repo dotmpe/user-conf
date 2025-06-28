@@ -9,7 +9,7 @@
 #
 
 ENV_CTX=${ENV_CTX:-$0[$$]}-interactive
-ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
+#ENV_SRC=${ENV_SRC-}${ENV_SRC:+ }/etc/bash.bashrc
 
 #[ -r /etc/uc ] &&
 [[ ${_uconf_shell_core-} ]] ||

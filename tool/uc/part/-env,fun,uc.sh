@@ -321,6 +321,7 @@ EOM
   ( +continue )
     : param '...'
     : about "Reload uc env from export, and redeclare dynamic parts"
+    >&2 echo Continue $$...
     uc:env:${SHELL_NAME:-bash} &&
     _INFO "Loaded compiled env" ||
       _WARN "Failed loading compiled env: E$?" || return
@@ -473,8 +474,8 @@ EOM
   ( +try-init )
     #: input "${2?:Tag expected: $*, $ENV_CTX:$FUNCNAME}"
     _Sh_Fun_Exists uc:env:${SHELL_NAME:-bash} && {
-      uc_env +init
-      uc_env +continue || return
+      uc_env +init &&
+      uc_env +continue
     }
     #[[ ${uc_env_types["${2}"]-} = G ]] ||
     #  _uconf_alert_ "Group expected $2:${uc_env_types["${2}"]} (ignored)"
@@ -786,7 +787,10 @@ EOM
     # FIXME: scripts loaded *and* run during profile need to use us_env
     # instead, but until support is rolled out simply export everything loaded
     # until now from uconf-shell includes.
+    uc_env @functions \
+      uc_env &&
     uc_env @exports \
+      uc_env \
       _ _IF{_,DBG,VBS} _uconf_shell_is{debug,verbose} append_path \
       :ignore :pass :stat &&
     uc_env :export &&
