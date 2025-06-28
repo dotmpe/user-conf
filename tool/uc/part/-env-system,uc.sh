@@ -10,7 +10,6 @@ case " ${ENV_BASE?} " in ( *" us-system "* )
 ;; esac
 
 uc_env @part G us-system /etc/profile.d/us-system.sh
-# ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
 
 
 # Inline: uc-sh-util
@@ -319,12 +318,13 @@ uc_env @part G os-release
     <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports
     : "$(sed 's/^/OS_/g' /etc/os-release)"
     eval "$_" ||
-      _CRIT "OS release failed: E$? /etc/os-release"
+      _ _CRIT "OS release failed: E$? /etc/os-release"
   }
   # Typical values for ubuntu and debian based
   # are OS_{NAME,ID{,_LIKE},VERSION{,_{CODENAME,ID}}} and others
   # Scripts cannot really expect any of these to be set though.
 }
+
 
 # Inline: os-host
 
@@ -342,36 +342,11 @@ SYS_ARCH=$(uname -i)                # Hardware platform (non-portable)
 SYS_PROC=$(uname -p)                # Processor (non-portable)
 
 uc_env_exports+=(
-  HOST
   OS_{HOST{,NAME},UNAME}
+  #HOST
   SYS_{MACH,ARCH,PROC}
 )
 
-# Inline: os-path
-
-uc_env @part G os-path
-
-uc_env +d dx os_add '_OS_Path_Add "$@" || true'
-uc_env +d dx os_path_add '_OS_Path_Add "$@"'
-
-[[ ${OS_OVERRIDE:-false} != true ]] || {
-  os_prefix ()
-  {
-    case ":$PATH:" in
-    ( *:"${1:?}":*) false ;;
-    ( * ) PATH="${1:?}${PATH:+:$PATH}"
-    esac
-  }
-  os_path_prefix ()
-  {
-    local -n _PATH=${1:?Variable name expected}
-    case ":$_PATH:" in
-    ( *:"${1:?}":*) false ;;
-    ( * ) _PATH="${1:?}${_PATH:+:$_PATH}"
-    esac
-  }
-  uc_env_exports+=( os_{,path_}prefix )
-}
 
 # Inline: uc-host
 
@@ -389,5 +364,7 @@ uc_env @part G uc-host
   }
 }
 
+
 _INFO "Loaded -env-system,uc"
+
 # Id: -env-system,uc /etc/profile.d/us-system.sh
