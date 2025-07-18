@@ -12,6 +12,8 @@
   case " ${ENV_BASE-} " in ( *" profile "* )
       # Reset env
     ;; ( * )
+      # Start env
+      umask 022
       # Set maximum soft resource limit for user shell processes to 5000
       ulimit -S -u 5000
 
@@ -40,4 +42,4 @@
   _uconf_shell_core_=0 # Finish
 }
 
-# Id: uc:shell:core $PREFIX/share/uc/etc/profile                    ex:ft=bash:
+# Id: uc:shell:core $PREFIX/share/uc/-uconf-shell-core.sh           ex:ft=bash:

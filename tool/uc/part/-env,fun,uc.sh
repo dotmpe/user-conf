@@ -243,6 +243,9 @@ EOM
     done
     #local -n "uc_env_parts[\"\${_pn:?}\"]"
   ;;
+  ( -R )
+    : about 'Like --require, but activate provisioning privileges'
+    ;;
   ( -r | --require | :require-parts )
     : about 'Require env parts'
     : param '~~ <Name ...>'
@@ -798,6 +801,19 @@ EOM
 
   ( @uc ) #XXX: registration
     : param '...'
+  ;;
+
+  ( @uc/env/build )
+    : param '...'
+    # To update going to need to reload, and only after uc-build has run which
+    # has access to all sources.
+    uc_env -R uc-build &&
+    uc_build uc-env
+  ;;
+
+  ( @uc/env/status )
+    : param '...'
+    # inspect uc-env groups for dirty bits, see @build
   ;;
 
   ( * )
