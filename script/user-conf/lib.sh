@@ -4,10 +4,14 @@
 test -n "${UC_LIB_PATH:-}" || return 123
 true "${UC_LIB_PATH:?Expected UC shell lib}"
 
-. ${UC_LIB_PATH}/../tool/u-c/init.sh
+export ansi_esc=$(echo -e '\e')
+
+. ${UC_LIB_PATH}/../tool/uc/init.sh
 
 # Finally, run init for Uc lib
-uc_lib__init
+#uc_lib__init
+uc_main_init
+uc_env_defaults
 
 
 # And define startup sequence for main, to load settings.
@@ -18,7 +22,7 @@ uc_main_start () # <Subcmd-Name> <Subcmd-Func> <Cmdline-Args>...
   uc_req_network_facts || return 3
 
   # Then load static settings, configs.
-  uc_conf_load "$1" || return 4
+  #uc_conf_load "$1" || return 4
 
   # Last sanity checks
   test "$USER" = "$username" || warn "username is not USER: $username != $USER"
@@ -112,23 +116,11 @@ uc__env ()
       echo "UC_LIB_PATH=$UC_LIB_PATH"
   }
 
-  std_info "Template tag values:"
-  local i=0
-  for key in $(
-    {
-      echo -e $UC_NAMES_TPL
-# XXX: make distinct groups for other template sets
-      echo -e $UC_LOCAL_TPL
-      echo -e $UC_STAT_TPL
-    } | tr -c 'A-Za-z0-9_' '\n' | sort -u
-  )
-  do
-    i=$(( $i + 1 ))
-    test $human_out -eq 1 && {
-      std_info "$i:$key: ${!key-}"
-    } ||
-      echo "$key=${!key-}"
-  done
+  declare -gA uc_conf_def
+  :pass "$(uc_config_def uc_conf_def)" &&
+  eval "${_}"
+
+  uc__env_keyinfo
 
   uc_conf_get || return 0
 
@@ -140,28 +132,45 @@ uc__env ()
     std_info "UConf: $UCONF"
     std_info "Config: $conf"
     std_info "Config-Name: $config_name"
-    std_info "Id: $stab_id"
-    std_info "Short: $stab_short"
-    std_info "Tags: $stab_tags"
-    std_info "Refs: $stab_refs"
-    std_info "Id-Refs: $stab_idrefs"
-    std_info "Meta: $stab_meta"
+    #std_info "Id: $stab_id"
+    #std_info "Short: $stab_short"
+    #std_info "Tags: $stab_tags"
+    #std_info "Refs: $stab_refs"
+    #std_info "Id-Refs: $stab_idrefs"
+    #std_info "Meta: $stab_meta"
   } || {
     echo "UCONF=$UCONF"
     echo "conf=$conf"
     echo "config_name=$config_name"
-    echo "config_id=$stab_id"
-    echo "config_short=$stab_short"
-    echo "config_tags=$stab_tags"
-    echo "config_refs=$stab_refs"
-    echo "config_idrefs=$stab_idrefs"
-    echo "config_meta=$stab_meta"
+    #echo "config_id=$stab_id"
+    #echo "config_short=$stab_short"
+    #echo "config_tags=$stab_tags"
+    #echo "config_refs=$stab_refs"
+    #echo "config_idrefs=$stab_idrefs"
+    #echo "config_meta=$stab_meta"
   }
 }
 
 uc__env_keys ()
 {
   echo uc_lib UC_LIB_PATH UCONF conf config_names
+}
+
+uc__env_keyinfo ()
+{
+  std_info "Template tag values:"
+  local i=0
+
+  for key in $(uc_config_keys UC_{NAMES,LOCAL,STAT}_TPL)
+  do
+    i=$(( $i + 1 ))
+    test $human_out -eq 1 && {
+      #std_info " $i. $key: ${uc_conf_def["$key"]-}"
+      std_info " $i. $key: ${!key-}"
+    } ||
+      echo "$key=${!key-}"
+  done
+
 }
 
 uc__env_update ()
@@ -358,7 +367,7 @@ uc__status ()
   test $verbosity -ge 5 && {
     cat "$uc_cache"
   } || {
-    test $verbosity -ge 4 && {
+    test $verbosity -lt || {
       grep -v '^ok ' "$uc_cache"
     }
   }

@@ -14,17 +14,28 @@ uc_lib__init ()
   # Some more things hardcoded, ripe for clean-up
   uc_main_init || return
 
+  >&2 echo Loading StatTab instance...
+
   # Prepare access to our specific UC configs table file
   uc_prefix_var_tag_ stattab_ STTTAB &&
+
+  lib_load args &&
+  #lib_require stattab-class &&
+  #lib_init stattab-class &&
+  : "${METADIR:=.uc}" &&
+
+  class_init StatTab &&
 
   # Default still empty env
   uc_env_defaults &&
 
   # Get stattab instance
   create uctab StatTab $STTTAB_UC || return
+  >&2 echo Acquired StatTab instance
 
   # Create table if not exists
   $uctab.tab-exists || $uctab.tab-init || return
+  >&2 echo checked StatTab instance
 
   #! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
   ! sys_debug -debug -dev -init ||
@@ -59,19 +70,98 @@ uc_env_defaults ()
     std_term 1 && human_out=1 || human_out=0
   }
 
-  true "${uc_cache_ttl:="3600"}"
+  : "${uc_cache_ttl:="3600"}"
 
-  true "${UC_NAMES_TPL:="\$username@\$hostname\\n\$username\\n\$hostname\\n\$domainname\\n\$hostname.\$domain\\n\$domain\\n\$hardware_name-\$hardware_processor\\n\$hardware_processor\\n\
-  \$hardware_name\\n\$OS_KERNEL-\$os_release\\n\$os_release\\n\$OS_KERNEL\\n"}"
+  : "${domainname:=uc}"
+  : "${domain:=$domainname}"
+  : "${hardware_name:=unknown}"
+  : "${SYS_MACH:=$(uname -m)}"
+  : "${hardware_processor:=$SYS_MACH}"
+  : "${OS_NAME:=$(uname -o)}"
+  : "${OS_KERNEL:=$(uname -s)}"
 
-  true "${UC_LOCAL_TPL:="\$hostname.\$domainname"}"
+  : "${UC_NAMES_TPL:="$username@$hostname
+$domain.$hostname
+$username
+$hostname
+$domainname
+$domain
+$hardware_name-$hardware_processor
+$hardware_processor
+$hardware_name
+$OS_ID-$OS_VERSION_ID
+$OS_ID
+$OS_VERSION_CODENAME
+$OS_KERNEL-$OS_VERSION_ID
+$OS_KERNEL-$OS_VERSION_CODENAME
+$OS_KERNEL
+"}"
+
+  : "${UC_LOCAL_TPL:="$hostname.$domainname"}"
 
   # FIXME:
-  true "${UC_STAT_TPL:="\$(git_ref)"}"
+  #: "${UC_STAT_TPL:="$(git_ref)"}"
 
-  true "${UC_PATHS_TPL:="\$PWD\\n\${CONFDIR:-\$UCONF}\\n\${CONFDIR:-\$UCONF}/etc/profile.d\\n"}"
+  : "${UC_PATHS_TPL:="$PWD
+${CONFDIR:-$UCONF}
+${CONFDIR:-$UCONF}/etc/profile.d
+"}"
 
-  true "${STTTAB_UC:="$HOME/.local/var/user-conf/configs.tab"}"
+  : "${STTTAB_UC:="$HOME/.local/var/user-conf/configs.tab"}"
+}
+
+uc_config_def ()
+{
+  : "Access raw, unevaluated expressions for config keys"
+  : XXX "multiline values cannot start line with var<TAB>"
+  local outvar=${1:-uc_config_def}
+  uc_config_defraw | {
+    local current_{name,value} line type name value
+    while read -r line
+    do
+      IFS=$'\t\n' read -r type name value <<< "$line"
+      case "${type-}" in
+          var )
+            [ -z "${current_name-}" ] ||
+              echo "${outvar}[$current_name]=${current_value@Q}"
+            current_name=$name current_value=$value
+        ;;
+          "" )
+            echo "${outvar}[$current_name]=${current_value@Q}"
+            unset current_{name,value}
+        ;;
+          * )
+            current_value=${current_value-}$'\n'${line}
+        ;;
+      esac
+    done
+    [ -z "${current_name-}" ] ||
+      echo "${outvar}[$current_name]=${current_value@Q}"
+  }
+}
+
+uc_config_defraw ()
+{
+  sh_funbody uc_env_defaults |
+    pcre2grep -M --output=$'var\t$1\t$2' '^ *: +"\${([^:]+):="?([\s\S]*?)"?}";?$'
+}
+
+uc_config_keys ()
+{
+  : about "List uc config keys for value defaults"
+  : extended "List keys used to build default values for given variables, "
+  : extended "ie. the variable references made on definition"
+  # TODO: this requires a reference to the definition or definition source,
+  # should use uc-env for that. For now use with uc-env-defaults keys only!
+  local config_{key,ref}
+  #  def_decl
+  for config_key
+  do
+    test -n "${uc_conf_def["$config_key"]-}" || continue
+    <<< "${_}" pcre2grep -M --output='$1' \
+      -e '\${([\s\S]*?)}' \
+      -e '\$([A-Za-z_][A-Za-z0-9_]*?)[\s]'
+  done | awk '!a[$0]++'
 }
 
 uc_main_init ()
@@ -534,12 +624,12 @@ uc_req_network_facts ()
 
 uc_req_uname_facts ()
 {
-  #true "${os_name:="$(uname -o)"}"            # Eg. 'GNU/Linux'
-  true "${OS_KERNEL:="$(uname -s)"}"           # Eg. 'Linux', also 'OS name'
-  true "${os_release:="$(uname -r)"}"          # Version nr
-  true "${hardware_name:="$(uname -m)"}"       # Eg. x86_64
-  #true "${hardware_platform:="$(uname -i)"}"  # Eg. x86_64
-  true "${hardware_processor:="$(uname -p)"}"  # Idem. to machine-type on x86
+  #: "${os_name:="$(uname -o)"}"            # Eg. 'GNU/Linux'
+  : "${OS_KERNEL:="$(uname -s)"}"           # Eg. 'Linux', also 'OS name'
+  : "${os_release:="$(uname -r)"}"          # Version nr
+  : "${hardware_name:="$(uname -m)"}"       # Eg. x86_64
+  #: "${hardware_platform:="$(uname -i)"}"  # Eg. x86_64
+  : "${hardware_processor:="$(uname -p)"}"  # Idem. to machine-type on x86
 
   if test -e /etc/os-release
   then
@@ -559,14 +649,17 @@ uc_req_uname_facts ()
     os_name=
     hardware_platform=
   else
-    true "${os_name:="$(uname -o)"}"
-    true "${hardware_platform:="$(uname -i)"}"
+    : "${os_name:="$(uname -o)"}"
+    : "${hardware_platform:="$(uname -i)"}"
   fi
 }
 
 # Parse FQDN and compare with hostname. Set other vars based on that.
 uc_req_domain () # ~ [FQDN]
 {
+  >&2 echo uc_req_domain
+  return
+
   local nameraw=${1:-$host_fqdn}
 
   # Auto extract domain if attached to 'fqdn'

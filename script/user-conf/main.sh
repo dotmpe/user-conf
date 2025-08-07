@@ -46,12 +46,12 @@ case "$0" in "" ) ;; "-*" ) ;; * )
   test -z "${DEBUG-}" || {
     set -x
     # Reset terminal/ANSI escapes before every trace line
-    export PS4="${NORMAL:=$(tput sgr0)}"
+    export PS4="${ansi_normal:-$(tput sgr0)}"
   }
 
   # Go to user-conf script-dir, load everything
-  true "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"
-  true "${UC_LIB_PATH:=$(dirname "$uc_lib")}"
+  : "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"
+  : "${UC_LIB_PATH:=$(dirname "$uc_lib")}"
   . "$uc_lib"/lib.sh
 
   # Do something if script invoked as 'uc' or 'main'
