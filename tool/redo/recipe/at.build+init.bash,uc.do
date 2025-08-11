@@ -55,21 +55,7 @@ redo-ifchange @shdev+init &&
 
 . ./.env-init.sh || exit
 
-
-#us-env -r uc-type &&
-
-#ucbuild_getnode target @build+init &&
-#
-#$target.run "$@"
-
-#us-env -r user-script &&
-
-#lib_require sys os build-uc &&
-#
-#ucbuild_do4124 uc:at.build+init.bash.do "$@"
-
-#us-env -r uc-build &&
-#redo-ifdone \$config+build+init &&
+## Run with metadata
 
 ucbuild_core_sldef=(
   ".bash-env.sh" "${U_C:?}/tool/uc/part/-ucbuild-bash-env.sh"
@@ -129,10 +115,10 @@ do
 done
 
 # Process local BuildTargets file
-[[ ! -s ${BUILD_TARGETS:?} ]] &&
-_IFVBS _WARN "Empty or missing build targets file <$BUILD_TARGETS>" || {
+[[ ! -s "${BUILD_TARGETS-}" ]] &&
+_IFVBS _WARN "Empty or missing build targets file <${BUILD_TARGETS:-(unset)}>" || {
 
-  if_ok "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
+  :pass "$(grep -oP "([^ ]+)(?=\.[a-z]+: )" "${BUILD_TARGETS:?}")" &&
   for tag in $_
   do
     # XXX: Easiest is to just re-link so... should probably rewrite

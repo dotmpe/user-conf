@@ -39,20 +39,29 @@ set -eETuo pipefail
 
 uc_shdev_sldef=(
   "${HOME:?}/.l" ".local"
-  "${HOME:?}/.l/c" "share/composure"
+  "${HOME:?}/.l/s" "share"
+  "${HOME:?}/.l/s/c" "composure"
+  "${HOME:?}/.l/c" "s/c"
 )
 
+# XXX: this only initializes symlinks, 
 for ((i=0; i<${#uc_shdev_sldef[*]}; i+=2))
 do
-  [[ -e "${uc_shdev_sldef[i]}" ]] || {
-    # Remove if broken symlink
-    [[ ! -h "${uc_shdev_sldef[i]}" ]] || {
-      >&2 rm -v "${uc_shdev_sldef[i]}" || {
-        _ALERT "Failed removing symlink" "${uc_shdev_sldef[i]}"
-        exit 3
-      }
+  # Remove on symlink target mismatch or if broken
+  [[ -e "${uc_shdev_sldef[i]}" ]] && {
+    [[ -h "${uc_shdev_sldef[i]}" ]] || continue
+    target=$(readlink "${uc_shdev_sldef[i]}") &&
+    [[ $target = "${uc_shdev_sldef[i+1]}" ]] && continue
+  } || {
+    [[ ! -h "${uc_shdev_sldef[i]}" ]] ||
+    [[ -e "${uc_shdev_sldef[i]}" ]] ||
+    >&2 rm -v "${uc_shdev_sldef[i]}" || {
+      >&2 echo ALERT: "Failed removing path or symlink" "${uc_shdev_sldef[i]}"
+      #_ALERT "Failed removing path or symlink" "${uc_shdev_sldef[i]}"
+      exit 3
     }
   }
+
   [[ -d "$(dirname "${uc_shdev_sldef[i]}")" ]] ||
     >&2 mkdir -vp "$(dirname "${uc_shdev_sldef[i]}")"
   [[ -h "${uc_shdev_sldef[i]}" ]] ||
@@ -60,19 +69,21 @@ do
 done
 
 uc_shdev_reporefs_1=( "dotmpe/composure" "test" "" 
-  "/src/local/composure+dev" "~/.local/share/composure" "~/.local/c" )
+  "/src/local/composure+dev" "~/.local/share/composure" "~/.local/c" "~/project/composure-mpe" )
 uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" "" 
-  "/src/local/user-conf+dev" )
+  "/src/local/user-conf+dev" "~/project/user-conf" )
 uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" "" 
-  "/src/local/user-scripts+dev" )
+  "/src/local/user-scripts+dev" "~/project/user-scripts" )
 uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" "" 
-  "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" )
+  "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" "~/project/conf-mpe" )
 
 # XXX: assume first scm-git instance has branch/tag; convenient when all repos are 
 # mirrors however that may not apply
 
 for ((i=1; i<5; i+=1))
 do
+  # see note on redo-stamp at bottom
+  declare -p "uc_shdev_reporefs_${i}" | redo-stamp
   declare -n repo_data="uc_shdev_reporefs_${i}"
   repo_ref="${repo_data[0]:?}"
   for repo in /srv/scm-git*/${repo_ref}.git
@@ -91,7 +102,7 @@ do
         "$repo" "${repo_data[3]}/" || exit
     repo_fresh=1
   }
-  >&2 pushd "${repo_data[3]}/" || exit
+  >/dev/null 2>&1 pushd "${repo_data[3]}/" || exit
   repo_up=1
   for repo in /srv/scm-git*/${repo_ref}.git
   do
@@ -112,13 +123,48 @@ do
     >&2 git fetch -q --all
   ((repo_fresh)) || {
     >&2 git checkout -q "${branch}" -- &&
-    >&2 echo git pull -q "${srv_tag}-bare" "${branch}" &&
     >&2 git pull -q "${srv_tag}-bare" "${branch}" || exit
   }
-  >&2 popd
-done
-. ./.env-init.sh || exit
+  >/dev/null 2>&1 popd
 
->&2 mkdir -vp "${METADIR?}"/build/data
+  for sl in "${repo_data[@]:4}"
+  do
+    sl=${sl/#~/$HOME}
+    [[ -e "${sl}" ]] && {
+      [[ -h "${sl}" ]] || continue
+      target=$(readlink "${sl}") &&
+      [[ $target = "${repo_data[3]}" ]] && continue
+    } || {
+      [[ ! -h "${sl}" ]] ||
+      [[ -e "${sl}" ]] ||
+      >&2 rm -v "${sl}" || {
+        >&2 echo ALERT: "Failed removing path or symlink" "${sl}"
+        #_ALERT "Failed removing path or symlink" "${sl}"
+        exit 3
+      }
+    }
+
+    [[ -d "$(dirname "${sl}")" ]] ||
+      >&2 mkdir -vp "$(dirname "${sl}")"
+    [[ -h "${sl}" ]] ||
+      >&2 ln -vs "${repo_data[3]}" "${sl}"
+  done
+done
+
+. ${EWD:?}/.env-init.sh || exit
+
+: "${METADIR:=.${PACK_ID:?}}"
+
+: "${B:=${METADIR:?}/build}"
+: "${C:=${METADIR:?}/cache}"
+: "${D:=${METADIR:?}/dist}"
+
+>&2 mkdir -vp "${B}" "${C}" "${D}"
+
+# XXX: track metadata names+values only, or consider script modifications as
+# well?  for production or dist mode none are expected or no functional changes
+# are expected regardless of modifications; for dev would want to track
+# modifications to entire script as updates.
+declare -p uc_shdev_sldef METADIR B C D | redo-stamp
 
 # ex:ft=bash:
