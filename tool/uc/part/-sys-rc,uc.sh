@@ -15,14 +15,10 @@ ENV_CTX=${ENV_CTX:-$0[$$]}-interactive
 [[ ${_uconf_shell_core-} ]] ||
 . /usr/share/uc/-uconf-shell-core.sh
 
-# XXX: cleanup
-[ "${ENV_BASE:0:7}" = "profile" ] || {
-
-  # Assumed here is that us-system has been loaded already by parent and
-  # exported for use by all subs. XXX: exception for SSH above...
+case " ${ENV_BASE-} " in *" profile "* ) ;; * ) false; esac || {
   uc_env +continue &&
   _INFO "Continued existing uc-env to load rc" ||
-    _ERR "Failed to resume existing uc-env: E$? ($ENV_SRC)"
+    _ _ERR "Failed to resume existing uc-env: E$?"
 }
 
 # @ Inline: Shell:running-interactively
