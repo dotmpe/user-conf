@@ -61,11 +61,11 @@ done
 
 uc_shdev_reporefs_1=( "dotmpe/composure" "test" "" 
   "/src/local/composure+dev" "~/.local/share/composure" "~/.local/c" )
-uc_shdev_reporefs_2=( "dotmpe/user-conf" "test" "" 
+uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" "" 
   "/src/local/user-conf+dev" )
-uc_shdev_reporefs_3=( "dotmpe/user-scripts" "test" "" 
+uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" "" 
   "/src/local/user-scripts+dev" )
-uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "test" "" 
+uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" "" 
   "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" )
 
 # XXX: assume first scm-git instance has branch/tag; convenient when all repos are 
