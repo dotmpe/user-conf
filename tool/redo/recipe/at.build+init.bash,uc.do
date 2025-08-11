@@ -6,7 +6,15 @@
 # for names matching existing parts and symlinks those.
 
 # Later work should move functions in to a universal @auto and @conf{,ig} target
-# and resipe, and to rewrite this to be more metadata driven.
+# and recipe, rewriting this to be more dynamic metadata driven setup. Current
+# work is offering a Redo install path/profile for init-linux and @shdev+init to
+# ensure Git base is UTD*.
+
+# * XXX: @build+init tracks updates by putting metadata dump in redo-stamp so
+# it can track state change, but it has no external sources declared (or
+# embedded redo-always) to trigger updates, so redo-ifchange will only re-run
+# the target if the recipe is actually modified; otherwise explicit redo calls
+# will run the script.
 
 set -eETuo pipefail
 
@@ -37,6 +45,17 @@ set -eETuo pipefail
   }
 }
 
+
+## Initialize/update shell dev env (local and host)
+
+[[ -e @shdev+init.do ]] ||
+>&2 ln -vs "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do @shdev+init.do
+
+redo-ifchange @shdev+init &&
+
+. ./.env-init.sh || exit
+
+
 #us-env -r uc-type &&
 
 #ucbuild_getnode target @build+init &&
@@ -51,8 +70,6 @@ set -eETuo pipefail
 
 #us-env -r uc-build &&
 #redo-ifdone \$config+build+init &&
-
->&2 mkdir -vp "${METADIR?}"/build/data
 
 ucbuild_core_sldef=(
   ".bash-env.sh" "${U_C:?}/tool/uc/part/-ucbuild-bash-env.sh"
