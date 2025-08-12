@@ -42,6 +42,7 @@ uc_shdev_sldef=(
   "${HOME:?}/.l/s" "share"
   "${HOME:?}/.l/s/c" "composure"
   "${HOME:?}/.l/c" "s/c"
+  "${HOME:?}/.l/s/composure" "${HOME}/.conf/script/composure"
 )
 
 # XXX: this only initializes symlinks, 
@@ -68,8 +69,9 @@ do
     >&2 ln -vs "${uc_shdev_sldef[i+1]}" "${uc_shdev_sldef[i]}"
 done
 
-uc_shdev_reporefs_1=( "dotmpe/composure" "test" "" 
-  "/src/local/composure+dev" "~/.local/share/composure" "~/.local/c" "~/project/composure-mpe" )
+# XXX: the real user composure include dir is submod of conf-mpe
+uc_shdev_reporefs_1=( "dotmpe/composure" "master" "" 
+  "/src/local/composure-mpe+dev" "~/project/composure-mpe" )
 uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" "" 
   "/src/local/user-conf+dev" "~/project/user-conf" )
 uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" "" 
