@@ -45,7 +45,7 @@ uc_shdev_sldef=(
   "${HOME:?}/.l/s/composure" "${HOME}/.conf/script/composure"
 )
 
-# XXX: this only initializes symlinks, 
+# XXX: this only initializes symlinks,
 for ((i=0; i<${#uc_shdev_sldef[*]}; i+=2))
 do
   # Remove on symlink target mismatch or if broken
@@ -70,16 +70,16 @@ do
 done
 
 # XXX: the real user composure include dir is submod of conf-mpe
-uc_shdev_reporefs_1=( "dotmpe/composure" "master" "" 
+uc_shdev_reporefs_1=( "dotmpe/composure" "master" ""
   "/src/local/composure-mpe+dev" "~/project/composure-mpe" )
-uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" "" 
+uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" ""
   "/src/local/user-conf+dev" "~/project/user-conf" )
-uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" "" 
+uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" ""
   "/src/local/user-scripts+dev" "~/project/user-scripts" )
-uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" "" 
+uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" ""
   "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" "~/project/conf-mpe" )
 
-# XXX: assume first scm-git instance has branch/tag; convenient when all repos are 
+# XXX: assume first scm-git instance has branch/tag; convenient when all repos are
 # mirrors however that may not apply
 
 for ((i=1; i<5; i+=1))
@@ -88,7 +88,7 @@ do
   declare -p "uc_shdev_reporefs_${i}" | redo-stamp
   declare -n repo_data="uc_shdev_reporefs_${i}"
   repo_ref="${repo_data[0]:?}"
-  for repo in /srv/scm-git*/${repo_ref}.git
+  for repo in /srv/scm-git-[0-9]*/${repo_ref}.git
   do
     [[ -d "$repo" ]] && break || continue
   done
@@ -106,7 +106,7 @@ do
   }
   >/dev/null 2>&1 pushd "${repo_data[3]}/" || exit
   repo_up=1
-  for repo in /srv/scm-git*/${repo_ref}.git
+  for repo in /srv/scm-git-[0-9]*/${repo_ref}.git
   do
     [[ -d "$repo" ]] || exit
     : "${repo#\/srv\/scm-git-}"
@@ -125,7 +125,10 @@ do
     >&2 git fetch -q --all
   ((repo_fresh)) || {
     >&2 git checkout -q "${branch}" -- &&
-    >&2 git pull -q "${srv_tag}-bare" "${branch}" || exit
+    >&2 git pull -q "${srv_tag}-bare" "${branch}" || {
+      >&2 echo ALERT: "Cannot update $PWD from" "remotes/$srv_tag-bare/$branch"
+      exit
+    }
   }
   >/dev/null 2>&1 popd
 
