@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-
-true "${U_S:?Requires User-Script installation}"
-true "${UC_LIB_PATH:?Expected UC shell lib}"
+: "${U_C:?Requires User-Conf installation}"
+: "${U_S:?Requires User-Script installation}"
+: "${UC_LIB_PATH:?Expected UC shell lib}"
 
 #test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
-true "${LOG:=${U_C:?}/tool/sh/log.sh}"
+: "${LOG:=${U_C:?}/tool/sh/log.sh}"
 export LOG
 INIT_LOG=$LOG
 
@@ -50,9 +50,9 @@ test $IS_DASH -eq 1 && {
 
 # Lots of script depend on these basic variables. Validate later.
 
-true "${USER:=$(whoami)}"
-true "${username:=$USER}"
-true "${hostname:=$(hostname -s)}"
+: "${USER:=$(whoami)}"
+: "${username:=$USER}"
+: "${hostname:=$(hostname -s)}"
 
 #shellcheck disable=1087
 log_key="$username@$hostname:$scriptname[$$]:${1-}"
@@ -101,7 +101,7 @@ class_uc_lib__init
 case "${TERM-}" in
   ( "" ) ;;
   ( dumb ) ;;
-  ( * ) true "${COLORIZE:=1}" ;;
+  ( * ) : "${COLORIZE:=1}" ;;
 esac
 
 # For log and color output

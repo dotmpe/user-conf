@@ -20,7 +20,8 @@ set -eETuo pipefail
 
 [[ ${REDO_RUNID-} && ${REDO_TARGET} = @build+init ]] || {
 #[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = @build+init+local.do ]] || {
-  echo  "Illegal env" && exit 124
+  >&2 echo "$0: Illegal env"
+  exit 124
 }
 
 # Keep this recipe UTD automatically

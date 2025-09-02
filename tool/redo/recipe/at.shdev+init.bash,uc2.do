@@ -6,34 +6,21 @@
 # others, this can be done in a host-centric way, using Bash, Git and Redo as
 # basic prerequisite tools.
 
+# TODO: split this up into host config and project config parts, review env-local base setup
+
 set -eETuo pipefail
 
 [[ ${REDO_RUNID-} && ${REDO_TARGET} = @shdev+init ]] || {
 #[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = @shdev+init+local.do ]] || {
-  echo  "Illegal env" && exit 124
+  >&2 echo "$0: Illegal env"
+  exit 124
 }
+
+. "${U_C:?}"/tool/uc/part/ucassert.bash
 
 # Keep this recipe UTD automatically
-[[ -h @shdev+init.do ]] || {
-  ! "${DEV:-false}" && {
-    ! "${DEBUG:-false}" || {
-      >&2 diff -bqr @shdev+init.do \
-      "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do ||
-        $LOG alert : "Local recipe is OOD" "E122:doenv/req" 122 || exit $?
-    }
-
-  } || {
-
-    >&2 diff -bqr @shdev+init.do \
-      "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do || {
-
-      >&2 cp -v "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do @shdev+init.do && {
-        $LOG warn : "Local recipe was OOD" "E123:noenv/pend" 123 || exit $?
-      } ||
-        $LOG alert : "Local recipe update failed" "E121:ifenv/bug" 121 || exit $?
-    }
-  }
-}
+uc-assert symlink-or-copy @shdev+init.do \
+  "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do
 
 : "${EWD:=${REDO_BASE:?}}"
 
@@ -45,29 +32,7 @@ uc_shdev_sldef=(
   "${HOME:?}/.l/s/composure" "${HOME}/.conf/script/composure"
 )
 
-# XXX: this only initializes symlinks,
-for ((i=0; i<${#uc_shdev_sldef[*]}; i+=2))
-do
-  # Remove on symlink target mismatch or if broken
-  [[ -e "${uc_shdev_sldef[i]}" ]] && {
-    [[ -h "${uc_shdev_sldef[i]}" ]] || continue
-    target=$(readlink "${uc_shdev_sldef[i]}") &&
-    [[ $target = "${uc_shdev_sldef[i+1]}" ]] && continue
-  } || {
-    [[ ! -h "${uc_shdev_sldef[i]}" ]] ||
-    [[ -e "${uc_shdev_sldef[i]}" ]] ||
-    >&2 rm -v "${uc_shdev_sldef[i]}" || {
-      >&2 echo ALERT: "Failed removing path or symlink" "${uc_shdev_sldef[i]}"
-      #_ALERT "Failed removing path or symlink" "${uc_shdev_sldef[i]}"
-      exit 3
-    }
-  }
-
-  [[ -d "$(dirname "${uc_shdev_sldef[i]}")" ]] ||
-    >&2 mkdir -vp "$(dirname "${uc_shdev_sldef[i]}")"
-  [[ -h "${uc_shdev_sldef[i]}" ]] ||
-    >&2 ln -vs "${uc_shdev_sldef[i+1]}" "${uc_shdev_sldef[i]}"
-done
+uc-assert symlink-all uc_shdev_sldef
 
 # XXX: the real user composure include dir is submod of conf-mpe
 uc_shdev_reporefs_1=( "dotmpe/composure" "master" ""
