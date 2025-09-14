@@ -16,13 +16,22 @@ set -eETuo pipefail
   exit 124
 }
 
-. "${U_C:?}"/tool/uc/part/ucassert.bash
+uc_shdev_reporefs_env=(
+  C_INC
+  U_C
+  U_S
+  UCONF
+)
 
-# Keep this recipe UTD automatically
-uc-assert symlink-or-copy @shdev+init.do \
-  "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do
-
-: "${EWD:=${REDO_BASE:?}}"
+# XXX: the real user composure include dir is submod of conf-mpe
+uc_shdev_reporefs_1=( "dotmpe/composure" "test" ""
+  "/src/local/composure-mpe+dev" "~/project/composure-mpe" )
+uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" ""
+  "/src/local/user-conf+dev" "~/project/user-conf" )
+uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" ""
+  "/src/local/user-scripts+dev" "~/project/user-scripts" )
+uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" ""
+  "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" "~/project/conf-mpe" )
 
 uc_shdev_sldef=(
   "${HOME:?}/.l" ".local"
@@ -32,17 +41,30 @@ uc_shdev_sldef=(
   "${HOME:?}/.l/s/composure" "${HOME}/.conf/script/composure"
 )
 
-uc-assert symlink-all uc_shdev_sldef
+: "${U_C:-${uc_shdev_reporefs_2[3]}}"
+. "${_:?}"/tool/uc/part/uc-assert.directive-handlers.bash
 
-# XXX: the real user composure include dir is submod of conf-mpe
-uc_shdev_reporefs_1=( "dotmpe/composure" "master" ""
-  "/src/local/composure-mpe+dev" "~/project/composure-mpe" )
-uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" ""
-  "/src/local/user-conf+dev" "~/project/user-conf" )
-uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" ""
-  "/src/local/user-scripts+dev" "~/project/user-scripts" )
-uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" ""
-  "/src/local/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" "~/project/conf-mpe" )
+uc-assert repo-dir-env uc_shdev_reporefs_{env,}
+
+uc_shdev_path=(
+  "$C_INC/tool/bash/exec"
+  "$U_C/bin"
+  #"$U_C/tool/sh/exec"
+  "$U_S/bin"
+  #"$U_S/tool/sh/exec"
+  "$UCONF/path/Generic"
+  "$UCONF/path/Linux"
+  "$UCONF/tool/sh/exec"
+  "$UCONF/tool/py/exec"
+)
+
+# Keep this recipe UTD automatically
+uc-assert symlink-or-copy @shdev+init.do \
+  "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do
+
+: "${EWD:=${REDO_BASE:?}}"
+
+uc-assert symlink-all uc_shdev_sldef
 
 # XXX: assume first scm-git instance has branch/tag; convenient when all repos are
 # mirrors however that may not apply
@@ -120,6 +142,10 @@ do
       >&2 ln -vs "${repo_data[3]}" "${sl}"
   done
 done
+
+. "${C_INC:?}/uconf-shell-core.inc.sh"
+
+uc-assert path-env uc_shdev_path
 
 . ${EWD:?}/.env-init.sh || exit
 
