@@ -6,6 +6,39 @@ uc-assert ()
   ! ((ret)) || [[ $ret = 123 ]]
 }
 
+uc-assert-repo-dir-env ()
+{
+  local -n envs=${1:?}
+  local _a
+  for _a in "${!envs[@]}"
+  do
+    local -n env_var=${envs[_a]}
+    [[ ${env_var:+set} ]] || {
+      ((_a+=1))
+      local -n reporef=${2:?}${_a}
+      export "${!env_var}=${reporef[3]}" &&
+      echo "export ${_}" >> ~/.bashrc &&
+      true || return
+    }
+  done
+}
+
+uc-assert-path-env ()
+{
+  local -n paths=${1:?}
+  local path change=false
+  for path in "${paths[@]}"
+  do
+    _OS_Path_Add "${path:?}" || continue
+    echo "PATH=\$PATH:$path" >> ~/.bashrc || return
+    change=true
+  done
+  ! "${change:?}" || {
+    echo "export PATH" >> ~/.bashrc &&
+    export PATH
+  }
+}
+
 uc-assert-git-checkout ()
 {
   :
