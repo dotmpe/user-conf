@@ -50,6 +50,7 @@ done && [[ -s $__ ]] && . "$__" ||
   $LOG alert ":ucbuild[$$]:env-local" "Failure resolving base env" \
     "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123} ||
       return
+unset __
 
 [[ ! ${ENV_PEND+set} ]] || $LOG alert ":ucbuild[$$]:env-local" \
   "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
@@ -59,6 +60,7 @@ done && [[ -s $__ ]] && . "$__" ||
 
 # Boilerplate end:
 
+# TODO: 'local' should reflect
 uc_env_exports+=(
   "ENV_BASE"
   "ENV_NID"

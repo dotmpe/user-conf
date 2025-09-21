@@ -1,0 +1,4 @@
+UserConf-Directive-copy ()
+{
+  false
+}
