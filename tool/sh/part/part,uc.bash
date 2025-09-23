@@ -6,6 +6,6 @@ uc-part ()
       * ) false
     esac
   do shift
-  done
-  PATH=$UC_INC:$PATH . "${1:?}"
+  done &&
+  . "${1:?}"
 }

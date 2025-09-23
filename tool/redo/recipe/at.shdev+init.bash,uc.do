@@ -62,14 +62,31 @@ case "${UC_DIR_ENV:-local}" in
     done
     >&2 declare -p new
     ((new)) && {
+      # Need to apply this ucinit group, but working from scratch.
       : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
       . "${_:?}/tool/sh/part/init,uc.bash" &&
-      . "$UC_INIT/tool/sh/part/common,uc.bash" &&
-      . "$UC_INIT/tool/sh/part/runner,uc.bash" &&
-      . "$UC_INIT/tool/sh/part/copy,directive,uc.bash" &&
-      PATH=$PATH:$UC_INIT/tool/sh/part
 
-      uc-runner apply ucinit
+      # XXX: This will get easier with some prepared groups, but need to
+      # sync/build those. May later detect or configure to
+      # init for bourne shell or bash, and re-use from profile cq. env or
+      # otherwise.
+
+      # Start loading parts simply using path-add, UCONF should be optional but the UC_INIT must have all parts needed to apply ucinit
+      . "${UC_INIT:?}/tool/sh/part/add,path,os.bash" &&
+      . "${UC_INIT:?}/tool/sh/part/assert,path,os.bash" &&
+      OS-Path-Assert "${UC_INIT:?}/tool/sh/part" &&
+      [[ ! "${UCONF:+set}" || ! -d "${UCONF-}" ]] || {
+        OS-Path-Assert "${UCONF:-${HOME:?}/.conf}/tool/sh/part"
+      } &&
+      . "common,uc.bash" &&
+      . "common,uconf.bash" &&
+      . "common,c-inc.bash" &&  # During dev working also from C_INC
+      . "part,uc.bash" &&
+      . "runner,uc.bash" &&
+      . "copy,directive,uc.bash" &&
+
+      uc-runner apply ucinit ||
+        :failp "Failed to apply ucinit profile" || exit
     }
     env_init_sh=".init-env.sh"
     redo-ifchange "${env_init[@]}" &&

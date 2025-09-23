@@ -1,6 +1,5 @@
 ucinit() {
   path $UC_INIT/tool/uc/part
-
   copy -- \
     $UC_INIT/tool/uc/part/-ucbuild-env-build,uc.bash .env-build.sh \
     $UC_INIT/tool/uc/part/-ucbuild-env-init,uc.bash .env-init.sh \
