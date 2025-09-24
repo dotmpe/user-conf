@@ -33,16 +33,25 @@ uc-runner ()
     ;;
   ( run-seq )
       uc-runner load-dir "${2}" &&
-      local dir="UserConf-Directive-${2}" &&
+      local dir="UserConf-Directive-${2}" fail=0 utd=1 &&
       local -n dir_argc=uconf_dir_${2,,}_argc &&
       shift 2 &&
       while [[ $# -gt 0 ]]
       do
         ((uc_idx+=1)) &&
-        "$dir" "${@:${dir_argc:-1}}" ||
-          :failp "At ${uc_idx}: $dir: sequence '${@:${dir_argc:-1}}'" || return
+        "$dir" "${@:1:${dir_argc:-1}}" || {
+          test ${_E_continue:?} -eq $? -o ${_E_retry:?} -eq $? && {
+            fail=1
+          } || {
+            test ${_E_next:?} -eq $_ && utd=0
+          } ||
+            :failp "At ${uc_idx}: $dir: sequence '${@:1:${dir_argc:-1}}'" || return
+        }
         shift ${dir_argc-}
       done
+      ! ((fail)) || return
+      # ((uc_check)) || return 0
+      # ((utd)) || return 123
     ;;
     * ) false || :failp "? $FUNCNAME ${*@Q}"
   esac

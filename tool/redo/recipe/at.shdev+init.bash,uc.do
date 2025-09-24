@@ -60,7 +60,8 @@ case "${UC_DIR_ENV:-local}" in
       [[ -e "${init:?}" ]] && continue
       new=1 && break
     done
-    >&2 declare -p new
+    #>&2 declare -p new
+
     ((new)) && {
       # Need to apply this ucinit group, but working from scratch.
       : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
@@ -175,11 +176,11 @@ uc_shdev_reporefs_6=( "dotmpe/htdocs-mpe" "master" ""
 
 # Additional symlink definitions
 uc_shdev_sldef=(
-  "${HOME:?}/.l" ".local"
-  "${HOME:?}/.l/s" "share"
-  "${HOME:?}/.l/s/c" "composure"
-  "${HOME:?}/.l/c" "s/c"
-  "${HOME:?}/.l/s/composure" "${HOME}/.conf/script/composure"
+  ".local" "${HOME:?}/.l"
+  "share" "${HOME:?}/.l/s"
+  "composure" "${HOME:?}/.l/s/c"
+  "s/c" "${HOME:?}/.l/c"
+  "${HOME}/.conf/script/composure" "${HOME:?}/.l/s/composure"
 )
 
 : "${U_C:-${uc_shdev_reporefs_2[3]}}"
@@ -201,6 +202,7 @@ uc_shdev_path=(
   "$UCONF/tool/py/exec"
 )
 
+:err stat @shdev+init.do
 # Keep this recipe UTD automatically
 uc-assert symlink-or-copy @shdev+init.do \
   "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do

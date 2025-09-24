@@ -49,12 +49,22 @@ set -eETuo pipefail
 
 ## Initialize/update shell dev env (local and host)
 
-[[ -e @shdev+init.do ]] ||
->&2 ln -vs "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do @shdev+init.do
+[[ -e "${ENV_SH:=.env.sh}" ]] && {
+  . "${ENV_SH:?}"
+} || {
+  [[ -e @shdev+init.do ]] || {
+    >&2 stat @shdev+init.do
+    [[ ! -h @shdev+init.do ]] || >&2 rm -v @shdev+init.do
+    >&2 ln -vs "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do @shdev+init.do
+  }
+  redo-ifchange @shdev+init &&
+  . ./.env-init.sh || exit
+}
 
-redo-ifchange @shdev+init &&
+# TODO
+. "build,uc.bash"
+uc-runner apply ucbuild
 
-. ./.env-init.sh || exit
 
 ## Run with metadata
 

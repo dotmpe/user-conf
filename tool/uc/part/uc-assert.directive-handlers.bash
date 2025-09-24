@@ -59,20 +59,19 @@ uc-assert-git-checkout-all ()
 
 uc-assert-git-mirror ()
 {
-  :
+  false TODO
 }
 
 uc-assert-symlinks ()
 {
   local -a _uca_sl_defs=( "$@" )
-  uc-assert-symlink-all _uca_defs
+  uc-symlink --seq _uca_sl_defs
 }
 
 uc-assert-symlink-all ()
 {
   local -n _uca_sla_defs=${1:?}
   local utd=true
-
   for ((i=0; i<${#_uca_sla_defs[*]}; i+=2))
   do
     # Remove on symlink target mismatch or if broken
@@ -97,25 +96,20 @@ uc-assert-symlink-all ()
       utd=false
     }
   done
-  "${utd:?}" || return 123
 }
 
 uc-assert-symlink-or-copy ()
 {
-  local target=${1:?} dest=${2:?}
+  local target=${1:?} src=${2:?}
   [[ -h $target ]] || {
     ! "${DEV:-false}" && {
       ! "${DEBUG:-false}" || {
-        >&2 diff -bqr "$target" "$dest" || return 122
+        >&2 diff -bqr "$target" "$src" || return ${_E_retry:?}
         # $LOG alert : "Local copy is OOD" "E122:doenv/req" 122 || exit $?
       }
     } || {
-      >&2 diff -bqr "$target" "$dest" || {
-        >&2 cp -v "$dest" "$target" && {
-          return 123
-          # $LOG warn : "Local file was OOD" "E123:noenv/pend" 123 || exit $?
-        } ||
-          return 121
+      >&2 diff -bqr "$target" "$src" || {
+        >&2 cp -v "$src" "$target" && return ${_E_next:?}
           #$LOG alert : "Local file update failed" "E121:ifenv/bug" 121 || exit $?
       }
     }

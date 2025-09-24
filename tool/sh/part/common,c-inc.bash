@@ -14,4 +14,11 @@ unset part{dirs,base}
 #{
   declare -x C_INC
 #}
+: "${_E_GAE:=193}" # generic-argument-error/exception
+: "${_E_MA:=194}" # missing-arguments
+: "${_E_continue:=195}" # failed, can keep going (continue steps/batch)
+: "${_E_next:=196}"  # partial success or next alternative
+: "${_E_break:=197}" # success; last step, finish batch, ie. stop loop now and wrap-up
+: "${_E_retry:=198}" # failed, but can or must reinvoke
+: "${_E_limit:=199}" # generic value/param OOB error?
 #
