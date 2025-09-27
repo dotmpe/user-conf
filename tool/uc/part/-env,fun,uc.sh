@@ -231,7 +231,7 @@ EOM
   ;;
   ( -Q )
     : param '~~ <Type> <Name> ...'
-    ! _OS_Fun_Exists uc-env::${3} ||
+    ! _Sh_Fun_Exists uc-env::${3} ||
         [[ ${uc_env_parts["${3}.${2}"]:+set} ]] ||
             uc_env @d:${2} ${3} "$(declare -f uc-env::${3})"
   ;;

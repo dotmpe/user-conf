@@ -3,9 +3,9 @@ uc-runner ()
   case "${1:?}" in
   ( apply ) (
         : param '~ ~ <Uc-profile-part>'
-        local uc_idx=0
+        local uc_idx=0 uc_
         uc-runner load-dsl &&
-        "${2:?}" || :failp "At ${2@Q}"
+        "${2:?}" || :failp "E$? At ${2@Q}"
       )
     ;;
   ( load-dsl )
@@ -39,13 +39,17 @@ uc-runner ()
       while [[ $# -gt 0 ]]
       do
         ((uc_idx+=1)) &&
-        "$dir" "${@:1:${dir_argc:-1}}" || {
-          test ${_E_continue:?} -eq $? -o ${_E_retry:?} -eq $? && {
-            fail=1
+        "$dir" "${2}" "${1}" || {
+          uc-status-new --pass && {
+            ! uc-status --changed || utd=0
           } || {
-            test ${_E_next:?} -eq $_ && utd=0
-          } ||
-            :failp "At ${uc_idx}: $dir: sequence '${@:1:${dir_argc:-1}}'" || return
+            :failp "$UC_STATUS at ${uc_idx}: $dir: sequence '${@:1:${dir_argc:-1}}'"
+            fail=1
+            uc-status --continue ||  {
+              :failp "Aborting"
+              break
+            }
+          }
         }
         shift ${dir_argc-}
       done

@@ -21,7 +21,7 @@ set -eETuo pipefail
 [[ ${REDO_RUNID-} && ${REDO_TARGET} = @build+init ]] || {
 #[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = @build+init+local.do ]] || {
   >&2 echo "$0: Illegal env"
-  exit 124
+  exit ${_E_ifenv:-124}
 }
 
 # Keep this recipe UTD automatically
@@ -142,4 +142,6 @@ _IFVBS _WARN "Empty or missing build targets file <${BUILD_TARGETS:-(unset)}>" |
   done && unset tag
 }
 
+! ((fail)) || exit
+((utd)) || exit 123
 # ex:ft=bash:

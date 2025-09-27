@@ -13,19 +13,13 @@ set -eETuo pipefail
 [[ ${REDO_RUNID-} && ${REDO_TARGET} = @shdev+init ]] || {
 #[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = @shdev+init+local.do ]] || {
   >&2 echo "$$/$0: Illegal env ${1@Q}"
-  exit 124
+  exit ${_E_ifenv:-124}
 }
+
+fail=0 utd=1
 
 : "${UC_SRC_ENV:=dev}"
 : "${UC_DIR_ENV:=local}"
-
-#: "${METADIR:=.${PACK_ID:?}}"
-#
-#: "${B:=${METADIR:?}/build}"
-#: "${C:=${METADIR:?}/cache}"
-#: "${D:=${METADIR:?}/dist}"
-#
-#>&2 mkdir -vp "${B}" "${C}" "${D}"
 
 # basic install profiles. remote setup is so that SSH user auth/config is used
 # for all provisioning
@@ -63,6 +57,14 @@ case "${UC_DIR_ENV:-local}" in
     #>&2 declare -p new
 
     ((new)) && {
+      >&2 echo "New env, need to apply ucinit group..."
+
+      : "${METADIR:=.${PACK_ID:-meta}}"
+      : "${B:=${METADIR:?}/build}"
+      : "${C:=${METADIR:?}/cache}"
+      : "${D:=${METADIR:?}/dist}"
+      >&2 mkdir -vp "${B}" "${C}" "${D}"
+
       # Need to apply this ucinit group, but working from scratch.
       : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
       . "${_:?}/tool/sh/part/init,uc.bash" &&
@@ -76,18 +78,26 @@ case "${UC_DIR_ENV:-local}" in
       . "${UC_INIT:?}/tool/sh/part/add,path,os.bash" &&
       . "${UC_INIT:?}/tool/sh/part/assert,path,os.bash" &&
       OS-Path-Assert "${UC_INIT:?}/tool/sh/part" &&
+      OS-Path-Assert "${UC_INIT:?}/tool/uc/part" &&
       [[ ! "${UCONF:+set}" || ! -d "${UCONF-}" ]] || {
         OS-Path-Assert "${UCONF:-${HOME:?}/.conf}/tool/sh/part"
       } &&
       . "common,uc.bash" &&
       . "common,uconf.bash" &&
       . "common,c-inc.bash" &&  # During dev working also from C_INC
+      . "common,us.bash" &&
       . "part,uc.bash" &&
       . "runner,uc.bash" &&
       . "copy,directive,uc.bash" &&
+      . "status,uc.bash" &&
 
-      uc-runner apply ucinit ||
-        :failp "Failed to apply ucinit profile" || exit
+      #>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."
+      :err uc-runner apply ucinit ||
+        uc-status-new --continue ||
+          :failp "Failed to apply ucinit profile" || exit
+      ! ((${UC_STATUS-0})) ||
+      :fail "$UC_STATUS ucinit"
+      #>&2 echo "Ready to use 'ucinit'"
     }
     env_init_sh=".init-env.sh"
     redo-ifchange "${env_init[@]}" &&
@@ -302,4 +312,6 @@ uc-assert path-env uc_shdev_path
 # modifications to entire script as updates.
 declare -p uc_shdev_sldef METADIR B C D | redo-stamp
 
+! ((fail)) || exit
+((utd)) || exit 123
 # ex:ft=bash:
