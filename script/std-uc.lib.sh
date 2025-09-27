@@ -192,6 +192,17 @@ std_quiet () # ~ <Cmd...> # Silence verbose log and warnings (stderr)
 
 std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
 {
+  "$@" >/dev/null
+}
+
+std_noo () # ~ <Cmd...> # Silence verbose log and warnings (stderr)
+{
+  "$@" >/dev/null 2>&1
+}
+# alias: std-noerr
+
+std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
+{
   "$@" >/dev/null 2>&1
 }
 
