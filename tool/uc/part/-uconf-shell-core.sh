@@ -6,39 +6,52 @@
 [ "${_uconf_shell_core_-}" = "0" ] || {
   _uconf_shell_core_=1 # Loading core defs...
 
-  >&2 echo "Starting -uconf-shell-core bootstrap"
-
   . /etc/uc/host
   . /etc/uc/log
 
   case " ${ENV_BASE-} " in ( *" profile "* )
-      # Reset env
+      # XXX: Reset env
     ;; ( * )
-      >&2 echo XXX source u-c:-uconf-shell-core.sh
-
       # Start env
+
       umask 022
       # Set maximum soft resource limit for user shell processes to 5000
       ulimit -S -u 5000
 
-      # Start env
       : "${USER:=$(whoami)}"
       : "${HOME:=/home/$USER}"
       : "${C_INC:=${HOME}/.l/c}"
       : "${TERM:=dumb}"
       declare -x USER HOME C_INC TERM SHELL=/bin/bash
-      PATH=${PATH:?}:${C_INC:?}
-      . "uc-env.inc.sh"
-      . "uc-cmp.inc.sh"
-      . "uc-afs.inc.sh"
-      . "uconf-shell.inc.sh"
-      . "uconf-shell-core.inc.sh"
-      . "uconf-shell-log.inc.sh"
-      . "uconf-shell-dsl.inc.sh"
-      . "uconf-profile-dsl.inc.sh"
-      uc_env @uc/env &&
-      true
 
+      # TODO: load just bourne compatible parts for profile, also install somewhere
+      #PATH=${PATH:?}:${C_INC:?}/tool/sh/part
+      # XXX: start rewriting to compatible namespaces, see common* parts
+      PATH=${PATH:?}:${C_INC:?}/tool/us/part
+
+      . "us-profile.inc.bash"
+      declare -xf "${us_core_fun[@]}" "${us_shell_profile_fun[@]}" "${us_log_fun[@]}"
+
+      . "us-util.bash"
+      declare -xf "${us_util_fun[@]}"
+
+      #_Sys_Apply_Argc 2 us_core_dsl us_debug_profile_dsl \
+      #  _Sh_Fun_Eval
+      _Sys_Exec_ApplyMap _Sh_Fun_Eval us_core_dsl
+      _Sys_Exec_ApplyMap _Sh_Fun_Eval us_debug_profile_dsl
+
+      TODO () {
+        fail "TODO ${FUNCNAME[1]}" 125
+      }
+
+      #. "uc-afs.bash"
+      . "uc-cmp.bash"
+      . "uc-env.bash"
+
+      # For some hosts use user namespaces in profile as well: c-inc
+      PATH=${PATH:?}:${C_INC:?}/tool/uc/part
+
+      uc_env @uc/env
       #uc_env +init
       #uc_env -r uconf-shell
   esac
