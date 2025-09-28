@@ -108,7 +108,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/ANNEXDIRS.lookup.sh" )
     redo-ifchange ".local/cache/ANNEXDIRS.var.sh" &&
     . ".local/cache/ANNEXDIRS.var.sh" &&
-    os_path ANNEXDIRS &&
+    os_pathvar ANNEXDIRS &&
     declare -p ANNEXDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -133,7 +133,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/BUILDPATH.lookup.sh" )
     redo-ifchange ".local/cache/BUILDPATH.var.sh" &&
     . ".local/cache/BUILDPATH.var.sh" &&
-    os_path BUILDPATH &&
+    os_pathvar BUILDPATH &&
     declare -p BUILDPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -160,7 +160,7 @@ case "${xredo_target:?}" in
     redo-ifchange ".local/cache/PATH.var.sh" &&
     (
       . ".local/cache/PATH.var.sh" &&
-      os_path PATH &&
+      os_pathvar PATH &&
       declare -p PATH{,_arr} > "${3:?}"
     ) &&
     < "${3:?}" redo-stamp
@@ -210,7 +210,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/PPATH.lookup.sh" )
     redo-ifchange ".local/cache/PPATH.var.sh" &&
     . ".local/cache/PPATH.var.sh" &&
-    os_path PPATH &&
+    os_pathvar PPATH &&
     declare -p PPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -223,7 +223,7 @@ case "${xredo_target:?}" in
     # project source package dirs.
     redo-ifchange ".local/cache/USERDIRS.var.sh" &&
     . ".local/cache/USERDIRS.var.sh" &&
-    os_path USERDIRS &&
+    os_pathvar USERDIRS &&
     PPATH=$USERDIRS &&
     : "${PPATH//[^:]}" &&
     PPATH_cnt=$(( 1 + ${#_} )) &&
@@ -241,7 +241,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/SCRIPTPATH.lookup.sh" )
     redo-ifchange ".local/cache/SCRIPTPATH.var.sh" &&
     . ".local/cache/SCRIPTPATH.var.sh" &&
-    os_path SCRIPTPATH &&
+    os_pathvar SCRIPTPATH &&
     declare -p SCRIPTPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -272,7 +272,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/USERDIRS.lookup.sh" )
     redo-ifchange ".local/cache/USERDIRS.var.sh" &&
     . ".local/cache/USERDIRS.var.sh" &&
-    os_path USERDIRS &&
+    os_pathvar USERDIRS &&
     stderr echo "Found ${#USERDIRS_arr[@]} dirs for USERDIRS" &&
     declare -p USERDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
@@ -297,7 +297,7 @@ case "${xredo_target:?}" in
 ( ".local/cache/VOLUMEDIRS.lookup.sh" )
     redo-ifchange ".local/cache/VOLUMEDIRS.var.sh" &&
     . ".local/cache/VOLUMEDIRS.var.sh" &&
-    os_path VOLUMEDIRS &&
+    os_pathvar VOLUMEDIRS &&
     stderr echo "Found ${#VOLUMEDIRS_arr[@]} dirs for VOLUMEDIRS" &&
     declare -p VOLUMEDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
