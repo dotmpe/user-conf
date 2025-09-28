@@ -6,12 +6,16 @@
 [ "${_uconf_shell_core_-}" = "0" ] || {
   _uconf_shell_core_=1 # Loading core defs...
 
+  >&2 echo "Starting -uconf-shell-core bootstrap"
+
   . /etc/uc/host
   . /etc/uc/log
 
   case " ${ENV_BASE-} " in ( *" profile "* )
       # Reset env
     ;; ( * )
+      >&2 echo XXX source u-c:-uconf-shell-core.sh
+
       # Start env
       umask 022
       # Set maximum soft resource limit for user shell processes to 5000
