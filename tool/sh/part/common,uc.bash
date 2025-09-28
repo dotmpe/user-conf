@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-OS-Path-Assert "${UCONF:-/srv/uconf-local}"/script
+_OS_Path_Assert "${UCONF:-/srv/uconf-local}"/script
 _OS_Path_Assert "${U_C:?}"/script
 _OS_Path_Assert "${U_S:?}"/src/sh/lib/
 
