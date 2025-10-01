@@ -174,30 +174,30 @@ uc_env_types["sh_var"]=f
 # Group: compo:inc:sh-type
 # Copy: compo:inc:sh-var
 
-std_noerr () # ~ <Cmd...> # Void secondary output
+std_silent () # ~ <Cmd...> # Void secondary output
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" 2>/dev/null
 }
-uc_env_types["std_noerr"]=f
+uc_env_types["std_silent "]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-noerr
 
-std_noout () # ~ <Cmd...> # Void primary output
+std_quiet () # ~ <Cmd...> # Void primary output
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" >/dev/null
 }
-uc_env_types["std_noout"]=f
+uc_env_types["std_quiet"]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-noout
 
-std_quiet () # ~ <Cmd...> # Void regular output (std{out,err})
+std_noo () # ~ <Cmd...> # Void regular output (std{out,err})
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" >/dev/null 2>&1
 }
-uc_env_types["std_quiet"]=f
+uc_env_types["std_noo"]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-quiet
 

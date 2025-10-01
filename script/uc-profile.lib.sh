@@ -264,7 +264,7 @@ uc_profile_load () # ~ NAME [TAG]
     "${uc_log:-${LOG?}}" debug :load "Start loading part" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
-  fnmatch "-*" "$1" && {
+  globmatch "-*" "$1" && {
     uc_profile_part_exists=0; uc_profile_partname="${1:1}"
   }
   shift
@@ -406,7 +406,7 @@ uc_profile_boot () # TAB [types...]
     test -n "$type" -a $# -gt 0 && {
       # Skip entry unless '$*' matches any type for entry
       local tp m=0
-      for tp in "$@"; do fnmatch "* $tp *" " $type " && m=1 || continue; done
+      for tp in "$@"; do globmatch "* $tp *" " $type " && m=1 || continue; done
 
       test $m -eq 1 || {
         ! uc_debug ||
@@ -416,11 +416,11 @@ uc_profile_boot () # TAB [types...]
     }
 
     # test for globs, and expand those first
-    if fnmatch "*[\*\?]*" "$namespec"
+    if globmatch "*[\*\?]*" "$namespec"
     then
       # Use Bash compgen to expand glob
       # Also '-' prefix must be handled here
-      fnmatch "-*" "$namespec" &&
+      globmatch "-*" "$namespec" &&
         require=false namespec=${namespec:1} || require=true
 
       :pass "$(uc_profile_partnames "$namespec")" &&
@@ -574,7 +574,7 @@ sys_uc_source_trace () # ~ [<Head>] [<Msg>] [<Offset=2>] [ <var-names...> ]
   for var in "${@:4}"
   do
     if_ok "$(declare -p ${!var})" &&
-    fnmatch "declare -n *" "$_" && {
+    globmatch "declare -n *" "$_" && {
       printf -- '- %s\n  %s\n' "$_" "${!var}: ${var@Q}"
     } || echo "$_"
   done | sed 's/^/  /'
@@ -601,7 +601,7 @@ uc_var ()
   local val upd
 
   # Force update or try existing value first
-  fnmatch "* $1 *" " $UC_VAR_PDNG " && {
+  globmatch "* $1 *" " $UC_VAR_PDNG " && {
     uc_var_update "$1"
     upd=1
   }

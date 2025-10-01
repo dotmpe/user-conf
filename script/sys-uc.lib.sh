@@ -52,15 +52,15 @@ prepend_path () # ~ <Path> ...
   os_path_add "${1:?}"
 }
 
-#uc_fun append_path_lookup ||
-append_path_lookup ()
+#uc_fun append_lookup ||
+append_lookup ()
 {
   : source "sys-uc.lib.sh"
-  add_env_path_lookup "${1:?}" "" "${2:?}"
+  add_env_lookup "${1:?}" "" "${2:?}"
 }
 
 # Add an entry to colon-separated paths, ie. PATH, CLASSPATH alike lookup paths
-add_env_path_lookup() # Var-Name Prepend-Value Append-Value
+add_env_lookup() # Var-Name Prepend-Value Append-Value
 {
   test $# -ge 2 -a $# -le 3 || return 64
   local val="$(eval echo "\${$1-}")"
@@ -83,7 +83,7 @@ add_env_path_lookup() # Var-Name Prepend-Value Append-Value
   }
 }
 
-remove_env_path_lookup()
+remove_env_lookup()
 {
   local newval="$( eval echo \"\$$1\" | tr ':' '\n' | while read oneval
     do

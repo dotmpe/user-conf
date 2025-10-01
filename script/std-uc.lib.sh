@@ -168,12 +168,12 @@ std_ifstat () # ~ <Spec> <Cmd ...>
   str_globmatch "$?" "$1"
 }
 
-std_noerr () # ~ <Cmd ...> # Silence stderr
+std_silent () # ~ <Cmd ...> # Silence stderr
 {
   "$@" 2>/dev/null
 }
 
-std_noout () # ~ <Cmd...> # Silence stdout
+std_quiet () # ~ <Cmd...> # Silence stdout
 {
   "$@" >/dev/null
 }
@@ -184,16 +184,17 @@ std_nz () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-st
   ! "$@"
 }
 
-std_quiet () # ~ <Cmd...> # Silence verbose log and warnings (stderr)
+std_quiet () # ~ <Cmd...> # Silence verbose output (std 1)
+{
+  "$@" >/dev/null
+}
+# alias: std-noout
+
+std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
 {
   "$@" 2>/dev/null
 }
 # alias: std-noerr
-
-std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
-{
-  "$@" >/dev/null
-}
 
 std_noo () # ~ <Cmd...> # Silence verbose log and warnings (stderr)
 {
