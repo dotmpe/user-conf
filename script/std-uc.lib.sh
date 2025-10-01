@@ -168,44 +168,48 @@ std_ifstat () # ~ <Spec> <Cmd ...>
   str_globmatch "$?" "$1"
 }
 
-std_silent () # ~ <Cmd ...> # Silence stderr
+# XXX: _uconf_shell_core_ = {ba,}sh
+>/dev/null 2>&1 declare -F sh_fun ||
+sh_fun ()
 {
-  "$@" 2>/dev/null
+  : src std-uc.lib.sh
+  : input "${@:?$FUNCNAME: Function name, $ENV_CTX}"
+  >/dev/null 2>&1 declare -F "${@}"
 }
 
-std_quiet () # ~ <Cmd...> # Silence stdout
+sh_fun std_noo ||
+std_noo () # ~ <Cmd...> # Silence all output (std{out,err})
 {
-  "$@" >/dev/null
+  "$@" >/dev/null 2>&1
 }
+# old: std-silent
 
-# See also 'not'
+sh_fun std_nz ||
 std_nz () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
 {
+  : description 'Change status to 1 only if it is zero'
+  : src std-uc.lib.sh
   ! "$@"
 }
+# alias: not
 
-std_quiet () # ~ <Cmd...> # Silence verbose output (std 1)
+sh_fun std_quiet ||
+std_quiet () # ~ <Cmd...> # Silence stdout
 {
-  "$@" >/dev/null
+  local s=$?
+  "$@" >/dev/null && return ${stat}
+  : src std-uc.lib.sh
 }
 # alias: std-noout
 
-std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
+sh_fun std_silent ||
+std_silent () # ~ <Cmd ...> # Silence stderr
 {
-  "$@" 2>/dev/null
+  local s=$?
+  "$@" 2>/dev/null && return ${stat}
+  : src std-uc.lib.sh
 }
 # alias: std-noerr
-
-std_noo () # ~ <Cmd...> # Silence verbose log and warnings (stderr)
-{
-  "$@" >/dev/null 2>&1
-}
-# alias: std-noerr
-
-std_silent () # ~ <Cmd...> # Silence all output (std{out,err})
-{
-  "$@" >/dev/null 2>&1
-}
 
 # XXX: rename these or deprecate: std-v*
 
@@ -218,7 +222,7 @@ std_v1c () # ~ <Cmd ...> # Wrapper that echoes both command and status
 {
   : param "<Cmd ...>"
   : note "Strictly for debugging of script branches (or DEBUG, DIAG mode etc)"
-  stderr echo "Running command: $*"
+  >&2 echo "Running command: $*"
   "$@"
   stderr_stat $? "$@"
 }

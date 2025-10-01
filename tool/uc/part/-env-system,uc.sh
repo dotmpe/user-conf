@@ -265,7 +265,7 @@ uc_env_exports+=(
   if_ok
   incr
   sh_{fun,{a,i,}arr,typeset,var}
-  std{_{no{err,out},quiet},err}
+  std{_{noo,silent,quiet},err}
   str_{{glob,word}match,{v,}word}
 )
 
