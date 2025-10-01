@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+
+set -eETuo pipefail
+shopt -s extdebug
+: "${C:=${CACHE_DIR:-${METADIR:-.meta}/cache}}"
+: "${B:=${BUILD_DIR:-${METADIR:-.meta}/build}}"
+
 case "${xredo_target}" in
 
 ( @config )
@@ -23,6 +30,30 @@ case "${xredo_target}" in
     . "${U_C:?}"/tool/uc/part/uc-assert.directive-handlers.bash
     declare -p uc_build_selects
     echo PATH=\$PATH:${U_C:?}/tool/redo/recipe
+  ;;
+
+( tool/*/part/-common.sh )
+    : "${ENV_CTX:=$$/$0:tool/*/part/common.sh}"
+    . "typeset,part,uc.sh" &&
+    uc_env_typeset
+    exit 123
+  ;;
+
+( tool/*/part/*.sh )
+    : "${ENV_CTX:=$$/$0:tool/*/part/*.sh}"
+    . "fun,script,uc.sh" &&
+    exit 123
+
+    shopt -s nullglob
+    os_path_add "${U_S:?}/tool/us/part" &&
+    os_path_add "${U_S:?}/tool/us/exec" &&
+    . "us-env.node.sh" &&
+    . "fun,script,uc.sh" &&
+    . "common,cache,uc.sh" &&
+    us_env_node_init &&
+    >&2 us_env_node_list &&
+    TODO "build $1" ||
+    :failp "E$? during load"
   ;;
 
 ( * )

@@ -21,9 +21,12 @@ xredo_target="${REDO_PWD:+$REDO_PWD/}${REDO_TARGET:?}"
 
 [[ ${uc_build_selects:+set} ]] || {
   declare -ga uc_build_selects
-  uc_build_selects+=( "uc-build.host-env-select.bash.do" )
+  uc_build_selects+=( \
+    "uc-build.host-env-select.bash.do"
+    #"uc-build.local-env-select.bash.do"
+  )
   : "${U_C:=/src/local/user-conf+${CTX_ENV:-dev}}"
-  export PATH=$PATH:${U_C:?}/tool/redo/recipe
+  os_path_add ${U_C:?}/tool/redo/recipe
 }
 
 for build_select_sh in "${uc_build_selects[@]}"
