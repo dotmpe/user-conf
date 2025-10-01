@@ -52,7 +52,7 @@ prepend_path () # ~ <Path> ...
   os_path_add "${1:?}"
 }
 
-#uc_fun append_lookup ||
+uc_fun append_lookup ||
 append_lookup ()
 {
   : source "sys-uc.lib.sh"
