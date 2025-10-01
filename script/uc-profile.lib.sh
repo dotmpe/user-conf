@@ -692,7 +692,7 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
   esac
 }
 
-os_lookup_add () # ~ <Var> <Prepend> <Append>
+os_lookup_add_old () # ~ <Var> <Prepend> <Append>
 {
   : source "u-c:script/uc-profile.lib.sh"
   : copy "os.lib.sh"

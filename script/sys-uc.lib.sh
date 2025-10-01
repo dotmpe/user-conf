@@ -35,21 +35,21 @@ uc_fun add_path ||
 add_path () # ~ <Path> ...
 {
   : source "sys-uc.lib.sh"
-  os_path_add "" "${1:?}"
+  os_path_add_old "" "${1:?}"
 }
 
 uc_fun append_path ||
 append_path () # ~ <Path> ...
 {
   : source "sys-uc.lib.sh"
-  os_path_add "" "${1:?}"
+  os_path_add_old "" "${1:?}"
 }
 
 uc_fun prepend_path ||
 prepend_path () # ~ <Path> ...
 {
   : source "sys-uc.lib.sh"
-  os_path_add "${1:?}"
+  os_path_add_old "${1:?}"
 }
 
 uc_fun append_lookup ||

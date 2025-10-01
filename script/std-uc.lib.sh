@@ -184,8 +184,8 @@ std_noo () # ~ <Cmd...> # Silence all output (std{out,err})
 }
 # old: std-silent
 
-sh_fun std_nz ||
-std_nz () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
+sh_fun std_not ||
+std_not () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
 {
   : description 'Change status to 1 only if it is zero'
   : src std-uc.lib.sh
