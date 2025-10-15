@@ -1,6 +1,6 @@
 # TODO: consolidate into ShellStarr node
 
-[ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] ||
+[ -n "${BASH_VERSION-}" -o -n "${BASH-}" ] && ENV_SHELL=bash ||
     >&2 echo "-uconf-shell-core.sh is incompatible with ${SHELL-}"
 
 [ "${_uconf_shell_core_-}" = "0" ] || {
@@ -13,6 +13,7 @@
       # XXX: Reset env
     ;; ( * )
       # Start env
+      #. /usr/share/uc/profile,uc.${ENV_SHELL:-sh}
 
       umask 022
       # Set maximum soft resource limit for user shell processes to 5000

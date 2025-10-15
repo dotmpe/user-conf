@@ -2,8 +2,8 @@
 
 set -eETuo pipefail
 shopt -s extdebug
-: "${C:=${CACHE_DIR:-${METADIR:-.meta}/cache}}"
-: "${B:=${BUILD_DIR:-${METADIR:-.meta}/build}}"
+: "${C:=$(realpath --relative-to "${REDO_BASE}" "${CACHE_DIR:-${METADIR:-.meta}/cache}")}"
+: "${B:=$(realpath --relative-to "${REDO_BASE}" "${BUILD_DIR:-${METADIR:-.meta}/build}")}"
 
 case "${xredo_target}" in
 
@@ -24,6 +24,16 @@ case "${xredo_target}" in
     redo-ifchange @env:PATH
   ;;
 
+( @tools )
+    redo "tool/*/part"
+
+    local -a partnames targets
+    partnames=( common profile interactive )
+    : "$(printf 'tool/sh/part/%s.bash\ntool/sh/part/%s.sh\n' "${partnames[@]}")"
+    <<< "${_}" mapfile -t targets &&
+    redo-ifchange "${targets[@]}"
+  ;;
+
 ( .env )
     : "${U_C:=/src/local/user-conf+current}"
     echo "U_C=${U_C}"
@@ -32,34 +42,7 @@ case "${xredo_target}" in
     echo PATH=\$PATH:${U_C:?}/tool/redo/recipe
   ;;
 
-( tool/*/part/-common.sh )
-    : "${ENV_CTX:=$$/$0:tool/*/part/common.sh}"
-    . "typeset,part,uc.sh" &&
-    uc_env_typeset
-    exit 123
-  ;;
-
-( tool/*/part/*.sh )
-    : "${ENV_CTX:=$$/$0:tool/*/part/*.sh}"
-    . "fun,script,uc.sh" &&
-    exit 123
-
-    shopt -s nullglob
-    os_path_add "${U_S:?}/tool/us/part" &&
-    os_path_add "${U_S:?}/tool/us/exec" &&
-    . "us-env.node.sh" &&
-    . "fun,script,uc.sh" &&
-    . "common,cache,uc.sh" &&
-    us_env_node_init &&
-    >&2 us_env_node_list &&
-    TODO "build $1" ||
-    :failp "E$? during load"
-  ;;
-
-( * )
-    #>&2 echo "${xredo_build_select}: Unknown target $1"
-    return 196
-  ;;
+( * ) return ${_E_next:-196}
 
 esac &&
 

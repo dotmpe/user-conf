@@ -3,10 +3,10 @@
 #    . "${UCONF:?}/tool/sh/part/ucbuild-als.sh"
 #  ;;
 
-case "${xredo_target}" in
+case "${xredo_target:?}" in
 
 # Default build target
-( all|[@:.]all )
+( all | [@:.]all )
       redo-ifchange @env:a:local_all_target "${local_all_target[@]}"
     ;;
 
@@ -28,7 +28,7 @@ case "${xredo_target}" in
     ;;
 
 
-( +*:* )
+( +*:* ) TODO
     ;;
 
 
@@ -59,11 +59,7 @@ case "${xredo_target}" in
   ;;
 
 
-  * )
-      >&2 echo "! do,local: Unknown target: ${1@Q}"
-      exit "${_E_nsa:-68}"
-    ;;
-
+ * ) return ${_E_next:-196}
 
 esac
 
