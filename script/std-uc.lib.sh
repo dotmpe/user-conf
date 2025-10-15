@@ -72,6 +72,7 @@ std_uc_env_def ()
   : "${_E_user:=3}" # @define
   # 3: user: usage error or faulty data (less serious than 2, but ie. grep uses
 
+  : "${_E_nsc:=64}" # @define
   : "${_E_nsk:=67}" # @define
   # 67: nsk: no such key
   : "${_E_nsa:=68}" # @define
