@@ -2,7 +2,7 @@
 case "${xredo_target:?}" in
 
 ( @redo:env )
-    declare -F | >&2 grep '^X\?REDO'
+    declare -p | >&2 grep ' X\?REDO'
   ;;
 
 
