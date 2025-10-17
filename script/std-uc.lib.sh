@@ -113,8 +113,8 @@ std_uc_env_def ()
   # or done.
   # E:next     196: like 195 but fail/skip iso. error, continue with next alt.
   : "${_E_next:=196}" # @define
-  # E:stop     197:
-  : "${_E_stop:=197}" # abort or fatal step @define
+  # E:break    197:  was E:stop
+  : "${_E_break:=197}" # abort or fatal step @define
   # E:retry    198: pending; not 195/196 but can retry later this loop/batch
   # E:break    limit    199: limit; like 198 but some throttling was initiated as well
   : "${_E_done:=200}" # @define

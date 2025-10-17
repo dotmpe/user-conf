@@ -14,7 +14,7 @@ rules_lib__load ()
   true "${LCACHE_DIR:=.meta/cache}"
 
   true "${_E_next:=196}" # std:states
-  true "${_E_stop:=197}" # std:states
+  true "${_E_break:=197}" # std:states
 }
 
 rules_lib__init()
@@ -40,7 +40,7 @@ rule_run__diag () # (:rr)
 {
   local atime utime ltime lvl rstat stdl errl cwd sh cmdline
   ${read:-read -r} atime utime ltime lvl rstat stdl errl sh cwd cmdline ||
-    return $_E_stop
+    return $_E_break
 
   # Process shell spec as part EC id, part shell session type spec
   env_box_spec=${sh//[^@a-z0-9-]}
@@ -330,7 +330,7 @@ rules_run () # (:u) ~ [<Ns>] [<Ql>] [<:Rs-select...>] # Pipe rule-select to rule
       do
         rule_run $ns || {
           ignore_stat eq $_E_next && continue || {
-            ignore_stat eq $_E_stop && break || return
+            ignore_stat eq $_E_break && break || return
           }
         }
       done

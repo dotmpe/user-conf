@@ -21,7 +21,7 @@ first_scr ()
   [ -s "${_scr}" ] || return ${_E_next:-196}
   "${@: 1: $#-1}" "${_scr}" || return
   # >&2 echo "Started build env ${_scr@Q}"
-  return ${_E_stop:-197}
+  return ${_E_break:-197}
 }
 _Sys_Exec_Apply first_scr . uc_build_envs ||
   failpass "E$? while looking for build env" || exit
