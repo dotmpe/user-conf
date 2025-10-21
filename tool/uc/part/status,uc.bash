@@ -7,7 +7,8 @@
 
 uc-status ()
 {
-  : about '~ [<--options...>]'
+  : about 'Experimental helper to abstract return status handling'
+  : param '~ [<--options...>]'
   : id uc-status
 
   local fail=0 utd=1 stat=${UC_STATUS:?}
@@ -36,6 +37,7 @@ uc-status ()
     shift
   done
 }
+
 uc-status-new ()
 {
   UC_STATUS=$?

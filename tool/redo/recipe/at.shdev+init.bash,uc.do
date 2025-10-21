@@ -89,15 +89,17 @@ case "${UC_DIR_ENV:-local}" in
       . "part,uc.bash" &&
       . "runner,uc.bash" &&
       . "copy,directive,uc.bash" &&
-      . "status,uc.bash" &&
+      . "status,uc.bash" ||
+          :failp "Failed to load ucinit profile" || exit
 
       #>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."
-      :err uc-runner apply ucinit ||
+      >&2 uc-runner apply ucinit || {
         uc-status-new --continue ||
           :failp "Failed to apply ucinit profile" || exit
-      ! ((${UC_STATUS-0})) ||
-      :fail "$UC_STATUS ucinit"
-      #>&2 echo "Ready to use 'ucinit'"
+      }
+      #! ((${UC_STATUS-0})) ||
+      #  :fail "E$UC_STATUS ucinit" $UC_STATUS
+      >&2 echo "Ready to use 'ucinit'"
     }
     env_init_sh=".init-env.sh"
     redo-ifchange "${env_init[@]}" &&
