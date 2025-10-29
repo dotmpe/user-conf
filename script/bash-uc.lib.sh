@@ -78,25 +78,18 @@ bash_uc_errexit () # ~ <id> <msg> <frame-offset> ...
   #>&2 echo status E$err $FUNCNAME "$@"
   #>&2 sys_callers
   #bash_status "${err}"
-  >&2 bash_uc_trace "$@"
+  >&2 bash_uc_trace_errexit "$@"
 }
 
-# Format Bash trace
-bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
+bash_uc_trace_tpl ()
 {
-  local err=$? n=${NORMAL-} b=${BOLD-} r=${REVERSE-}
-  # XXX: cleanup
-  #! "${DEBUG:-${UC_DEBUG:-false}}" || {
-  #  echo "err-exit: script: $0; mode: $-; frame count: $(bash_frames); err: E$err"
-  #  for frame in $(bash_frames); do
-  #    echo "$frame. $(caller "$frame" || echo noframe): ${FUNCNAME[$frame]} (${BASH_ARGC[$frame]})"; done
-  #  stderr declare -p BASH_ARG{C,V} BASH_COMMAND FUNCNAME
-  #}
-  [[ "${1-}" ]] && {
-    head="$2 <id=$1>"
-  } ||
-    head=$BASH_COMMAND
-
+  TODO see term,us
+  : n Normal
+  : b Bold
+  : r Reverse video
+  : 1. Failure main swatch FG
+  : 1.1. Failure main swatch FG bold
+  # FIXME: templating should be throuh term-uc.lib and something more suitable
   # Adding color makes things a mess, this is the best I will now for now
   : ${_1:=${RED-}}
   : ${_1_1:=${n}${b}${RED-}}
@@ -114,49 +107,18 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
   : ${_6:=${n}${b}}
   : ${_6_1:=${_4}}
   : ${_6_2:=${_6_1}}
+}
 
-  : ${BASH_UC_SCRIPTNAME:=Bash}
-  : ${BASH_UC_SCRIPTTAG:=$0[$$]}
-
-  # Print error-line and stack-trace
-
-  test $# -gt 0 && {
-    printf "\n    Exception: %s <id=%s>\nTrace:\n" "$2" "$1"
-  } ||
-    printf " ${_1}${_1_2} ${_1_1} ${_1}${BASH_UC_SCRIPTNAME} error:${n} ${_4}${BASH_UC_SCRIPTTAG} ${_3_1}'${_3}$head${_3_1}' ${_2}exited with status ${_2_1}$err\n"
-  # TODO: If str/argv are loaded, run some user-configured errexit handles as well
-  #: "${SHELL_NAME:=$(basename -- $SHELL)}"
-  #printf "    ${b}${_f0}${r}${b}"
-  #printf '%-'$(tput cols)'s' ""
-  #printf "$(date) $USER@$HOST $SHELL_NAME[$$] ${n}\n"
-  #printf "${n}\n"
-
-  {
-    # Shell option required for BASH_ARGV
-    shopt -q extdebug
-  } && {
-    {
-      case "$-" in ( *E* ) ;; ( * ) false ;; esac &&
-      case "$-" in ( *T* ) ;; ( * ) false ;; esac
-    } || {
-      bash_uc_log warn ":bash-uc.lib:errexit" "Cannot display full trace without E/T?" "-=$-"
-    }
-  } || {
-    # Bash manual notes setting extdebug after starting script or not at all
-    # results in inconsistant values. Would probably want some framework/env
-    # setting to guarantee consistent ops.
-    $LOG error ":bash-uc.lib:errexit" "Cannot display trace without extdebug mode" "-=$-"
-    #return 1
-  }
-#
-  declare frame=${3:-1}
+bash_uc_trace_format ()
+{
+  declare frame=${1:-1}
   declare bash_argv_offset=0
 
-  [[ $frame -eq 0 ]] || {
+  ! ((${frame})) || {
     local skipframe
     for skipframe in $(seq 0 "$frame")
     do
-      bash_argv_offset=$(( bash_argv_offset + ${BASH_ARGC[skipframe]:?} ))
+      (( bash_argv_offset += ${BASH_ARGC[skipframe]:?} ))
     done
   }
 
@@ -200,7 +162,75 @@ bash_uc_trace () # ~ <id> <msg> <frame-offset> ...
     frame=$((frame+1))
   done
 
-  return "$err"
+}
+
+# Format Bash trace
+bash_uc_trace_print_return () # ~ <id> <msg> <frame-offset> ...
+{
+  local _str _err=$?
+  bash_uc_trace_return "${@:1:3}" _str &&
+  echo "$_str"
+  return $_err
+}
+
+bash_uc_trace_return () # ~ <id> <msg> <frame-offset> <dest> ...
+{
+  local err=$? n=${NORMAL-} b=${BOLD-} r=${REVERSE-}
+  local -n __out_str=${4:-bash_uc_trace_str}
+  # XXX: cleanup
+  #! "${DEBUG:-${UC_DEBUG:-false}}" || {
+  #  echo "err-exit: script: $0; mode: $-; frame count: $(bash_frames); err: E$err"
+  #  for frame in $(bash_frames); do
+  #    echo "$frame. $(caller "$frame" || echo noframe): ${FUNCNAME[$frame]} (${BASH_ARGC[$frame]})"; done
+  #  stderr declare -p BASH_ARG{C,V} BASH_COMMAND FUNCNAME
+  #}
+
+  # Assemble output from header piece followed by formatted trace
+  local _header _header_label _trace_str
+
+  [[ "${1-}" ]] && {
+    _header_label="$2 <id=$1>"
+  } ||
+    _header_label=$BASH_COMMAND
+
+  : ${BASH_UC_SCRIPTNAME:=Bash}
+  : ${BASH_UC_SCRIPTTAG:=$0[$$]}
+
+  test $# -gt 0 && {
+    printf -v _header "\n    Exception: %s <id=%s>\nTrace:\n" "$2" "$1"
+  } ||
+    printf -v _header " ${_1}${_1_2} ${_1_1} ${_1}${BASH_UC_SCRIPTNAME} error:${n} ${_4}${BASH_UC_SCRIPTTAG} ${_3_1}'${_3}$_header_label${_3_1}' ${_2}exited with status ${_2_1}$err\n"
+
+  # TODO: If str/argv are loaded, run some user-configured errexit handles as well
+  #: "${SHELL_NAME:=$(basename -- $SHELL)}"
+  #printf "    ${b}${_f0}${r}${b}"
+  #printf '%-'$(tput cols)'s' ""
+  #printf "$(date) $USER@$HOST $SHELL_NAME[$$] ${n}\n"
+  #printf "${n}\n"
+
+  {
+    # Shell option required for BASH_ARGV
+    shopt -q extdebug
+  } && {
+    {
+      case "$-" in ( *E* ) ;; ( * ) false ;; esac &&
+      case "$-" in ( *T* ) ;; ( * ) false ;; esac
+    } || {
+      bash_uc_log warn ":bash-uc.lib:errexit" "Cannot display full trace without E/T?" "-=$-"
+    }
+  } || {
+    # Bash manual notes setting extdebug after starting script or not at all
+    # results in inconsistant values. Would probably want some framework/env
+    # setting to guarantee consistent ops.
+    $LOG error ":bash-uc.lib:errexit" "Cannot display trace without extdebug mode" "-=$-"
+    #return 1
+  }
+
+  bash_uc_trace_format ${3:-1} _trace_str
+
+  __out_str="$_header$_trace_str"
+
+  return $err
 }
 
 #

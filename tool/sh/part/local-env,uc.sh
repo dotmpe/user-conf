@@ -32,7 +32,11 @@ export ENV_INIT=uconf_static_init
 #export ENV_STATIC_INC=${APP_ID:?}-local.static.inc
 export ENV_STATIC_INC=uconf-build
 
+compo_inc_sh=${C_INC:?}/.meta/cache/includes,composure.bash
+
 export METADIR=${EWD:?}/.meta
+
+: "${A:=@build:}"
 
 [[ ${ENV_PEND+set} ]] && : "env-${ENV_PEND%% *}" || : "env"
 for __ in ${EWD:?}/{,.}{_,}$_.sh

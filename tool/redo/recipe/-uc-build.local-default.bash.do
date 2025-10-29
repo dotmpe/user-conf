@@ -9,22 +9,10 @@ set -euETo pipefail
   exit ${_E_noenv:-123}
 }
 
-[[ ${uc_build_envs:+set} ]] ||
-  uc_build_envs=(
-    './.build-env.sh'
-    './.local-env.sh'
-    './.env.sh'
-  )
-first_scr ()
-{
-  local _scr=${@: -1}
-  [ -s "${_scr}" ] || return ${_E_next:-196}
-  "${@: 1: $#-1}" "${_scr}" || return
-  # >&2 echo "Started build env ${_scr@Q}"
-  return ${_E_break:-197}
-}
-_Sys_Exec_Apply first_scr . uc_build_envs ||
-  failpass "E$? while looking for build env" || exit
+: "${UC_BUILD_ENVS_TRY:=./.build-env.sh ./.local-env.sh ./.env.sh}"
+uc_build_envs_try=( ${UC_BUILD_ENVS_TRY} )
+_Sys_Exec_Apply first_scr . uc_build_envs_try ||
+  fail "E$? while looking for build env" || exit
 
 # XXX: for all those use cases to work, need to change boilerplate to
 #us-env -r user-script -- "$@" &&

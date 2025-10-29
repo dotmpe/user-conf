@@ -1,4 +1,0 @@
-UserConf-Directive-path ()
-{
-  false
-}

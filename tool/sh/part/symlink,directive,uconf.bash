@@ -1,6 +1,6 @@
 uconf_dir_symlink_argc=2
 uconf_dir_symlink_argm=3
-UserConf-Directive-symlink ()
+User-Conf:Directive:symlink ()
 {
   : about "Symlink name to target"
   : input ${1:?Destination} UserConf-Target-pathref
@@ -12,22 +12,22 @@ UserConf-Directive-symlink ()
     rdest=$trgtref ||
     #rdest=$(cd "${name%/*}" && realpath "${trgtref}")
     rdest="${name%/*}/${trgtref}"
-  test -e "${name}" || :fail "No such source ${_@Q}" 127 || return
+  test -e "${name}" || fail "No such source ${_@Q}" 127 || return
   [[ -f "$rdest" ]] || {
     [[ ! -h "$rdest" ]] ||
       [[ $(readlink $name) = "$trgtref" ]] ||
         rm -v "$rdest" ||
-          :fail "E$? Unable to unsymlink ${rdest@Q}" ${_E_continue:?} || return
+          fail "E$? Unable to unsymlink ${rdest@Q}" ${_E_continue:?} || return
   }
   [[ -h "$name" ]] && return
   [[ ! -e "$name" ]] && {
     ln -vs "$name" "$trgtref" && return ${_E_next:?} ||
-      :fail "E$? Failed symlinking ${rdest@Q} at ${name@Q}" ${_E_retry:?} ||
+      fail "E$? Failed symlinking ${rdest@Q} at ${name@Q}" ${_E_retry:?} ||
         return
   } ||
-    :fail "Unable to symlink ${rdest@Q} at existing ${name@Q}" ${_E_continue:?}
+    fail "Unable to symlink ${rdest@Q} at existing ${name@Q}" ${_E_continue:?}
 }
-UserConf-Directive-symlink-seq ()
+User-Conf:Directive:symlink-seq ()
 {
   : id uconf-directives-symlink-sequence
   : about "~ <Array> ..."
@@ -38,7 +38,7 @@ UserConf-Directive-symlink-seq ()
   local offset=0 fail utd=1
   while [[ $offset < ${#_uconf_d_sl_seq_pairs[@]} ]]
   do
-    UserConf-Directive-symlink "${_uconf_d_sl_seq_pairs[@]:offset:2}" || {
+    User-Conf:Directive:symlink "${_uconf_d_sl_seq_pairs[@]:offset:2}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1
@@ -48,7 +48,7 @@ UserConf-Directive-symlink-seq ()
   ! ((${fail:-0})) || return
   ((utd)) || return ${_E_ood:?}
 }
-UserConf-Directive-symlink-map ()
+User-Conf:Directive:symlink-map ()
 {
   : id uconf-directives-symlink-map
   : about "~ <Array> ... # Define symlinks for each key targetting value"
@@ -60,7 +60,7 @@ UserConf-Directive-symlink-map ()
   local -n ref=${1}[\$n]
   for n in "${!uc_symlink_map[@]}"
   do
-    UserConf-Directive-symlink "$n" "${ref}" || {
+    User-Conf:Directive:symlink "$n" "${ref}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1

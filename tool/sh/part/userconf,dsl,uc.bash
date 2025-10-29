@@ -1,6 +1,7 @@
-declare -A userconf_dsl
+declare -gA \
 userconf_dsl=(
   [assert-dir]=
+  [copy-or-symlink]=
   [clean]=
   [copy]=
   [env]=

@@ -26,26 +26,6 @@ fail=0 utd=1
 shdev_prereq=( sshuser+init gituser+init )
 case "${UC_DIR_ENV:-local}" in
 ( local ) # sources are all at prefixes
-    # including configs. scripts are copies during setup, until all checkouts
-    # at prefixes are completed. initial phase seeds config copies, but helps
-    # creating new instances. basedir becomes new redo project holding local
-    # config files and linking to recipe scripts at dev checkouts directly.
-    # This is the bleeding edge setup, and all env (including profile and rc)
-    # scripts depend on the DSL for C-INC. And all user projects can be source
-    # or even annex prerequisites, the goal being to build virtual local
-    # projects (like ~/Documents and other user dirs) as part of an integrated,
-    # full host build.
-    #
-    # But when starting from blank slate there is a bit if of a chicken and the
-    # egg problem. Mostly this has to do with the choice of configuration to
-    # use. One solution is to start packaging and distributing, using some sort
-    # of toolkit however that is not the intent of the local profile. Instead,
-    # the initial pre-checkout fileset is required to be provided, e.g. by
-    # remote mount or local copy of the working trees.
-    #
-    # env-local parts are all found and properly symlinked and init-env is used
-    # as trigger to provide env to use for @shdev+init (ie. with ENV_PEND="init
-    # local").
 
     env_init=( @local{env,uc} )
     new=0
@@ -54,7 +34,6 @@ case "${UC_DIR_ENV:-local}" in
       [[ -e "${init:?}" ]] && continue
       new=1 && break
     done
-    #>&2 declare -p new
 
     ((new)) && {
       >&2 echo "New env, need to apply ucinit group..."
@@ -75,33 +54,32 @@ case "${UC_DIR_ENV:-local}" in
       # otherwise.
 
       # Start loading parts simply using path-add, UCONF should be optional but the UC_INIT must have all parts needed to apply ucinit
-      . "${UC_INIT:?}/tool/sh/part/add,path,os.bash" &&
-      . "${UC_INIT:?}/tool/sh/part/assert,path,os.bash" &&
-      OS-Path-Assert "${UC_INIT:?}/tool/sh/part" &&
-      OS-Path-Assert "${UC_INIT:?}/tool/uc/part" &&
-      [[ ! "${UCONF:+set}" || ! -d "${UCONF-}" ]] || {
-        OS-Path-Assert "${UCONF:-${HOME:?}/.conf}/tool/sh/part"
-      } &&
-      . "common,uc.bash" &&
-      . "common,uconf.bash" &&
-      . "common,c-inc.bash" &&  # During dev working also from C_INC
-      . "common,us.bash" &&
-      . "part,uc.bash" &&
-      . "runner,uc.bash" &&
-      . "copy,directive,uc.bash" &&
-      . "status,uc.bash" ||
-          :failp "Failed to load ucinit profile" || exit
+      . "${C_INC:?}/Tool/bash/part/os,us.bash" &&
+      SCRIPTPATH="${C_INC:?}/Tool/bash/part" &&
+      PATH=$PATH:"$SCRIPTPATH" &&
+      . "str,us.bash" &&
+      . "part,us.bash" &&
+      #User-Script:part --export --alias us &&
+      User-Script:part --export --alias \
+        us-{core,std,str,arr,os,sys,shell,lib} &&
+      append_lookup "${UC_INIT:?}"/tool/{sh,uc}/part SCRIPTPATH &&
+      #User-Script:part --alias pass fail ignore _ sh_fun &&
+      User-Script:part uc-runner uconf-directive-copy &&
+        fail "Failed to load ucinit profile" || exit
+      User-Conf:runner --apply ucinit ||
+        fail "Failed to load ucinit profile" || exit
 
-      #>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."
-      >&2 uc-runner apply ucinit || {
-        uc-status-new --continue ||
-          :failp "Failed to apply ucinit profile" || exit
-      }
+      ##>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."
+      #>&2 uc-runner apply ucinit || {
+      #  uc-status-new --continue ||
+      #    :failp "Failed to apply ucinit profile" || exit
+      #}
       #! ((${UC_STATUS-0})) ||
       #  :fail "E$UC_STATUS ucinit" $UC_STATUS
       >&2 echo "Ready to use 'ucinit'"
     }
     env_init_sh=".init-env.sh"
+
     redo-ifchange "${env_init[@]}" &&
     . "$env_init_sh"
     shdev_parts=( user{inc,conf,dirs,docs,bup,scripts,bin}+init )

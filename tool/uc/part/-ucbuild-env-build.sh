@@ -41,15 +41,12 @@ done && [[ -s $__ ]] && . "$__" ||
 # Boilerplate end:
 
 # The env-build also inserts a default Env-Init that env-boot would pick up
-: "${ENV_BASE//[^A-Za-z0-9_]/_}"
-
 : "${PACK_ID:=${APP_ID:?env-build: package ID default; expected APP env}}"
+: "${ENV_BASE//[^A-Za-z0-9_]/_}"
 : "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${_:?}_init}"
 
-#: "${CWD:=${REDO_STARTDIR:?}}"
 : "${BUILD_TOOL:=redo}"
 : "${BUILD_ID:=${REDO_RUNID:?}}"
-#: "${BUILD_STARTDIR:=$CWD:?}"
 : "${BUILD_BASE:=${REDO_BASE:?}}"
 #: "${BUILD_PWD:="${REDO_PWD:-${CWD:${#BUILD_BASE}}}"}"
 #test -z "$BUILD_PWD" || BUILD_PWD=${BUILD_PWD:1}
@@ -58,4 +55,15 @@ done && [[ -s $__ ]] && . "$__" ||
 #BUILD_PATH=$BUILD_PATH:${UCONF:?}:${U_C:?}:${U_S:?}
 : "${METADIR:?env-build: expected METADIR env}"
 : "${BUILD_TARGETS:=${_}/stat/index/build-targets.local.list}"
+
+: "${A:=@build:}"
+
+# TODO: load this from local build dir and prepare under @localuc target
+uc_build_selects=(
+  "uc-build.host-env-select.bash.do"
+  "uc-build.local-select.bash.do"
+  "uc-build.composure-select.bash.do"
+  "uc-build.redo-select.bash.do"
+)
+
 #

@@ -42,11 +42,6 @@ uc-assert-path-env ()
   }
 }
 
-uc-assert-git-checkout ()
-{
-  false
-}
-
 uc-assert-git-checkout-all ()
 {
   local -n _uca_gitco
@@ -83,11 +78,11 @@ uc-assert-copy-or-symlink ()
     ((boot)) && [[ ! -e $target ]]
   } && {
     uc-copy "$@"
-    uc-status-new --pass || :failp "Failed copy <$1>" || return
+    uc-status-new --pass || fail "Failed copy <$1>" || return
     ((boot)) && return
     ! ((cleanup)) && return
     >&2 rm -v "${1}"
   }
   uc-symlink "$@"
-  uc-status-new --pass || :failp "Failed symlink"
+  uc-status-new --pass || fail "Failed symlink"
 }

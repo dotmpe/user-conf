@@ -2,28 +2,28 @@ uc-add ()
 {
   : about '~ [<--options...>] <Name> ...'
   false "TODO: include <Name> as source file"
-  :failp "$_"
+  fail "$_"
 }
 uc-copy ()
 {
   : about '~ [<--options...>] <Name> <Dest...>'
   : id uc-copy
   case "${1}" in
-  ( --map ) UserConf-Directive-copy-map "${@:2:1}" &&
+  ( --map ) UserConf:Directive:copy-map "${@:2:1}" &&
       shift 2
     ;;
   ( --seq ) # XXX: either need runner access, or compile seq routine..
-      UserConf-Directive-copy-seq "${@:2:1}" &&
+      UserConf:Directive:copy-seq "${@:2:1}" &&
       shift 2
     ;;
   ( -- )
       local -a _uc_sl_pairs
       _uc_sl_pairs=( "${@:2}" )
-      UserConf-Directive-copy-seq _uc_sl_pairs
+      UserConf:Directive:copy-seq _uc_sl_pairs
       return
     ;;
     * )
-      UserConf-Directive-copy "${@:1}"
+      UserConf:Directive:copy "${@:1}"
       return
   esac
 }
@@ -65,21 +65,21 @@ uc-symlink ()
       } &&
       shift 2
     ;;
-  ( --map ) UserConf-Directive-symlink-map "${@:2:1}" &&
+  ( --map ) UserConf:Directive:symlink-map "${@:2:1}" &&
       shift 2
     ;;
   ( --seq ) # XXX: either need runner access, or compile seq routine..
-      UserConf-Directive-symlink-seq "${@:2:1}" &&
+      UserConf:Directive:symlink-seq "${@:2:1}" &&
       shift 2
     ;;
   ( -- )
       local -a _uc_sl_pairs
       _uc_sl_pairs=( "${@:2}" )
-      UserConf-Directive-symlink-seq _uc_sl_pairs
+      UserConf:Directive:symlink-seq _uc_sl_pairs
       return
     ;;
     * )
-      UserConf-Directive-symlink "${@:1}"
+      UserConf:Directive:symlink "${@:1}"
       return
   esac
 }

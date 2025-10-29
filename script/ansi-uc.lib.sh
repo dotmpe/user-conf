@@ -42,9 +42,10 @@ ansi_uc_lib__init ()
     declare -p _f0 >/dev/null 2>&1 || ansi_uc_env_def; return;
   }
 
-  : "${REVERSE:=$(tput rev)}"
-  : "${BOLD:=$(tput bold)}"
-  : "${NORMAL:=$(tput sgr0)}"
+  : "${REVERSE:=$(std_silent tput rev)}"
+  : "${BOLD:=$(std_silent tput bold)}"
+  : "${RESET:=$(std_silent tput sgr0)}"
+  : "${NORMAL:=$(std_silent tput op)}"
 
   # XXX: might as well rewrite to raw codes and do away with xterm case
   #local esc=$(ansi_uc_esc)
@@ -56,7 +57,6 @@ ansi_uc_lib__init ()
     xterm-256color | \
     xterm | \
     linux )
-
       : "${_f0:=${BLACK:=$(tput ${tset}f 0)}}"
       : "${_f2:=${GREEN:=$(tput ${tset}f 2)}}"
       : "${_f5:=${CYAN:=$(tput ${tset}f 5)}}"
@@ -88,11 +88,7 @@ ansi_uc_lib__init ()
     screen-* | \
     tmux-256color | \
     xterm-256color )
-        : "${_f1:=${RED:=$(tput ${tset}f 1)}}"
-        : "${_f3:=${YELLOW:=$(tput ${tset}f 3)}}"
-        : "${_f4:=${BLUE:=$(tput ${tset}f 4)}}"
-        : "${_f6:=${MAGENTA:=$(tput ${tset}f 6)}}"
-
+        # Get backgrounds as well
         [[ ${ncolors:-0} -eq 8 ]] || {
           : "${_b1:=${BG_RED:=$(tput ${tset}b 1)}}"
           : "${_b3:=${BG_YELLOW:=$(tput ${tset}b 3)}}"
