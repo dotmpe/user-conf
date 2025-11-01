@@ -59,14 +59,15 @@ case "${UC_DIR_ENV:-local}" in
       PATH=$PATH:"$SCRIPTPATH" &&
       . "str,us.bash" &&
       . "part,us.bash" &&
-      #User-Script:part --export --alias us &&
-      User-Script:part --export --alias \
+      #User-Script.part --export --alias us &&
+      User-Script.part --export --alias \
         us-{core,std,str,arr,os,sys,shell,lib} &&
+      eval "$US_ENV_INIT" &&
+      unset US_ENV_INIT &&
       append_lookup "${UC_INIT:?}"/tool/{sh,uc}/part SCRIPTPATH &&
-      #User-Script:part --alias pass fail ignore _ sh_fun &&
-      User-Script:part uc-runner uconf-directive-copy &&
+      us_part --alias uc-runner uconf-directive-copy &&
         fail "Failed to load ucinit profile" || exit
-      User-Conf:runner --apply ucinit ||
+      User-Conf.runner --apply ucinit ||
         fail "Failed to load ucinit profile" || exit
 
       ##>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."

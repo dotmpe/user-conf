@@ -14,14 +14,21 @@ case "${xredo_target}" in
 
 ( @env:* )
     : "${1#@env:}"
-    : "${_//[:,.]/ }"
+    : "${_//[:,]/ }"
     declare -p $_ | redo-stamp
     #:pass "$(declare -p $_)" &&
     #redo-stamp <<< "${_}"
   ;;
 
+( @host-env:lookup:* )
+    : "${1#@host-env:lookup:}"
+    : "${_//[:,]/ }"
+    #redo-ifchange
+    redo-always
+  ;;
+
 ( @host-env )
-    redo-ifchange @env:PATH
+    TODO "Check/update /etc/uc"
   ;;
 
 ( @tools )
@@ -48,4 +55,4 @@ esac &&
 
 redo-ifchange "${BASH_SOURCE[0]}"
 
-# ex:ft=bash:
+# Id uc-build.host-env-select.bash recipe-select ex:ft=bash:

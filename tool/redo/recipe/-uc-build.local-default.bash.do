@@ -12,7 +12,7 @@ set -euETo pipefail
 : "${UC_BUILD_ENVS_TRY:=./.build-env.sh ./.local-env.sh ./.env.sh}"
 uc_build_envs_try=( ${UC_BUILD_ENVS_TRY} )
 _Sys_Exec_Apply first_scr . uc_build_envs_try ||
-  fail "E$? while looking for build env" || exit
+  failerr "E$? while looking for build env" || exit
 
 # XXX: for all those use cases to work, need to change boilerplate to
 #us-env -r user-script -- "$@" &&
