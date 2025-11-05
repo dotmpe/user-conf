@@ -1,8 +1,9 @@
-uconf_dir_symlink_argc=2
-uconf_dir_symlink_argm=3
-User-Conf:Directive:symlink ()
+uconf_dir_symlink_argnum=2
+uconf_dir_symlink_argmax=3
+User-Conf.Directive.symlink ()
 {
   : about "Symlink name to target"
+  : param '~ <Link-path> <Source-path> [<Mode>]'
   : input ${1:?Destination} UserConf-Target-pathref
   : input ${2:?Name reference} UserConf-Source-path
   : id uconf-directives-symlink
@@ -27,7 +28,8 @@ User-Conf:Directive:symlink ()
   } ||
     fail "Unable to symlink ${rdest@Q} at existing ${name@Q}" ${_E_continue:?}
 }
-User-Conf:Directive:symlink-seq ()
+
+User-Conf.Directive.symlink-seq ()
 {
   : id uconf-directives-symlink-sequence
   : about "~ <Array> ..."
@@ -38,7 +40,7 @@ User-Conf:Directive:symlink-seq ()
   local offset=0 fail utd=1
   while [[ $offset < ${#_uconf_d_sl_seq_pairs[@]} ]]
   do
-    User-Conf:Directive:symlink "${_uconf_d_sl_seq_pairs[@]:offset:2}" || {
+    User-Conf.Directive.symlink "${_uconf_d_sl_seq_pairs[@]:offset:2}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1
@@ -48,7 +50,7 @@ User-Conf:Directive:symlink-seq ()
   ! ((${fail:-0})) || return
   ((utd)) || return ${_E_ood:?}
 }
-User-Conf:Directive:symlink-map ()
+User-Conf.Directive.symlink-map ()
 {
   : id uconf-directives-symlink-map
   : about "~ <Array> ... # Define symlinks for each key targetting value"
@@ -60,7 +62,7 @@ User-Conf:Directive:symlink-map ()
   local -n ref=${1}[\$n]
   for n in "${!uc_symlink_map[@]}"
   do
-    User-Conf:Directive:symlink "$n" "${ref}" || {
+    User-Conf.Directive.symlink "$n" "${ref}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1

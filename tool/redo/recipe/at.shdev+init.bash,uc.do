@@ -21,6 +21,12 @@ fail=0 utd=1
 : "${UC_SRC_ENV:=dev}"
 : "${UC_DIR_ENV:=local}"
 
+#: "${METADIR:=.${PACK_ID:-meta}}"
+#: "${B:=${METADIR:?}/build}"
+#: "${C:=${METADIR:?}/cache}"
+#: "${D:=${METADIR:?}/dist}"
+#>&2 mkdir -vp "${B}" "${C}" "${D}"
+
 # basic install profiles. remote setup is so that SSH user auth/config is used
 # for all provisioning
 shdev_prereq=( sshuser+init gituser+init )
@@ -28,65 +34,58 @@ case "${UC_DIR_ENV:-local}" in
 ( local ) # sources are all at prefixes
 
     env_init=( @local{env,uc} )
-    new=0
+    new=1
     for init in "${env_init[@]}"
     do
-      [[ -e "${init:?}" ]] && continue
-      new=1 && break
+      [[ -e "${init:?}" ]] && new=0 && break
+      continue
     done
 
-    ((new)) && {
-      >&2 echo "New env, need to apply ucinit group..."
+    ! ((new)) || {
+      >&2 echo "New env, need to apply preliminary user-config parts..."
 
-      : "${METADIR:=.${PACK_ID:-meta}}"
-      : "${B:=${METADIR:?}/build}"
-      : "${C:=${METADIR:?}/cache}"
-      : "${D:=${METADIR:?}/dist}"
-      >&2 mkdir -vp "${B}" "${C}" "${D}"
-
-      # Need to apply this ucinit group, but working from scratch.
       : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
-      . "${_:?}/tool/sh/part/init,uc.bash" &&
 
-      # XXX: This will get easier with some prepared groups, but need to
-      # sync/build those. May later detect or configure to
-      # init for bourne shell or bash, and re-use from profile cq. env or
-      # otherwise.
+      PATH=$PATH:"${UC_INIT:?}/tool/bash/part"
 
-      # Start loading parts simply using path-add, UCONF should be optional but the UC_INIT must have all parts needed to apply ucinit
-      . "${C_INC:?}/Tool/bash/part/os,us.bash" &&
-      SCRIPTPATH="${C_INC:?}/Tool/bash/part" &&
-      PATH=$PATH:"$SCRIPTPATH" &&
-      . "str,us.bash" &&
-      . "part,us.bash" &&
-      #User-Script.part --export --alias us &&
-      User-Script.part --export --alias \
-        us-{core,std,str,arr,os,sys,shell,lib} &&
+      [[ ! -d "${UCONF:=$HOME/.conf}" ]] ||
+        PATH=$PATH:"${UCONF}/tool/sh/part:${UCONF}/tool/bash/part"
+
+      . /etc/uc/host
+
+      [[ ${US_ENV_PARTS:+set} ]] &&
+      [[ ${US_ENV_INIT:+set} ]] &&
       eval "$US_ENV_INIT" &&
-      unset US_ENV_INIT &&
-      append_lookup "${UC_INIT:?}"/tool/{sh,uc}/part SCRIPTPATH &&
-      us_part --alias uc-runner uconf-directive-copy &&
-        fail "Failed to load ucinit profile" || exit
-      User-Conf.runner --apply ucinit ||
-        fail "Failed to load ucinit profile" || exit
+      unset US_ENV_INIT || {
+        >&2 echo "Expected User-Script profile env, loading"
 
-      ##>&2 echo "Loaded bootstrap env, starting 'ucinit' profile setup..."
-      #>&2 uc-runner apply ucinit || {
-      #  uc-status-new --continue ||
-      #    :failp "Failed to apply ucinit profile" || exit
-      #}
-      #! ((${UC_STATUS-0})) ||
-      #  :fail "E$UC_STATUS ucinit" $UC_STATUS
-      >&2 echo "Ready to use 'ucinit'"
+        . "profile,host,us.sh"
+        #/usr/share/uc/us-host-profile.sh
+      }
+
+      . "${UC_INIT:?}/tool/sh/part/init,uc.bash" &&
+      append_lookup \
+          "${C_INC:?}"/Tool/{{,ba}sh,uc,us}/part \
+          "${UC_INIT:?}"/tool/{{,ba}sh,uc,us}/part \
+          "${U_C:?}"/tool/{{,ba}sh,uc,us}/part \
+            SCRIPTPATH &&
+
+      us_part --alias --hooks:init us uc-runner uconf-extra ||
+        failerr "Failed to load runner and ucinit profile (E$?)" || exit
+
+      >&2 echo "Bootstrap env loaded, ready to apply $1 groups..."
+      User-Conf.runner --apply ${UC_PROFILE:=${1#@}} || {
+        uc-status-new --continue ||
+          failerr "Failed to apply ${UC_PROFILE@Q} profile (E$?)" || exit
+      }
+      >&2 echo "Ready to use ${UC_PROFILE@Q}"
     }
-    env_init_sh=".init-env.sh"
 
+    env_init_sh=".init-env.sh"
     redo-ifchange "${env_init[@]}" &&
     . "$env_init_sh"
-    shdev_parts=( user{inc,conf,dirs,docs,bup,scripts,bin}+init )
-    #tool/redo/recipe
-    #tool/uc/part/ for env parts
-    #tool/shdev/part
+
+    #shdev_parts=( user{inc,conf,dirs,docs,bup,scripts,bin}+init )
   ;;
 
 ( basedir ) # sources and config are prepared at basedir.
@@ -97,12 +96,12 @@ case "${UC_DIR_ENV:-local}" in
     # are fully packaged and versioned projects and come preinstalled). (Although
     # its unlikely I will ever use ie. USBIN or HTDOCS as such.)
     # FIXME: current scripts are for composure setup, see local dir-env
-    fail
+    failerr
   ;;
   * )
 esac
 
-exit 123
+TODO
 
 for target in "${shdev_prereq[@]}"
 do
@@ -178,20 +177,6 @@ uc_shdev_sldef=(
 . "${_:?}"/tool/uc/part/uc-assert.directive-handlers.bash
 
 uc-assert repo-dir-env uc_shdev_reporefs_{env,}
-
-uc_shdev_path=(
-  "$C_INC/tool/bash/exec"
-  "$U_C/bin"
-  #"$U_C/tool/sh/exec"
-  "$U_S/bin"
-  #"$U_S/tool/sh/exec"
-  "$UCONF/path/Generic"
-  "$UCONF/path/Linux"
-  "$UCONF/script/Generic"
-  "$UCONF/script/Linux"
-  "$UCONF/tool/sh/exec"
-  "$UCONF/tool/py/exec"
-)
 
 :err stat @shdev+init.do
 # Keep this recipe UTD automatically
@@ -281,18 +266,4 @@ do
   done
 done
 
-. "${C_INC:?}/uconf-shell-core.inc.sh"
-
-uc-assert path-env uc_shdev_path
-
-. ${EWD:?}/.env-init.sh || exit
-
-# XXX: track metadata names+values only, or consider script modifications as
-# well?  for production or dist mode none are expected or no functional changes
-# are expected regardless of modifications; for dev would want to track
-# modifications to entire script as updates.
-declare -p uc_shdev_sldef METADIR B C D | redo-stamp
-
-! ((fail)) || exit
-((utd)) || exit 123
 # ex:ft=bash:

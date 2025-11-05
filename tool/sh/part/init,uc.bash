@@ -1,5 +1,10 @@
 ucinit() {
-  path $UC_INIT/tool/uc/part
+  lookup $UC_INIT/tool/uc/part INSTALL
+
+  # TODO: fix srv dirs
+  #  "$(realpath /src/${local_srv})" \
+  #  "$(realpath ${scm_git_pref:-/srv/scm-git-}${local_srv})" \
+  #  "$(realpath /srv/annex-${local_srv})"
 
   #uc-part --simple --all "uc-assert.directive-handlers.bash" \
   #  "copy,directive,uc.bash" "commands,uc.bash" ||
@@ -19,13 +24,15 @@ ucinit() {
   true ||
     fail "E$? at ucinit:$uc_idx" || return
 
+  env DOTFILES:=\${HOME}/.conf
+  assert-dir "${HOME:?}/.local/"{share,tool/{sh,redo}/part,var}
   symlink -- \
     $HOME/.l ".local" \
     $HOME/.local/s share \
-    $HOME/.local/s/composure /srv/src-local/local/user-conf+dev/script/composure \
     $HOME/.local/c s/composure \
+    $HOME/.l/s/composure "${DOTFILES:?}/script/composure"
     $HOME/.local/user $UCONF/user ||
-      fail "E$? at ucinit:$uc_idx" || return
+      failerr "E$? at ucinit:$uc_idx" || return
 
   for target in "${ucinit_targets[@]}"
   do
@@ -36,13 +43,13 @@ ucinit() {
       pending+=( @${target}.do )
     }
   done ||
-    fail "E$? at ucinit:$uc_idx" || return
+    failerr "E$? at ucinit:$uc_idx" || return
 
   # @local{env,uc}
   symlink @localenv.do $UC_INIT/tool/redo/part/at.local-env.bash,uc.do &&
   symlink @localuc.do  $UC_INIT/tool/redo/part/at.local-uc.bash,uc.do  &&
   true ||
-    fail "E$? at ucinit:$uc_idx" || return
+    failerr "E$? at ucinit:$uc_idx" || return
 
   pending+=( .env.sh .env-init.sh )
 }

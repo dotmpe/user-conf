@@ -1,8 +1,13 @@
-#uc_directive_copy_pre=User-Conf:Directive:copy
-uconf_dir_copy_argc=2
-uconf_dir_copy_argn=1
+uc_directive_copy_pre=User-Conf.Directive.copy
+uc_directive_copy_fun=(
+  .copy{,-map,-seq}
+)
+
+uconf_dir_copy_argnum=2
+#uconf_dir_copy_argmax=3
 : "${uc_copy_force:=0}"
-User-Conf:Directive:copy ()
+
+User-Conf.Directive.copy ()
 {
   : about "Keep copy of name at target"
   : input ${1:?Destination} UserConf-Target-pathref
@@ -26,7 +31,8 @@ User-Conf:Directive:copy ()
   }
   cp -v "${name}" "${dest}" || return ${_E_retry:?}
 }
-User-Conf:Directive:copy-seq ()
+
+User-Conf.Directive.copy-seq ()
 {
   : id uconf-directives-copy-sequence
   : about "~ <Array> ..."
@@ -37,7 +43,7 @@ User-Conf:Directive:copy-seq ()
   local offset=0 fail utd=1
   while [[ $offset < ${#_uconf_d_cp_seq_pairs[@]} ]]
   do
-    User-Conf:Directive:copy "${_uconf_d_cp_seq_pairs[@]:offset:2}" || {
+    User-Conf.Directive.copy "${_uconf_d_cp_seq_pairs[@].offset.2}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1
@@ -47,7 +53,8 @@ User-Conf:Directive:copy-seq ()
   ! ((${fail:-0})) || return
   ((utd)) || return ${_E_ood:?}
 }
-User-Conf:Directive:copy-map ()
+
+User-Conf.Directive.copy-map ()
 {
   : id uconf-directives-copy-map
   : about "~ <Array> ... # Define copys for each key targetting value"
@@ -59,7 +66,7 @@ User-Conf:Directive:copy-map ()
   local -n src=${1}[\$n]
   for dest in "${!uc_copy_map[@]}"
   do
-    User-Conf:Directive:copy "${src}" "${dest}" || {
+    User-Conf.Directive.copy "${src}" "${dest}" || {
       uc-status-new --pass && {
         ! uc-status --changed || utd=0
       } || fail=1

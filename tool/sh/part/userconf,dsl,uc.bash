@@ -1,5 +1,6 @@
 declare -gA \
-userconf_dsl=(
+uc_dsl_userconf=(
+  [apply]=
   [assert-dir]=
   [copy-or-symlink]=
   [clean]=
@@ -8,7 +9,6 @@ userconf_dsl=(
   [git]=
   [line]=
   [line-word]=
-  [part]=
   [path]=
   [symlink]=
 )

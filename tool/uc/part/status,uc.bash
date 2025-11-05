@@ -1,8 +1,3 @@
-: "${_E_nsc:=64}" # Command name-context conflict @draft
-: "${_E_nss:=65}" # Generic namespace failure @draft
-: "${_E_nsl:=66}" # Name lookup failure @draft
-: "${_E_nsk:=67}"  # No such key (by static or builtin tag, ie. flag, option) @draft
-
 : "${keep_going:=0}"
 
 uc-status ()
@@ -11,7 +6,7 @@ uc-status ()
   : param '~ [<--options...>]'
   : id uc-status
 
-  local fail=0 utd=1 stat=${UC_STATUS:?}
+  local fail=0 utd=1 stat=${uc_status:?}
   [[ ${_E_continue:?} -eq $stat || ${_E_retry:?} -eq $stat ]] &&
     fail=1 ||
     [[ ${_E_next:?} -eq $stat ]] && utd=0 ||
@@ -40,7 +35,7 @@ uc-status ()
 
 uc-status-new ()
 {
-  UC_STATUS=$?
+  uc_status=$?
   uc-status "$@"
 }
 
