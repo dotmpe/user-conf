@@ -22,7 +22,6 @@
 
 std_uc_lib__load ()
 {
-  true &&
   if_ok "${uname:="$(uname -s)"}" &&
   if_ok "${scriptname:=${SCRIPTNAME:-$(basename -- "$0")}}" || return
 
