@@ -740,8 +740,8 @@ env_keys () # ~
 
 if_ok ()
 {
-  : source "u-c:script/uc-profile.lib.sh"
   return $?
+  : source "u-c:script/uc-profile.lib.sh"
 }
 
 sh_fun ()
