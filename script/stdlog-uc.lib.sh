@@ -188,13 +188,13 @@ stderr_log_inner ()
 # std-v <level>
 # if verbosity is defined, return non-zero if <level> is below verbosity treshold
 
-# stdlog-quite <level>
+# stdlog-quiet <level>
 # non-zero unless quiet, or verbosity level is lower than current threshold
 stdlog_quiet ()
 {
   "${quiet:-false}" ||
   test -n "${verbosity:-}" &&
-  test ${verbosity:?} -lt ${1:?"$(sys_exc_trc "stdlog-v: Argument expected:")"}
+  test ${verbosity:?} -lt ${1:?"$(sys_exc_trc "stdlog-quiet: Argument expected:")"}
 }
 
 # same as std-V but also override verbosity from 'v' if set

@@ -23,7 +23,8 @@
 std_uc_lib__load ()
 {
   if_ok "${uname:="$(uname -s)"}" &&
-  if_ok "${scriptname:=${SCRIPTNAME:-$(basename -- "$0")}}" || return
+  if_ok "${scriptname:=${SCRIPTNAME:-$(basename -- "$0")}}" &&
+  true || return
 
   # The deeper get within subshells, the more likely stdio is re-routed from
   # tty. This test should be performed in the scripts main.
