@@ -22,9 +22,6 @@
 
 std_uc_lib__load ()
 {
-  if_ok "${uname:="$(uname -s)"}" &&
-  if_ok "${scriptname:=${SCRIPTNAME:-$(basename -- "$0")}}" || return
-
   # The deeper get within subshells, the more likely stdio is re-routed from
   # tty. This test should be performed in the scripts main.
   true "${std_interactive:="std_term 0"}"
@@ -46,8 +43,8 @@ std_uc_lib__init ()
 {
   test -z "${std_uc_lib_init-}" || return $_
   [[ "${INIT_LOG-}" ]] || return 102
-  [[ -x "$(command -v readlink)" ]] || error "readlink util required for stdio-type" 1
-  [[ -x "$(command -v file)" ]] || error "file util required for stdio-type" 1
+  [[ -x "$(command -v readlink)" ]] || failerr "readlink util required for stdio-type" 1
+  [[ -x "$(command -v file)" ]] || failerr "file util required for stdio-type" 1
   [[ "${LOG-}" ]] && std_lib_log="$LOG" || std_lib_log="$INIT_LOG"
   [[ -z "${v-}" ]] || verbosity=$v
 
