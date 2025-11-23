@@ -22,6 +22,8 @@ bash_uc_lib__init ()
     #sh-mode dev # Enable shell stacktrace print on errexit
     set -hET &&
     shopt -s extdebug &&
+    : "$(trap)" &&
+    [[ "$_" == *ERR* ]] ||
     trap 'bash_uc_errexit' ERR || return
   }
   ! "${INIT:-false}" ||
