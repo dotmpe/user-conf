@@ -1,3 +1,4 @@
+uconf_extra_pre=User-Conf.Extra
 uconf_extra_fun=(
   TODO
 )
