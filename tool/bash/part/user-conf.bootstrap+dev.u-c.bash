@@ -1,4 +1,5 @@
-ucinit() {
+user-conf.bootstrap+dev ()
+{
   lookup $UC_INIT/tool/uc/part INSTALL
 
   # TODO: fix srv dirs

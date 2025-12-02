@@ -44,10 +44,11 @@ case "${UC_DIR_ENV:-local}" in
     ! ((new)) || {
       >&2 echo "New env, need to apply preliminary user-config parts..."
 
+      # NOTE: cleanup if needed, but UC_INIT should only need to be a simple seed
+      # tree, and if so build may discard that after initial setup.
       : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
 
       PATH=$PATH:"${UC_INIT:?}/tool/bash/part"
-
       [[ ! -d "${UCONF:=$HOME/.conf}" ]] ||
         PATH=$PATH:"${UCONF}/tool/sh/part:${UCONF}/tool/bash/part"
 
@@ -63,18 +64,17 @@ case "${UC_DIR_ENV:-local}" in
         #/usr/share/uc/us-host-profile.sh
       }
 
-      . "${UC_INIT:?}/tool/sh/part/init,uc.bash" &&
       append_lookup \
           "${C_INC:?}"/Tool/{{,ba}sh,uc,us}/part \
           "${UC_INIT:?}"/tool/{{,ba}sh,uc,us}/part \
           "${U_C:?}"/tool/{{,ba}sh,uc,us}/part \
             SCRIPTPATH &&
 
-      us_part --alias --hooks:init us uc-runner uconf-extra ||
+      us_part --alias --hooks:init us uc-runner ||
         failerr "Failed to load runner and ucinit profile (E$?)" || exit
 
       >&2 echo "Bootstrap env loaded, ready to apply $1 groups..."
-      User-Conf.runner --apply ${UC_PROFILE:=${1#@}} || {
+      User-Conf.runner --apply ${UC_PROFILE_AT:=user-script.${1#@}} || {
         uc-status-new --continue ||
           failerr "Failed to apply ${UC_PROFILE@Q} profile (E$?)" || exit
       }

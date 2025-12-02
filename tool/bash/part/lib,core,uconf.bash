@@ -1,31 +1,33 @@
 uconf_directives_core_pre=User-Conf.Directives
 uconf_directives_core_fun=(
-  .path
+  .apply-env
+  .apply-path
+  .apply-profiles
   .copy-or-symlink
-  -env
-  .apply-profile
+  .install-packages
 )
+
 declare -gA \
 uconf_directives_core_als=(
   [uconf_apply]=.apply-profiles
 )
 
-User-Conf.Directive.path ()
+User-Conf.Directives.apply-path ()
 {
   User-Script.OS.lookup-append "${@}" SCRIPTPATH
 }
 
-User-Conf.Directive.copy-or-symlink ()
+User-Conf.Directives.copy-or-symlink ()
 {
   TODO "$FUNCNAME"
 }
 
-User-Conf.Directive.env ()
+User-Conf.Directives.apply-env ()
 {
   TODO "$FUNCNAME"
 }
 
-User-Conf.Directive.apply ()
+User-Conf.Directives.apply-profiles ()
 {
   TODO "$FUNCNAME"
 }
