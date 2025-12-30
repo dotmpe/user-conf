@@ -30,7 +30,7 @@ xredo_target="${REDO_PWD:+$REDO_PWD/}${REDO_TARGET:?}"
     "uc-build.redo-select.bash.do"
   )
   : "${U_C:=/src/local/user-conf+${CTX_ENV:-dev}}"
-  os_path_add ${U_C:?}/tool/redo/recipe
+  append_path ${U_C:?}/tool/redo/recipe
 }
 
 for build_select_sh in "${uc_build_selects[@]}"

@@ -74,7 +74,7 @@ case "${UC_DIR_ENV:-local}" in
         failerr "Failed to load runner and ucinit profile (E$?)" || exit
 
       >&2 echo "Bootstrap env loaded, ready to apply $1 groups..."
-      User-Conf.runner --apply ${UC_PROFILE_AT:=user-script.${1#@}} || {
+      User-Conf.Runner.main-select --apply ${UC_PROFILE_AT:=user-script.${1#@}} || {
         uc-status-new --continue ||
           failerr "Failed to apply ${UC_PROFILE@Q} profile (E$?)" || exit
       }

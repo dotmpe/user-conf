@@ -133,11 +133,11 @@ case "${xredo_target:?}" in
     _uc_build__tool_name "${B?}" '.inc'
     mkdir -p "${B?}/tool/${tool:?}/part"
     curpath=$PATH
-    os_path_add "${UCONF?}/script/composure"
+    append_path "${UCONF?}/script/composure"
     . "common,local.sh"
-    os_path_add "${UCONF?}/script/composure/Tool/sh/part"
-    os_path_add "${UCONF?}/script/composure/Tool/uc/part"
-    os_path_add "${UCONF?}/script/composure/Tool/us/part"
+    append_path "${UCONF?}/script/composure/Tool/sh/part"
+    append_path "${UCONF?}/script/composure/Tool/uc/part"
+    append_path "${UCONF?}/script/composure/Tool/us/part"
     # Find and extract typeset meta
     us_env_nametoid name{,id}
     # FIXME: should use one specific extension for this later
@@ -149,7 +149,7 @@ case "${xredo_target:?}" in
     us_env_inc_key_all_values _nametypeset '' from &&
     for path in "${from[@]}"
     do
-      os_path_add "${UCONF?}/script/composure/${path}"
+      append_path "${UCONF?}/script/composure/${path}"
     done &&
     echo "PATH=\$PATH:${PATH:${#curpath}+1}" &&
     # Generate pre-requisite list
@@ -172,7 +172,7 @@ case "${xredo_target:?}" in
   ;;
 
 ( tool/*/part/*.sh )
-    os_path_add "${UCONF?}/script/composure"
+    append_path "${UCONF?}/script/composure"
     _uc_build__tool_name '' '.sh'
     redo-ifchange "$B/tool/$tool/part/$name.inc" &&
     . "$_" &&
