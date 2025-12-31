@@ -18,10 +18,10 @@ uc_env @part G uc-sh-util
 
 _Sh_Als_Exp ()
 {
-  : about "Expand alias to full script"
-  : extended "This will only work if aliases are completely loaded"
-  : src us-system.sh
-  : input "${1:?$ENV_CTX:$FUNCNAME: Alias name expected}"
+: about "Expand alias to full script"
+: extended "This will only work if aliases are completely loaded"
+: src us-system.sh
+: input "${1:?$ENV_CTX:$FUNCNAME: Alias name expected}"
   local fun=__fun_tmp_${RANDOM:?}
   eval "$fun ()
 {
@@ -34,8 +34,8 @@ uc_env_types["_Sh_Als_Exp"]=f
 
 _Sh_Caller ()
 {
-  : param '~ [<Frame=0>]'
-  : src us-system.sh
+: param '~ [<Frame=0>]'
+: src us-system.sh
   : "$(( ${1:-0} + 1 ))"
   :pass "$(caller $_)" || return
   : "${_#* }"
@@ -46,9 +46,9 @@ uc_env_types["_Sh_Caller"]=f
 
 _Sh_Callers ()
 {
-  : about "List function call stack"
-  : param '~ [<Start-frame=0>]'
-  : src us-system.sh
+: about "List function call stack"
+: param '~ [<Start-frame=0>]'
+: src us-system.sh
   local i
   for (( i=${1-0}; 1; i++ ))
   do caller $i || break

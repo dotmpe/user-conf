@@ -19,7 +19,7 @@ uc_env_shortdescr=
 # TODO: transpile function from parts, see tool/uc/part/-env,func,uc.sh
 _uc_env_ () # @uc/base
 {
-  : src "uc-env.sh"
+: src "uc-env.sh"
   local args
   case "${*:?${ENV_CTX:-$0[$$]}:uc-env Arguments expected}" in
   ( -h|-?|--help )

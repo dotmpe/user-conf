@@ -2,9 +2,9 @@
 
 uc-status ()
 {
-  : about 'Experimental helper to abstract return status handling'
-  : param '~ [<--options...>]'
-  : id uc-status
+: about 'Experimental helper to abstract return status handling'
+: param '~ [<--options...>]'
+: id uc-status
 
   local fail=0 utd=1 stat=${uc_status:?}
   [[ ${_E_continue:?} -eq $stat || ${_E_retry:?} -eq $stat ]] &&

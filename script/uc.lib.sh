@@ -148,9 +148,9 @@ uc_config_defraw ()
 
 uc_config_keys ()
 {
-  : about "List uc config keys for value defaults"
-  : extended "List keys used to build default values for given variables, "
-  : extended "ie. the variable references made on definition"
+: about "List uc config keys for value defaults"
+: extended "List keys used to build default values for given variables, "
+: extended "ie. the variable references made on definition"
   # TODO: this requires a reference to the definition or definition source,
   # should use uc-env for that. For now use with uc-env-defaults keys only!
   local config_{key,ref}

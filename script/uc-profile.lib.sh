@@ -685,7 +685,7 @@ uc_envd_init ()
 
 append_path () # ~ <DIR> # PATH helper (does not export!)
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   case ":$PATH:" in
     ( *:"${1:?}":* ) ;;
     ( * ) PATH="${PATH:+$PATH:}${1:?}"
@@ -694,8 +694,8 @@ append_path () # ~ <DIR> # PATH helper (does not export!)
 
 os_lookup_add_old () # ~ <Var> <Prepend> <Append>
 {
-  : source "u-c:script/uc-profile.lib.sh"
-  : copy "os.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
+: copy "os.lib.sh"
   [ -e "$2" -o -e "${3-}" ] || {
     >&2 echo "os_path_add: No such file or directory '$*'"
     return 1
@@ -719,7 +719,7 @@ os_lookup_add_old () # ~ <Var> <Prepend> <Append>
 # Store variables (name and current value) at associative array
 sys_aarrv () # ~ <Array> <Vars...>
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   # XXX: for some reason cannot set var to by-name-ref as well
   declare -n arr=${1:?}
   declare var
@@ -733,7 +733,7 @@ sys_aarrv () # ~ <Array> <Vars...>
 
 env_keys () # ~
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   # Ignore first line (for '_' value)
   compgen -A variable | sort | tail -n +2
 }
@@ -741,12 +741,12 @@ env_keys () # ~
 if_ok ()
 {
   return $?
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
 }
 
 sh_fun ()
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   declare -F "${1:?}" > /dev/null
 }
 
@@ -758,7 +758,7 @@ sys_astat () # ~ ( <Test-flag> <Test-value> )*
     test $stat "$1" "$2" || return $stat
     shift 2
   done
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
 }
 
 # Id: User-Conf:uc-profile.lib

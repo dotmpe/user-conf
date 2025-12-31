@@ -36,8 +36,8 @@ stdlog_uc_lib__init ()
 
 stdlog_init () # ~ HANDLER-NAME LOGGER [FILTERS...]
 {
-  : input "${1:?Handler name expected}"
-  : input "${2:?Logger name expected}"
+: input "${1:?Handler name expected}"
+: input "${2:?Logger name expected}"
   #args_uc__argc_n :stdlog-init $# ge 2 || return
   local name="$1" logger="$2" filters
   shift 2

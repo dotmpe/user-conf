@@ -172,8 +172,8 @@ std_ifstat () # ~ <Spec> <Cmd ...>
 >/dev/null 2>&1 declare -F sh_fun ||
 sh_fun ()
 {
-  : src std-uc.lib.sh
-  : input "${@:?$FUNCNAME: Function name, $ENV_CTX}"
+: src std-uc.lib.sh
+: input "${@:?$FUNCNAME: Function name, $ENV_CTX}"
   >/dev/null 2>&1 declare -F "${@}"
 }
 
@@ -187,8 +187,8 @@ std_noo () # ~ <Cmd...> # Silence all output (std{out,err})
 sh_fun std_not ||
 std_not () # ~ <Cmd ...> # Invert status, fail (only) if command returned zero-status
 {
-  : description 'Change status to 1 only if it is zero'
-  : src std-uc.lib.sh
+: description 'Change status to 1 only if it is zero'
+: src std-uc.lib.sh
   ! "$@"
 }
 # alias: not
@@ -198,7 +198,7 @@ std_quiet () # ~ <Cmd...> # Silence stdout
 {
   local s=$?
   "$@" >/dev/null && return ${stat}
-  : src std-uc.lib.sh
+: src std-uc.lib.sh
 }
 # alias: std-noout
 
@@ -207,7 +207,7 @@ std_silent () # ~ <Cmd ...> # Silence stderr
 {
   local s=$?
   "$@" 2>/dev/null && return ${stat}
-  : src std-uc.lib.sh
+: src std-uc.lib.sh
 }
 # alias: std-noerr
 
@@ -220,8 +220,8 @@ std_verbose () # ~ <Message ...> # Print message
 
 std_v1c () # ~ <Cmd ...> # Wrapper that echoes both command and status
 {
-  : param "<Cmd ...>"
-  : note "Strictly for debugging of script branches (or DEBUG, DIAG mode etc)"
+: param "<Cmd ...>"
+: note "Strictly for debugging of script branches (or DEBUG, DIAG mode etc)"
   >&2 echo "Running command: $*"
   "$@"
   stderr_stat $? "$@"
@@ -229,14 +229,14 @@ std_v1c () # ~ <Cmd ...> # Wrapper that echoes both command and status
 
 std_v_exit () # ~ <Cmd ...> # Wrapper to command that exits verbosely
 {
-  : param "<Cmd ...>"
+: param "<Cmd ...>"
   "$@"
   stderr_exit $?
 }
 
 std_v_stat ()
 {
-  : param "<Cmd ...>"
+: param "<Cmd ...>"
   "$@"
   stderr_stat $? "$@"
 }
@@ -244,8 +244,8 @@ std_v_stat ()
 std_vs () # ~ <Message ...> # Print message, but pass previous status code
 {
   local stat=$?
-  : about "Print message, but pass previous status code"
-  : param "<Message ...>"
+: about "Print message, but pass previous status code"
+: param "<Message ...>"
   stderr echo "$@" || return 3
   return $stat
 }

@@ -55,7 +55,7 @@ bash_uc_log ()
 
 sys_callers () # ~ [<Frame>]
 {
-  : copy "sys.lib.sh"
+: copy "sys.lib.sh"
   local i
   for (( i=${1-0}; 1; i++ ))
   do caller $i || break
@@ -86,9 +86,9 @@ bash_uc_errexit () # ~ <id> <msg> <frame-offset> ...
 bash_uc_trace_tpl ()
 {
   TODO see term,us
-  : n Normal
-  : b Bold
-  : r Reverse video
+: n Normal
+: b Bold
+: r Reverse video
   : 1. Failure main swatch FG
   : 1.1. Failure main swatch FG bold
   # FIXME: templating should be throuh term-uc.lib and something more suitable

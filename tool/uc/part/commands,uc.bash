@@ -1,13 +1,13 @@
 uc-add ()
 {
-  : about '~ [<--options...>] <Name> ...'
+: about '~ [<--options...>] <Name> ...'
   false "TODO: include <Name> as source file"
   fail "$_"
 }
 uc-copy ()
 {
-  : about '~ [<--options...>] <Name> <Dest...>'
-  : id uc-copy
+: about '~ [<--options...>] <Name> <Dest...>'
+: id uc-copy
   case "${1}" in
   ( --map ) UserConf:Directive:copy-map "${@:2:1}" &&
       shift 2
@@ -29,8 +29,8 @@ uc-copy ()
 }
 uc-symlink ()
 {
-  : about '~ [<--options...>] <Name> <Dest...>'
-  : id uc-symlink
+: about '~ [<--options...>] <Name> <Dest...>'
+: id uc-symlink
   case "${1}" in
   ( --detect-argspec )
       :strword "${2}" && {

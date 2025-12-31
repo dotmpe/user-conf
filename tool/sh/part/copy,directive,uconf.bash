@@ -9,9 +9,9 @@ uconf_dir_copy_argnum=2
 
 User-Conf.Directive.copy ()
 {
-  : about "Keep copy of name at target"
-  : input ${1:?Destination} UserConf-Target-pathref
-  : input ${2:?Name reference} UserConf-Source-path
+: about "Keep copy of name at target"
+: input ${1:?Destination} UserConf-Target-pathref
+: input ${2:?Name reference} UserConf-Source-path
   local dest=${1} name=${2} mode=${3-}
   # TODO: mode or other params
   [[ -f "${name}" ]] || {
@@ -34,10 +34,10 @@ User-Conf.Directive.copy ()
 
 User-Conf.Directive.copy-seq ()
 {
-  : id uconf-directives-copy-sequence
-  : about "~ <Array> ..."
-  : description "Each pair is (source, dest})"
-  : input "${1:?Pairs array name}"
+: id uconf-directives-copy-sequence
+: about "~ <Array> ..."
+: description "Each pair is (source, dest})"
+: input "${1:?Pairs array name}"
   local -n _uconf_d_cp_seq_pairs=${1:?}
   [[ "${_uconf_d_cp_seq_pairs[@]:+set}" ]] || return ${_E_MA:?}
   local offset=0 fail utd=1
@@ -56,10 +56,10 @@ User-Conf.Directive.copy-seq ()
 
 User-Conf.Directive.copy-map ()
 {
-  : id uconf-directives-copy-map
-  : about "~ <Array> ... # Define copys for each key targetting value"
-  : description "Each pair is dest->source, ie. reverse from normal argument sequence order"
-  : input "${1:?Associative array name}"
+: id uconf-directives-copy-map
+: about "~ <Array> ... # Define copys for each key targetting value"
+: description "Each pair is dest->source, ie. reverse from normal argument sequence order"
+: input "${1:?Associative array name}"
   local -n uc_copy_map=${1}
   [[ "${uc_copy_map[@]:+set}" ]] || return ${_E_MA:?}
   local dest fail utd=1
