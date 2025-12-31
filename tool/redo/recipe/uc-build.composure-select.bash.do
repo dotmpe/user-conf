@@ -1,11 +1,5 @@
 : "${compo_inc_sh:=${C:?}/includes,composure.bash}"
 
-# Do some pre-build per-target env setup
-case "${xredo_target:?}" in
-( "$A"/include,composure/* | \
-  @compo:groups ) . "common,cache,uc.sh" ;;
-esac
-
 # Handle composure-select target set
 case "${xredo_target:?}" in
 
