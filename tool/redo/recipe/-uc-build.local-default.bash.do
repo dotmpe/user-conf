@@ -11,7 +11,7 @@ set -euETo pipefail
 
 : "${UC_BUILD_ENVS_TRY:=./.build-env.sh ./.local-env.sh ./.env.sh}"
 uc_build_envs_try=( ${UC_BUILD_ENVS_TRY} )
-_Sys_Exec_Apply first_scr . uc_build_envs_try ||
+_Sys_Exec_Apply apply_first_nonempty . uc_build_envs_try ||
   failerr "E$? while looking for build env" || exit
 
 # XXX: for all those use cases to work, need to change boilerplate to

@@ -59,7 +59,6 @@ case "${UC_DIR_ENV:-local}" in
       eval "$US_ENV_INIT" &&
       unset US_ENV_INIT || {
         >&2 echo "Expected User-Script profile env, loading"
-
         . "profile,host,us.sh"
         #/usr/share/uc/us-host-profile.sh
       }

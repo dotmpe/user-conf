@@ -1,5 +1,5 @@
-uconf_directives_core_pre=User-Conf.Directives
-uconf_directives_core_fun=(
+uconf_core_lib_pre=User-Conf.Directive
+uconf_core_lib_fun=(
   .apply-env
   .apply-path
   .apply-profiles
@@ -8,28 +8,33 @@ uconf_directives_core_fun=(
 )
 
 declare -gA \
-uconf_directives_core_als=(
+uconf_core_lib_als=(
   [uconf_apply]=.apply-profiles
 )
 
-User-Conf.Directives.apply-path ()
+User-Conf.Directive.apply-path ()
 {
   User-Script.OS.lookup-append "${@}" SCRIPTPATH
 }
 
-User-Conf.Directives.copy-or-symlink ()
+User-Conf.Directive.copy-or-symlink ()
 {
   TODO "$FUNCNAME"
 }
 
-User-Conf.Directives.apply-env ()
+User-Conf.Directive.apply-env ()
 {
   TODO "$FUNCNAME"
 }
 
-User-Conf.Directives.apply-profiles ()
+User-Conf.Directive.apply-profiles ()
 {
-  TODO "$FUNCNAME"
+  : "${*}"
+  require ${_// /.u-c.bash }.u-c.bash || return
+  local fun
+  for fun
+  do "$fun" || return
+  done
 }
 
 #

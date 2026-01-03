@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 
-# annex-p-build:env
-
 # Boilerplate (derived from env-local)
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info ":ucbuild[$$]:env-build" "Build env loading..."
+  _ _INFO "Build env loading..."
 
 case " ${ENV_BASE-} " in ( *" build "* )
-  $LOG alert ":ucbuild[$$]:env-build" "Loop detected" \
-    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121} ||
-      return
+  _ALERT "Loop detected" "" ${_E_ifenv:-121} || return
 ;; esac
 
 [[ ${ENV_PEND+set} ]] ||
-  $LOG alert ":ucbuild[$$]:env-build" "Unverified env" "" ${_E_ifenv:-121} ||
+  _ALERT "Unverified env" "foo=bar" ${_E_ifenv:-121} ||
     return
 
 [[ ${ENV_PEND%% *} = build ]] || return ${_E_ifenv:-121}
@@ -28,15 +24,13 @@ for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -e $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" ||
-  $LOG alert ":ucbuild[$$]:env-build" "Failure resolving base env" \
-    "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123} ||
-      return
+  _ALERT "Failure resolving base env" "" ${_E_noenv:-123} || ${uc_stat}
 
-[[ ! ${ENV_PEND+set} ]] || $LOG alert ":ucbuild[$$]:env-build" \
-  "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
+[[ ! ${ENV_PEND+set} ]] ||
+  _ALERT "Expected complete env" "" ${_E_noenv:-123} || return
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info ":ucbuild[$$]:env-build" "Build env start"
+  _ _INFO "Build env start"
 
 # Boilerplate end:
 
