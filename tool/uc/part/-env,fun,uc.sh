@@ -126,6 +126,42 @@ EOM
     test -z "${uc_env_parts["${2}.ctx"]-}" || echo -n " Context: $_"
     echo
   ;;
+  ( --functions )
+    uc_env :list-by-type f
+  ;;
+  ( :list-part-types )
+    local part_key
+    local -n tspec="uc_env_parts[\"\$part_key\"]"
+    local -a types
+    for part_key in "${!uc_env_parts[@]}"
+    do
+      _Sys_Arr_Find types "${part_key##*.}" && continue
+      types+=( "$_" )
+    done
+    printf '%s\n' "${types[@]}"
+  ;;
+  ( :list-types )
+    : XXX this does not inspect part keys, see list-part-types
+    local name
+    local -n tspec="uc_env_types[\"\$name\"]"
+    local -a types
+    for name in "${!uc_env_types[@]}"
+    do
+      _Sys_Arr_Find types "${tspec:0:1}" && continue
+      types+=( "$_" )
+    done
+    printf '%s\n' "${types[@]}"
+  ;;
+  ( :list-by-type )
+    : param "~~ <Primary-type-flag> ..."
+    local name
+    local -n tspec="uc_env_types[\"\$name\"]"
+    for name in "${!uc_env_types[@]}"
+    do
+      [[ "${tspec:0:1}" = ${2:?} ]] || continue
+      echo "$name"
+    done
+  ;;
   ( :info )
     : param '~~ <Part-name> ...'
     : input "${2:?Part name expected: $*, $ENV_CTX:$FUNCNAME${1}}"
@@ -143,7 +179,11 @@ Usage:
                       ~ -gi | :group-info ...
                       ~ -pr | :pretty ...
                       ~ -su | :summary ...
+                      ~ -?? | :list-cases ...
 EOM
+  ;;
+  ( -\?\? | --commands | :list-cases )
+    declare -f $FUNCNAME | grep '^[\t ]*\(case .* in\|(\?[^()]*)\) *$'
   ;;
   ( -l | :list )
     : param '...'
@@ -254,7 +294,8 @@ EOM
     : param '...'
     . "${U_C:?}/tool/uc/part/-env,fun,uc.sh"
   ;;
-  ( -summary )
+  ( -su | :summary )
+
     >&2 echo "Env-ctx: ${ENV_CTX-(unset)}"
     local -a _env_{base,ctx,lib,src}
     _Sys_Read_Exec _env_base printf -- '%s\n' ${ENV_BASE-}

@@ -683,6 +683,7 @@ uc_envd_init ()
 
 # Misc. functions
 
+_Sh_Fun_Exists append_path ||
 append_path () # ~ <DIR> # PATH helper (does not export!)
 {
   : source "u-c:script/uc-profile.lib.sh"
