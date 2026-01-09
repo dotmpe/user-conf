@@ -21,7 +21,7 @@ uc_fun "${func_exists:-func_exists}" || {
 # Error unless non-empty and true-ish
 trueish () # Str
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   test $# -eq 1 -a -n "${1-}" || return
   case "$1" in
     [Oo]n|[Tt]rue|[Yyj]|[Yy]es|1)
@@ -34,33 +34,33 @@ trueish () # Str
 uc_fun add_path ||
 add_path () # ~ <Path> ...
 {
-  : source "sys-uc.lib.sh"
-  os_path_add "" "${1:?}"
+: source "sys-uc.lib.sh"
+  os_path_add_old "" "${1:?}"
 }
 
 uc_fun append_path ||
 append_path () # ~ <Path> ...
 {
-  : source "sys-uc.lib.sh"
-  os_path_add "" "${1:?}"
+: source "sys-uc.lib.sh"
+  os_path_add_old "" "${1:?}"
 }
 
 uc_fun prepend_path ||
 prepend_path () # ~ <Path> ...
 {
-  : source "sys-uc.lib.sh"
-  os_path_add "${1:?}"
+: source "sys-uc.lib.sh"
+  os_path_add_old "${1:?}"
 }
 
-#uc_fun append_path_lookup ||
-append_path_lookup ()
+uc_fun append_lookup ||
+append_lookup ()
 {
-  : source "sys-uc.lib.sh"
-  add_env_path_lookup "${1:?}" "" "${2:?}"
+: source "sys-uc.lib.sh"
+  add_env_lookup "${1:?}" "" "${2:?}"
 }
 
 # Add an entry to colon-separated paths, ie. PATH, CLASSPATH alike lookup paths
-add_env_path_lookup() # Var-Name Prepend-Value Append-Value
+add_env_lookup() # Var-Name Prepend-Value Append-Value
 {
   test $# -ge 2 -a $# -le 3 || return 64
   local val="$(eval echo "\${$1-}")"
@@ -83,7 +83,7 @@ add_env_path_lookup() # Var-Name Prepend-Value Append-Value
   }
 }
 
-remove_env_path_lookup()
+remove_env_lookup()
 {
   local newval="$( eval echo \"\$$1\" | tr ':' '\n' | while read oneval
     do
@@ -134,7 +134,7 @@ req_profile() # Name Vars...
 
 sys_debug ()
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   test $# -gt 0 || set -- debug
   while test $# -gt 0
   do
@@ -158,7 +158,7 @@ sys_debug ()
 
 sys_debug_mode ()
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   local lk=${lk-}:us:sys.lib:debug-mode
   case "$1" in
     ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
@@ -176,14 +176,14 @@ sys_debug_mode ()
 # XXX: hook to test for envd/uc and defer, returning cur bool value for setting
 sys_debug_ () # ~ [<...>]
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   sys_debug "$@" && echo true || echo false
 }
 
 # A helper for inside ${var?...} expressions
 sys_exc () # ~ <Head>: <Label> # Format exception-id and message
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   ! "${DEBUG:-$(sys_debug_ exceptions)}" && echo "$1: ${2-Expected}" ||
     # TODO: use localenv for params
     "${sys_on_exc:-sys_exc_trc}" "$1" "${2-Expected}" 3 "${@:3}"
@@ -192,7 +192,7 @@ sys_exc () # ~ <Head>: <Label> # Format exception-id and message
 # system-exception-trace: Helper to format callers list including custom head.
 sys_exc_trc () # ~ [<Head>] [<Msg>] [<Offset=2>] ...
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   echo "${1:-us:sys: E$? source trace:}${2+ }${2}"
   std_findent "  - " sys_callers "${3-2}"
 }
@@ -201,7 +201,7 @@ sys_exc_trc () # ~ [<Head>] [<Msg>] [<Offset=2>] ...
 # non-zero statusses, but one specifically. See also sys-astat.
 sys_not ()
 {
-  : source "sys-uc.lib.sh"
+: source "sys-uc.lib.sh"
   "$@"
   [[ $? -eq ${_E_fail:-1} ]]
 }

@@ -11,8 +11,8 @@ export _3HOUR=10800
 export _6HOUR=64800
 export _1DAY=86400
 export _1WEEK=604800
-export _1MONTH=$(( 31 * $_1DAY ))
-export _1YEAR=$(( 365 * $_1DAY ))
+export _1MONTH=$(( 31 * _1DAY ))
+export _1YEAR=$(( 365 * _1DAY ))
 
 
 # newer-than FILE SECONDS, filemtime must be greater-than Now - SECONDS

@@ -1,6 +1,6 @@
 uc_class_lib__load ()
 {
-  : about "Some stuff to help with declaration, to move into class.lib later"
+: about "Some stuff to help with declaration, to move into class.lib later"
   lib_require str sys-cmd class-uc
 }
 

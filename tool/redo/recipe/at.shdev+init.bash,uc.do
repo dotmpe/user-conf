@@ -1,0 +1,268 @@
+#!/usr/bin/env bash
+
+# See @build+init: initial helper to init/update hosts' shell dev environment
+# For effective user/host/project setup we need a layered approach, with ad hoc
+# customizable parts. By creating a ~/local (or ~/.local) project, and possibly
+# others, this can be done in a host-centric way, using Bash, Git and Redo as
+# basic prerequisite tools.
+
+# TODO: split this up into host config and project config parts, review env-local base setup
+
+set -eETuo pipefail
+
+[[ ${REDO_RUNID-} && ${REDO_TARGET} = @shdev+init ]] || {
+#[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = @shdev+init+local.do ]] || {
+  >&2 echo "$$/$0: Illegal env ${1@Q}"
+  exit ${_E_ifenv:-124}
+}
+
+fail=0 utd=1
+
+: "${UC_SRC_ENV:=dev}"
+: "${UC_DIR_ENV:=local}"
+
+#: "${METADIR:=.${PACK_ID:-meta}}"
+#: "${B:=${METADIR:?}/build}"
+#: "${C:=${METADIR:?}/cache}"
+#: "${D:=${METADIR:?}/dist}"
+#>&2 mkdir -vp "${B}" "${C}" "${D}"
+
+# basic install profiles. remote setup is so that SSH user auth/config is used
+# for all provisioning
+shdev_prereq=( sshuser+init gituser+init )
+case "${UC_DIR_ENV:-local}" in
+( local ) # sources are all at prefixes
+
+    env_init=( @local{env,uc} )
+    new=1
+    for init in "${env_init[@]}"
+    do
+      [[ -e "${init:?}" ]] && new=0 && break
+      continue
+    done
+
+    ! ((new)) || {
+      >&2 echo "New env, need to apply preliminary user-config parts..."
+
+      # NOTE: cleanup if needed, but UC_INIT should only need to be a simple seed
+      # tree, and if so build may discard that after initial setup.
+      : "${UC_INIT:=/srv/src-local/local/user-conf+${UC_SRC_ENV:?}}"
+
+      PATH=$PATH:"${UC_INIT:?}/tool/bash/part"
+      [[ ! -d "${UCONF:=$HOME/.conf}" ]] ||
+        PATH=$PATH:"${UCONF}/tool/sh/part:${UCONF}/tool/bash/part"
+
+      . /etc/uc/host
+
+      [[ ${US_ENV_PARTS:+set} ]] &&
+      [[ ${US_ENV_INIT:+set} ]] &&
+      eval "$US_ENV_INIT" &&
+      unset US_ENV_INIT || {
+        >&2 echo "Expected User-Script profile env, loading"
+        . "profile,host,us.sh"
+        #/usr/share/uc/us-host-profile.sh
+      }
+
+      append_lookup \
+          "${C_INC:?}"/Tool/{{,ba}sh,uc,us}/part \
+          "${UC_INIT:?}"/tool/{{,ba}sh,uc,us}/part \
+          "${U_C:?}"/tool/{{,ba}sh,uc,us}/part \
+            SCRIPTPATH &&
+
+      us_part --alias --hooks:init us uc-runner ||
+        failerr "Failed to load runner and ucinit profile (E$?)" || exit
+
+      >&2 echo "Bootstrap env loaded, ready to apply $1 groups..."
+      User-Conf.Runner.main-select --apply ${UC_PROFILE_AT:=user-script.${1#@}} || {
+        uc-status-new --continue ||
+          failerr "Failed to apply ${UC_PROFILE@Q} profile (E$?)" || exit
+      }
+      >&2 echo "Ready to use ${UC_PROFILE@Q}"
+    }
+
+    env_init_sh=".init-env.sh"
+    redo-ifchange "${env_init[@]}" &&
+    . "$env_init_sh"
+
+    #shdev_parts=( user{inc,conf,dirs,docs,bup,scripts,bin}+init )
+  ;;
+
+( basedir ) # sources and config are prepared at basedir.
+    # intention is to work with installed scripts and specific versions only.
+    # so that for CI we can build exact map of the context, and also to use
+    # a more bourne-shell compatible but secondary format for all env scripts
+    # for non-dev hosts. Only one package is needed (assuming all prerequisites
+    # are fully packaged and versioned projects and come preinstalled). (Although
+    # its unlikely I will ever use ie. USBIN or HTDOCS as such.)
+    # FIXME: current scripts are for composure setup, see local dir-env
+    failerr
+  ;;
+  * )
+esac
+
+TODO
+
+for target in "${shdev_prereq[@]}"
+do
+  shdev_targets+=( "@$target" )
+  shdev_prereq_targets+=( "@$target" )
+done
+exec 4>@shdev.do.do
+echo -n "redo-ifchange" >&4
+for target in "${shdev_parts[@]}"
+do
+  echo -n " ${target%+init}"
+  shdev_targets+=( "@$target" )
+done >&4
+echo " @local{env,uc} && . \"${env_init_sh:?}\" && uc-env -r uc && uc-stat shdev" >&4
+
+redo-ifchange "${shdev_prereq_targets[@]}" &&
+
+uc-env -r uc &&
+uc-part shdev &&
+uc-apply shdev &&
+
+redo-ifchange "${shdev_targets[@]}"
+
+exit
+
+for dir in \
+  "${HOME:=/home/${USER:-$(whoami)}}" \
+  "${SRC_LOCAL:=$(realpath /src/local)}" \
+  "${SCM_GIT_LOCAL:=$(realpath ${scm_git_pref}local)}" \
+  "${ANNEX_LOCAL:=$(realpath /srv/annex-local)}"
+do
+  [[ -d "${dir:-}" ]] || {
+    >&2 echo "$$/$0: Missing prefix ${dir@Q}"
+    exit 120
+  }
+done
+
+# Tags for env vars to the repository checkouts
+uc_shdev_reporefs_env=(
+  C_INC
+  U_C
+  U_S
+  UCONF
+  US_BIN
+  HTDOC
+)
+
+# Perequisite repos for dev setup
+# XXX: the real user composure include dir is submod of conf-mpe
+uc_shdev_reporefs_1=( "dotmpe/composure" "test" ""
+  "${SRC_LOCAL}/composure-mpe+dev" "~/project/composure-mpe" )
+uc_shdev_reporefs_2=( "dotmpe/user-conf" "r0.2" ""
+  "${SRC_LOCAL}/user-conf+dev" "~/project/user-conf" )
+uc_shdev_reporefs_3=( "dotmpe/user-scripts" "r0.0" ""
+  "${SRC_LOCAL}/user-scripts+dev" "~/project/user-scripts" )
+uc_shdev_reporefs_4=( "dotmpe/conf-mpe" "master" ""
+  "${SRC_LOCAL}/conf-mpe+dev" "~/.local/share/dotfiles" "~/.conf" "~/project/conf-mpe" )
+uc_shdev_reporefs_5=( "dotmpe/script-mpe" "features/docker-ci" ""
+  "${SRC_LOCAL}/script-mpe+dev" "~/bin" "~/project/script-mpe" )
+uc_shdev_reporefs_6=( "dotmpe/htdocs-mpe" "master" ""
+  "${ANNEX_LOCAL}/htdocs-mpe" "~/htdocs" )
+
+# Additional symlink definitions
+uc_shdev_sldef=(
+  ".local" "${HOME:?}/.l"
+  "share" "${HOME:?}/.l/s"
+  "composure" "${HOME:?}/.l/s/c"
+  "s/c" "${HOME:?}/.l/c"
+  "${HOME}/.conf/script/composure" "${HOME:?}/.l/s/composure"
+)
+
+: "${U_C:-${uc_shdev_reporefs_2[3]}}"
+. "${_:?}"/tool/uc/part/uc-assert.directive-handlers.bash
+
+uc-assert repo-dir-env uc_shdev_reporefs_{env,}
+
+:err stat @shdev+init.do
+# Keep this recipe UTD automatically
+uc-assert symlink-or-copy @shdev+init.do \
+  "${U_C:?}"/tool/redo/recipe/at.shdev+init.bash,uc.do
+
+: "${EWD:=${REDO_BASE:?}}"
+
+uc-assert symlink-all uc_shdev_sldef
+
+# XXX: assume first scm-git instance has branch/tag; convenient when all repos are
+# mirrors however that may not apply
+# FIXME: not using SCM_GIT_LOCAL env here. It would make more sense to have a
+# VENDOR path for looking up packages, ie. <project>/<repo>.git in this case.
+
+for ((i=1; i<5; i+=1))
+do
+  # see note on redo-stamp at bottom
+  declare -p "uc_shdev_reporefs_${i}" | redo-stamp
+  declare -n repo_data="uc_shdev_reporefs_${i}"
+  repo_ref="${repo_data[0]:?}"
+  for repo in ${scm_git_pref}[0-9]*/${repo_ref}.git
+  do
+    [[ -d "$repo" ]] && break || continue
+  done
+  [[ -d "$repo" ]] || exit
+  : "${repo#\/srv\/scm-git-}"
+  : "${_%%/*}"
+  srv_tag=${_:?}
+  # XXX: adapt to checkout either fresh? tag, or UTD branch
+  branch="${repo_data[1]:-}"
+  tag="${repo_data[2]:-}"
+  [[ -d "${repo_data[3]}/" ]] && repo_fresh=0 || {
+    >&2 git clone -q --origin "${srv_tag}-bare" --branch "${branch}" \
+        "$repo" "${repo_data[3]}/" || exit
+    repo_fresh=1
+  }
+  >/dev/null 2>&1 pushd "${repo_data[3]}/" || exit
+  repo_up=1
+  for repo in ${scm_git_pref}[0-9]*/${repo_ref}.git
+  do
+    [[ -d "$repo" ]] || exit
+    : "${repo#\/srv\/scm-git-}"
+    : "${_%%/*}"
+    srv_tag=${_:?}
+    repo_url=$(git config remote.$srv_tag-bare.url) && {
+    [[ $repo_url = $repo ]] && continue ||
+      repo_up=0
+      [[ ${repo+set} ]] && {
+        git remote set-url $srv_tag-bare "$repo" || exit
+      } ||
+        git remote add $srv_tag-bare "$repo"
+    }
+  done
+  ((repo_up)) ||
+    >&2 git fetch -q --all
+  ((repo_fresh)) || {
+    >&2 git checkout -q "${branch}" -- &&
+    >&2 git pull -q "${srv_tag}-bare" "${branch}" || {
+      >&2 echo ALERT: "Cannot update $PWD from" "remotes/$srv_tag-bare/$branch"
+      exit
+    }
+  }
+  >/dev/null 2>&1 popd
+
+  for sl in "${repo_data[@]:4}"
+  do
+    sl=${sl/#~/$HOME}
+    [[ -e "${sl}" ]] && {
+      [[ -h "${sl}" ]] || continue
+      target=$(readlink "${sl}") &&
+      [[ $target = "${repo_data[3]}" ]] && continue
+    } || {
+      [[ ! -h "${sl}" ]] ||
+      [[ -e "${sl}" ]] ||
+      >&2 rm -v "${sl}" || {
+        >&2 echo ALERT: "Failed removing path or symlink" "${sl}"
+        #_ALERT "Failed removing path or symlink" "${sl}"
+        exit 3
+      }
+    }
+
+    [[ -d "$(dirname "${sl}")" ]] ||
+      >&2 mkdir -vp "$(dirname "${sl}")"
+    [[ -h "${sl}" ]] ||
+      >&2 ln -vs "${repo_data[3]}" "${sl}"
+  done
+done
+
+# ex:ft=bash:

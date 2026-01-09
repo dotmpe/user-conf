@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 
-# annex-p-build:env
-
 # Boilerplate (derived from env-local)
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info ":ucbuild[$$]:env-build" "Build env loading..."
+  _ _INFO "Build env loading..."
 
 case " ${ENV_BASE-} " in ( *" build "* )
-  $LOG alert ":ucbuild[$$]:env-build" "Loop detected" \
-    "base=${ENV_BASE-(unset)},pending=${ENV_PEND-(unset)}" ${_E_ifenv:-121} ||
-      return
+  _ALERT "Loop detected" "" ${_E_ifenv:-121} || return
 ;; esac
 
 [[ ${ENV_PEND+set} ]] ||
-  $LOG alert ":ucbuild[$$]:env-build" "Unverified env" "" ${_E_ifenv:-121} ||
+  _ALERT "Unverified env" "foo=bar" ${_E_ifenv:-121} ||
     return
 
 [[ ${ENV_PEND%% *} = build ]] || return ${_E_ifenv:-121}
@@ -28,28 +24,23 @@ for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -e $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" ||
-  $LOG alert ":ucbuild[$$]:env-build" "Failure resolving base env" \
-    "E$?:base=${ENV_BASE-(unset)}:pend=${ENV_PEND-(unset)}" ${_E_noenv:-123} ||
-      return
+  _ALERT "Failure resolving base env" "" ${_E_noenv:-123} || ${uc_stat}
 
-[[ ! ${ENV_PEND+set} ]] || $LOG alert ":ucbuild[$$]:env-build" \
-  "Expected complete env" "pending:$ENV_PEND" ${_E_noenv:-123} || return
+[[ ! ${ENV_PEND+set} ]] ||
+  _ALERT "Expected complete env" "" ${_E_noenv:-123} || return
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  $LOG info ":ucbuild[$$]:env-build" "Build env start"
+  _ _INFO "Build env start"
 
 # Boilerplate end:
 
 # The env-build also inserts a default Env-Init that env-boot would pick up
-: "${ENV_BASE//[^A-Za-z0-9_]/_}"
-
 : "${PACK_ID:=${APP_ID:?env-build: package ID default; expected APP env}}"
+: "${ENV_BASE//[^A-Za-z0-9_]/_}"
 : "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${_:?}_init}"
 
-#: "${CWD:=${REDO_STARTDIR:?}}"
 : "${BUILD_TOOL:=redo}"
 : "${BUILD_ID:=${REDO_RUNID:?}}"
-#: "${BUILD_STARTDIR:=$CWD:?}"
 : "${BUILD_BASE:=${REDO_BASE:?}}"
 #: "${BUILD_PWD:="${REDO_PWD:-${CWD:${#BUILD_BASE}}}"}"
 #test -z "$BUILD_PWD" || BUILD_PWD=${BUILD_PWD:1}
@@ -58,4 +49,15 @@ done && [[ -s $__ ]] && . "$__" ||
 #BUILD_PATH=$BUILD_PATH:${UCONF:?}:${U_C:?}:${U_S:?}
 : "${METADIR:?env-build: expected METADIR env}"
 : "${BUILD_TARGETS:=${_}/stat/index/build-targets.local.list}"
+
+: "${A:=@build:}"
+
+# TODO: load this from local build dir and prepare under @localuc target
+uc_build_selects=(
+  "uc-build.host-env-select.bash.do"
+  "uc-build.local-select.bash.do"
+  "uc-build.composure-select.bash.do"
+  "uc-build.redo-select.bash.do"
+)
+
 #

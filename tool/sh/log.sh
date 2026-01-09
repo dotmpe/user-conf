@@ -13,6 +13,8 @@ test -d "/usr/lib/user-conf" && true "${U_C:="/usr/lib/user-conf"}"
 test -d "$HOME/.basher/cellar/packages/user-tools/user-conf/" && true "${U_C:="$HOME/.basher/cellar/packages/user-tools/user-conf"}"
 test -d "/src/local/user-conf" && true "${U_C:="/src/local/user-conf"}"
 
+: "${HOST:=${OS_HOSTNAME:-localhost}}"
+
 [ -n "$U_C" ] && [ -d "$U_C" ] || {
   >&2 echo "Unable to find Uc path <$U_C>"
   exit 1

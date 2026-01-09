@@ -264,7 +264,7 @@ uc_profile_load () # ~ NAME [TAG]
     "${uc_log:-${LOG?}}" debug :load "Start loading part" "$#:$*"
 
   local uc_profile_part_exists=1 uc_profile_partname="$1" uc_profile_part_envvar uc_profile_part_ret
-  fnmatch "-*" "$1" && {
+  globmatch "-*" "$1" && {
     uc_profile_part_exists=0; uc_profile_partname="${1:1}"
   }
   shift
@@ -406,7 +406,7 @@ uc_profile_boot () # TAB [types...]
     test -n "$type" -a $# -gt 0 && {
       # Skip entry unless '$*' matches any type for entry
       local tp m=0
-      for tp in "$@"; do fnmatch "* $tp *" " $type " && m=1 || continue; done
+      for tp in "$@"; do globmatch "* $tp *" " $type " && m=1 || continue; done
 
       test $m -eq 1 || {
         ! uc_debug ||
@@ -416,11 +416,11 @@ uc_profile_boot () # TAB [types...]
     }
 
     # test for globs, and expand those first
-    if fnmatch "*[\*\?]*" "$namespec"
+    if globmatch "*[\*\?]*" "$namespec"
     then
       # Use Bash compgen to expand glob
       # Also '-' prefix must be handled here
-      fnmatch "-*" "$namespec" &&
+      globmatch "-*" "$namespec" &&
         require=false namespec=${namespec:1} || require=true
 
       :pass "$(uc_profile_partnames "$namespec")" &&
@@ -574,7 +574,7 @@ sys_uc_source_trace () # ~ [<Head>] [<Msg>] [<Offset=2>] [ <var-names...> ]
   for var in "${@:4}"
   do
     if_ok "$(declare -p ${!var})" &&
-    fnmatch "declare -n *" "$_" && {
+    globmatch "declare -n *" "$_" && {
       printf -- '- %s\n  %s\n' "$_" "${!var}: ${var@Q}"
     } || echo "$_"
   done | sed 's/^/  /'
@@ -601,7 +601,7 @@ uc_var ()
   local val upd
 
   # Force update or try existing value first
-  fnmatch "* $1 *" " $UC_VAR_PDNG " && {
+  globmatch "* $1 *" " $UC_VAR_PDNG " && {
     uc_var_update "$1"
     upd=1
   }
@@ -686,17 +686,17 @@ uc_envd_init ()
 _Sh_Fun_Exists append_path ||
 append_path () # ~ <DIR> # PATH helper (does not export!)
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   case ":$PATH:" in
     ( *:"${1:?}":* ) ;;
     ( * ) PATH="${PATH:+$PATH:}${1:?}"
   esac
 }
 
-os_lookup_add () # ~ <Var> <Prepend> <Append>
+os_lookup_add_old () # ~ <Var> <Prepend> <Append>
 {
-  : source "u-c:script/uc-profile.lib.sh"
-  : copy "os.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
+: copy "os.lib.sh"
   [ -e "$2" -o -e "${3-}" ] || {
     >&2 echo "os_path_add: No such file or directory '$*'"
     return 1
@@ -720,7 +720,7 @@ os_lookup_add () # ~ <Var> <Prepend> <Append>
 # Store variables (name and current value) at associative array
 sys_aarrv () # ~ <Array> <Vars...>
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   # XXX: for some reason cannot set var to by-name-ref as well
   declare -n arr=${1:?}
   declare var
@@ -734,20 +734,20 @@ sys_aarrv () # ~ <Array> <Vars...>
 
 env_keys () # ~
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   # Ignore first line (for '_' value)
   compgen -A variable | sort | tail -n +2
 }
 
 if_ok ()
 {
-  : source "u-c:script/uc-profile.lib.sh"
   return $?
+: source "u-c:script/uc-profile.lib.sh"
 }
 
 sh_fun ()
 {
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
   declare -F "${1:?}" > /dev/null
 }
 
@@ -759,7 +759,7 @@ sys_astat () # ~ ( <Test-flag> <Test-value> )*
     test $stat "$1" "$2" || return $stat
     shift 2
   done
-  : source "u-c:script/uc-profile.lib.sh"
+: source "u-c:script/uc-profile.lib.sh"
 }
 
 # Id: User-Conf:uc-profile.lib

@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
-set -eETuo pipefail
-
-[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = default.do ]] ||
-  $LOG alert "" "Illegal env" "" 124
-
-# To bootstrap the build system for a project, it should aggregate and then
-# select from prewritten available recipes (or parts of) and then expand on
-# those.
+# To bootstrap the build system for a project, it should aggregate
+# select from prewritten available recipes (or parts of).
 
 # Before that some definitions need to be established that are in part already
 # defined by the host OS. The most basic parameter here is PATH, and to the
@@ -50,24 +44,54 @@ set -eETuo pipefail
 # ~/.config/user-dirs.dirs, and a key 'dotfiles' is added to include a
 # user-conf style config and seed repository
 
+
 # TOTEST: with and without proper env this command (or function) would either
 # extend the current shell session (if defined as function) to load that env;
 # or prepare that env and restart the script (fork to a new instance) to
 # properly load it and run the entire script to complete the current given
 # command.
-us-env -r user-script &&
+#us-env -r user-script &&
 # XXX: for all those use cases to work, need to change boilerplate to
 #us-env -r user-script -- "$@" &&
-
 # XXX: rewrite to us-env -r uc-build &&
-lib_require sys os build-uc &&
+#lib_require sys os build-uc &&
+#ucbuild_do4124 uc-build.user.default.bash.do "$@"
 
-ucbuild_do4124 uc-build.user.default.bash.do "$@"
+set -eETuo pipefail
 
-exit $?
+[[ ${REDO_RUNID-} && ${BASH_SOURCE[0]} = default.do ]] || {
+  >&2 echo "$0: Illegal env"
+  exit 124
+}
 
-case "${2:?}" in
+xredo_target="${REDO_PWD:+$REDO_PWD/}${REDO_TARGET:?}"
+
+case "${xredo_target}" in
+
+( @config )
+    redo-ifchange .env
+  ;;
+
+( .env )
+  ;;
+
+( * )
+    redo-ifdone @config &&
+    . ./.env
+  ;;
+esac
+
+for build_select_sh in "${uc_build_selects[@]}"
+do
+  . "${build_select_sh:?}" && exit ||
+  test ${_E_next:-196} -eq $? || exit
+done
+
+case "${xredo_target:?}" in
 ( all )
+    declare -gn all_alias=
+    redo-ifchange @env:a:local_all_target "${local_all_target[@]}"
+
     redo-ifchange \
       @hostpaths+dev \
       @recipes+dev
@@ -84,7 +108,7 @@ case "${2:?}" in
 ( ".local/cache/ANNEXDIRS.lookup.sh" )
     redo-ifchange ".local/cache/ANNEXDIRS.var.sh" &&
     . ".local/cache/ANNEXDIRS.var.sh" &&
-    os_path ANNEXDIRS &&
+    os_pathvar ANNEXDIRS &&
     declare -p ANNEXDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -109,7 +133,7 @@ case "${2:?}" in
 ( ".local/cache/BUILDPATH.lookup.sh" )
     redo-ifchange ".local/cache/BUILDPATH.var.sh" &&
     . ".local/cache/BUILDPATH.var.sh" &&
-    os_path BUILDPATH &&
+    os_pathvar BUILDPATH &&
     declare -p BUILDPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -136,7 +160,7 @@ case "${2:?}" in
     redo-ifchange ".local/cache/PATH.var.sh" &&
     (
       . ".local/cache/PATH.var.sh" &&
-      os_path PATH &&
+      os_pathvar PATH &&
       declare -p PATH{,_arr} > "${3:?}"
     ) &&
     < "${3:?}" redo-stamp
@@ -186,7 +210,7 @@ case "${2:?}" in
 ( ".local/cache/PPATH.lookup.sh" )
     redo-ifchange ".local/cache/PPATH.var.sh" &&
     . ".local/cache/PPATH.var.sh" &&
-    os_path PPATH &&
+    os_pathvar PPATH &&
     declare -p PPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -199,7 +223,7 @@ case "${2:?}" in
     # project source package dirs.
     redo-ifchange ".local/cache/USERDIRS.var.sh" &&
     . ".local/cache/USERDIRS.var.sh" &&
-    os_path USERDIRS &&
+    os_pathvar USERDIRS &&
     PPATH=$USERDIRS &&
     : "${PPATH//[^:]}" &&
     PPATH_cnt=$(( 1 + ${#_} )) &&
@@ -217,7 +241,7 @@ case "${2:?}" in
 ( ".local/cache/SCRIPTPATH.lookup.sh" )
     redo-ifchange ".local/cache/SCRIPTPATH.var.sh" &&
     . ".local/cache/SCRIPTPATH.var.sh" &&
-    os_path SCRIPTPATH &&
+    os_pathvar SCRIPTPATH &&
     declare -p SCRIPTPATH{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
   ;;
@@ -248,7 +272,7 @@ case "${2:?}" in
 ( ".local/cache/USERDIRS.lookup.sh" )
     redo-ifchange ".local/cache/USERDIRS.var.sh" &&
     . ".local/cache/USERDIRS.var.sh" &&
-    os_path USERDIRS &&
+    os_pathvar USERDIRS &&
     stderr echo "Found ${#USERDIRS_arr[@]} dirs for USERDIRS" &&
     declare -p USERDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp
@@ -273,7 +297,7 @@ case "${2:?}" in
 ( ".local/cache/VOLUMEDIRS.lookup.sh" )
     redo-ifchange ".local/cache/VOLUMEDIRS.var.sh" &&
     . ".local/cache/VOLUMEDIRS.var.sh" &&
-    os_path VOLUMEDIRS &&
+    os_pathvar VOLUMEDIRS &&
     stderr echo "Found ${#VOLUMEDIRS_arr[@]} dirs for VOLUMEDIRS" &&
     declare -p VOLUMEDIRS{,_arr} > "${3:?}" &&
     < "${3:?}" redo-stamp

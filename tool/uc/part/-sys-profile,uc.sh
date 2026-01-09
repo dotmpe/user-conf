@@ -200,4 +200,4 @@ fi
 # should finalize etc-profile group here, to indicate it finished properly
 _NOTICE "System profile ($_etc_profile) finished"
 
-# Id: uc:sys:profile /etc/profile ex:ft=bash:
+# Id: uc:sys-profile /etc/profile ex:ft=bash:

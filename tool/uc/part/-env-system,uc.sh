@@ -10,7 +10,6 @@ case " ${ENV_BASE?} " in ( *" us-system "* )
 ;; esac
 
 uc_env @part G us-system /etc/profile.d/us-system.sh
-# ENV_SRC=${ENV_SRC:-$0[$$]:}${ENV_SRC:+ }/etc/profile.d/us-system.sh
 
 
 # Inline: uc-sh-util
@@ -19,10 +18,10 @@ uc_env @part G uc-sh-util
 
 _Sh_Als_Exp ()
 {
-  : about "Expand alias to full script"
-  : extended "This will only work if aliases are completely loaded"
-  : src us-system.sh
-  : input "${1:?$ENV_CTX:$FUNCNAME: Alias name expected}"
+: about "Expand alias to full script"
+: extended "This will only work if aliases are completely loaded"
+: src us-system.sh
+: input "${1:?$ENV_CTX:$FUNCNAME: Alias name expected}"
   local fun=__fun_tmp_${RANDOM:?}
   eval "$fun ()
 {
@@ -35,8 +34,8 @@ uc_env_types["_Sh_Als_Exp"]=f
 
 _Sh_Caller ()
 {
-  : param '~ [<Frame=0>]'
-  : src us-system.sh
+: param '~ [<Frame=0>]'
+: src us-system.sh
   : "$(( ${1:-0} + 1 ))"
   :pass "$(caller $_)" || return
   : "${_#* }"
@@ -47,9 +46,9 @@ uc_env_types["_Sh_Caller"]=f
 
 _Sh_Callers ()
 {
-  : about "List function call stack"
-  : param '~ [<Start-frame=0>]'
-  : src us-system.sh
+: about "List function call stack"
+: param '~ [<Start-frame=0>]'
+: src us-system.sh
   local i
   for (( i=${1-0}; 1; i++ ))
   do caller $i || break
@@ -175,30 +174,30 @@ uc_env_types["sh_var"]=f
 # Group: compo:inc:sh-type
 # Copy: compo:inc:sh-var
 
-std_noerr () # ~ <Cmd...> # Void secondary output
+std_silent () # ~ <Cmd...> # Void secondary output
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" 2>/dev/null
 }
-uc_env_types["std_noerr"]=f
+uc_env_types["std_silent "]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-noerr
 
-std_noout () # ~ <Cmd...> # Void primary output
+std_quiet () # ~ <Cmd...> # Void primary output
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" >/dev/null
 }
-uc_env_types["std_noout"]=f
+uc_env_types["std_quiet"]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-noout
 
-std_quiet () # ~ <Cmd...> # Void regular output (std{out,err})
+std_noo () # ~ <Cmd...> # Void regular output (std{out,err})
 {
   : "${@:?$(sh_exc us-system:$FUNCNAME "Command expected")}"
   "$@" >/dev/null 2>&1
 }
-uc_env_types["std_quiet"]=f
+uc_env_types["std_noo"]=f
 # Group: compo:inc:std-util
 # Copy: compo:inc:std-quiet
 
@@ -266,7 +265,7 @@ uc_env_exports+=(
   if_ok
   incr
   sh_{fun,{a,i,}arr,typeset,var}
-  std{_{no{err,out},quiet},err}
+  std{_{noo,silent,quiet},err}
   str_{{glob,word}match,{v,}word}
 )
 
@@ -319,12 +318,13 @@ uc_env @part G os-release
     <<< "$_" mapfile -t -O ${#uc_env_exports[*]} uc_env_exports
     : "$(sed 's/^/OS_/g' /etc/os-release)"
     eval "$_" ||
-      _CRIT "OS release failed: E$? /etc/os-release"
+      _ _CRIT "OS release failed: E$? /etc/os-release"
   }
   # Typical values for ubuntu and debian based
   # are OS_{NAME,ID{,_LIKE},VERSION{,_{CODENAME,ID}}} and others
   # Scripts cannot really expect any of these to be set though.
 }
+
 
 # Inline: os-host
 
@@ -342,36 +342,11 @@ SYS_ARCH=$(uname -i)                # Hardware platform (non-portable)
 SYS_PROC=$(uname -p)                # Processor (non-portable)
 
 uc_env_exports+=(
-  HOST
   OS_{HOST{,NAME},UNAME}
+  #HOST
   SYS_{MACH,ARCH,PROC}
 )
 
-# Inline: os-path
-
-uc_env @part G os-path
-
-uc_env +d dx os_add '_OS_Path_Add "$@" || true'
-uc_env +d dx os_path_add '_OS_Path_Add "$@"'
-
-[[ ${OS_OVERRIDE:-false} != true ]] || {
-  os_prefix ()
-  {
-    case ":$PATH:" in
-    ( *:"${1:?}":*) false ;;
-    ( * ) PATH="${1:?}${PATH:+:$PATH}"
-    esac
-  }
-  os_path_prefix ()
-  {
-    local -n _PATH=${1:?Variable name expected}
-    case ":$_PATH:" in
-    ( *:"${1:?}":*) false ;;
-    ( * ) _PATH="${1:?}${_PATH:+:$_PATH}"
-    esac
-  }
-  uc_env_exports+=( os_{,path_}prefix )
-}
 
 # Inline: uc-host
 
@@ -389,5 +364,7 @@ uc_env @part G uc-host
   }
 }
 
+
 _INFO "Loaded -env-system,uc"
+
 # Id: -env-system,uc /etc/profile.d/us-system.sh
