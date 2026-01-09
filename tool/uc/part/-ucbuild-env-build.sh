@@ -10,7 +10,7 @@ case " ${ENV_BASE-} " in ( *" build "* )
 ;; esac
 
 [[ ${ENV_PEND+set} ]] ||
-  _ALERT "Unverified env" "foo=bar" ${_E_ifenv:-121} ||
+  _ALERT "Unverified env" "" ${_E_ifenv:-121} ||
     return
 
 [[ ${ENV_PEND%% *} = build ]] || return ${_E_ifenv:-121}
