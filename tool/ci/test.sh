@@ -1,7 +1,7 @@
 #!/bin/sh
 
 $LOG notice :tools/ci/test "Starting unit tests"
-#UC_LIB_PATH=${U_C:?}/script
+#UC_LIB_BASE=${U_C:?}/script
 #uc_lib=script/user-conf
 #. "$uc_lib"/lib.sh
 

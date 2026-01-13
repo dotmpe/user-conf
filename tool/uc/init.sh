@@ -2,7 +2,7 @@
 
 : "${U_C:?Requires User-Conf installation}"
 : "${U_S:?Requires User-Script installation}"
-: "${UC_LIB_PATH:?Expected UC shell lib}"
+: "${UC_LIB_BASE:?Expected UC shell lib}"
 
 #test -n "${LOG-}" || LOG=/etc/profile.d/uc-profile.sh
 : "${LOG:=${U_C:?}/tool/sh/log.sh}"
@@ -35,7 +35,7 @@ test $IS_BASH -eq 1 && {
 
   # trap ERR to provide an error handler whenever a command exits nonzero
   #  this is a more verbose version of set -o errexit
-  . "$UC_LIB_PATH"/bash-uc.lib.sh
+  . "$UC_LIB_BASE"/bash-uc.lib.sh
   trap 'bash_uc_errexit' ERR
 
 } || {
@@ -63,27 +63,27 @@ UC_LOG_LEVEL=${verbosity:=${v:-4}}
 export verbosity UC_LOG_LEVEL
 
 # Load and init all lib parts
-. "$UC_LIB_PATH"/args-uc.lib.sh
-. "$UC_LIB_PATH"/std-uc.lib.sh
-. "$UC_LIB_PATH"/str-uc.lib.sh
-. "$UC_LIB_PATH"/src-uc.lib.sh
-. "$UC_LIB_PATH"/ansi-uc.lib.sh
-. "$UC_LIB_PATH"/match-uc.lib.sh
-. "$UC_LIB_PATH"/os-uc.lib.sh
-. "$UC_LIB_PATH"/date-uc.lib.sh
-. "$UC_LIB_PATH"/vc-uc.lib.sh
-. "$UC_LIB_PATH"/sys-uc.lib.sh
-. "$UC_LIB_PATH"/stdlog-uc.lib.sh
-#. "$UC_LIB_PATH"/syslog-uc.lib.sh
-. "$UC_LIB_PATH"/conf-uc.lib.sh
-. "$UC_LIB_PATH"/uc.lib.sh
+. "$UC_LIB_BASE"/args-uc.lib.sh
+. "$UC_LIB_BASE"/std-uc.lib.sh
+. "$UC_LIB_BASE"/str-uc.lib.sh
+. "$UC_LIB_BASE"/src-uc.lib.sh
+. "$UC_LIB_BASE"/ansi-uc.lib.sh
+. "$UC_LIB_BASE"/match-uc.lib.sh
+. "$UC_LIB_BASE"/os-uc.lib.sh
+. "$UC_LIB_BASE"/date-uc.lib.sh
+. "$UC_LIB_BASE"/vc-uc.lib.sh
+. "$UC_LIB_BASE"/sys-uc.lib.sh
+. "$UC_LIB_BASE"/stdlog-uc.lib.sh
+#. "$UC_LIB_BASE"/syslog-uc.lib.sh
+. "$UC_LIB_BASE"/conf-uc.lib.sh
+. "$UC_LIB_BASE"/uc.lib.sh
 for d in copy symlink web line git
 do
-  . "$UC_LIB_PATH"/uc-d-$d.lib.sh
+  . "$UC_LIB_BASE"/uc-d-$d.lib.sh
 done
-. "$UC_LIB_PATH"/stattab-uc.lib.sh
-. "$UC_LIB_PATH"/class-uc.lib.sh
-. "$UC_LIB_PATH"/shell-uc.lib.sh
+. "$UC_LIB_BASE"/stattab-uc.lib.sh
+. "$UC_LIB_BASE"/class-uc.lib.sh
+. "$UC_LIB_BASE"/shell-uc.lib.sh
 
 sys_uc_lib__load
 std_uc_lib__load

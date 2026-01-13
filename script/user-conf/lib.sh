@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Created: 2015-09-21
 
-test -n "${UC_LIB_PATH:-}" || return 123
-true "${UC_LIB_PATH:?Expected UC shell lib}"
+test -n "${UC_LIB_BASE:-}" || return 123
+true "${UC_LIB_BASE:?Expected UC shell lib}"
 
 export ansi_esc=$(echo -e '\e')
 
-. ${UC_LIB_PATH}/../tool/uc/init.sh
+. ${UC_LIB_BASE}/../tool/uc/init.sh
 
 # Finally, run init for Uc lib
 #uc_lib__init
@@ -110,10 +110,10 @@ uc__env ()
   test $human_out -eq 1 && {
     local verbosity=6
       std_info "U-c scripts: $uc_lib"
-      std_info "Sh script libs: $UC_LIB_PATH"
+      std_info "Sh script libs: $UC_LIB_BASE"
   } || {
       echo "uc_lib=$uc_lib"
-      echo "UC_LIB_PATH=$UC_LIB_PATH"
+      echo "UC_LIB_BASE=$UC_LIB_BASE"
   }
 
   declare -gA uc_conf_def
@@ -153,7 +153,7 @@ uc__env ()
 
 uc__env_keys ()
 {
-  echo uc_lib UC_LIB_PATH UCONF conf config_names
+  echo uc_lib UC_LIB_BASE UCONF conf config_names
 }
 
 uc__env_keyinfo ()

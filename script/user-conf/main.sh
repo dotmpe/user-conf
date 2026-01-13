@@ -51,7 +51,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
 
   # Go to user-conf script-dir, load everything
   : "${uc_lib:="$(dirname "$(realpath -- "$0")")"}"
-  : "${UC_LIB_PATH:=$(dirname "$uc_lib")}"
+  : "${UC_LIB_BASE:=$(dirname "$uc_lib")}"
   . "$uc_lib"/lib.sh
 
   # Do something if script invoked as 'uc' or 'main'
@@ -76,7 +76,7 @@ case "$0" in "" ) ;; "-*" ) ;; * )
             {
               $func "$@"
             } 2>&1 | {
-              $UC_LIB_PATH/uc-colorize.sh >&2
+              $UC_LIB_BASE/uc-colorize.sh >&2
             }
             RET=$?
 

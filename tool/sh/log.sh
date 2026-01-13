@@ -130,9 +130,9 @@ uc_log_init () # ~
   # Verbosity is overriden from generic user-env setting
   test -z "${verbosity:-${v:-}}" || UC_LOG_LEVEL="${verbosity:-$v}" # XXX: BWC
 
-  . "${UC_LIB_PATH:-"$U_C/script"}/args-uc.lib.sh"
+  . "${UC_LIB_BASE:-"$U_C/script"}/args-uc.lib.sh"
   args_uc_lib_load=$?
-  . "${UC_LIB_PATH:-"$U_C/script"}/stdlog-uc.lib.sh" &&
+  . "${UC_LIB_BASE:-"$U_C/script"}/stdlog-uc.lib.sh" &&
   stdlog_uc_lib__load || return
   stdlog_uc_lib_load=0
   INIT_LOG=stderr_log

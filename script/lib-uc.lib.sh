@@ -39,6 +39,7 @@ lib_uc_lib__init ()
 }
 
 
+# FIXME: cleanup
 #lib_uc__exports="core base extra"
 #lib_uc_core__fun=
 #
@@ -212,12 +213,12 @@ lib_uc_load () # <Names...>
     return
   }
   local lib_loading=1
-  [[ $# -gt 0 ]] && {
-    [[ "${1-}" ]] || return ${_E_GAE:-193}
-  } || set -- ${default_sh_lib:?}
+  [[ "${*:+set}" ]] || return ${_E_GAE:-193}
   ! uc_debug || $LOG info "$lk" "Resolving lib(s)" "($#) $*"
 
   local lib_name lib_varn lib_stat lib_path f_lib_load retry
+  local -I UC_LIB_PATH
+  : "${UC_LIB_PATH:=$PATH}"
   for lib_name in "${@:?}"
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
@@ -230,7 +231,7 @@ lib_uc_load () # <Names...>
     # XXX: bats has some debug trap that spoils $_? test "$_" != "-1" || {
     [[ "-1" != "${!lib_stat:--1}" ]] || {
       # Lookup path to lib
-      lib_path=$(command -v "$lib_name${lib_uc_ext:-.lib.sh}") ||
+      lib_path=$(PATH=${UC_LIB_PATH} command -v "$lib_name${lib_uc_ext:-.lib.sh}") ||
         $LOG error "${lk}" "No such lib found" "$lib_name" 127 || return
       # XXX: not the same var.. UC_TOOLS_DEBUG?
       #test -z "${USER_CONF_DEBUG-}" ||

@@ -1,5 +1,7 @@
 #shellcheck disable=SC2120 # Ignore, args_uc__argc is doing some checks
 
+# TODO: probably want to drop this lib
+
 # Helper to source libs only once
 uc_profile_load_lib ()
 {
@@ -145,15 +147,13 @@ uc_profile_source_lib () # ~
 
   >/dev/null 2>&1 declare -F lib_require || {
     : "${U_C:-/src/local/user-conf+current}"
-    : "${UC_LIB_PATH:=$_/script}"
-    . "${UC_LIB_PATH:?}/lib-uc.lib.sh" &&
+    : "${UC_LIB_BASE:=$_/script}"
+    . "${UC_LIB_BASE:?}/lib-uc.lib.sh" &&
     lib_uc_lib__load &&
     lib_uc_lib__init || return
   }
 
   #_NOTICE "Ready to source libs and init"
-  # FIXME: build proper cached profile...
-  #test -n "${uc_lib_profile:-}" || . "${UCONF:?}/etc/profile.d/bash_fun.sh"
 
   # FIXME: lib-require in lib-init
   lib_require shell-uc str-uc syslog-uc &&
@@ -673,7 +673,7 @@ uc_envd_init ()
   # Bootstrap envd-type env if not already initialized
   [[ "set" = "${ENV_TYPE[*]+set}" ]] || {
 
-    . "${UC_LIB_PATH:?}/uc-envd.lib.sh" &&
+    . "${UC_LIB_BASE:?}/uc-envd.lib.sh" &&
     envd_lib_init || return
   }
 
@@ -762,4 +762,4 @@ sys_astat () # ~ ( <Test-flag> <Test-value> )*
 : source "u-c:script/uc-profile.lib.sh"
 }
 
-# Id: User-Conf:uc-profile.lib
+# Id: User-Conf:uc-profile.lib                                     ex:ft=bash:
