@@ -8,7 +8,7 @@ ctx_system_lib__init () {
   case "${HOSTTYPE:-$(uname -m)}" in
     ( x86_64 ) prereq+=" dmidecode" ;;
   esac
-  [[ -z "$(command ls /sys/class/power_supply/BAT*)" ]] || prereq+=" dmidecode"
+  [[ -z "$(command ls /sys/class/power_supply/BAT*)" ]] || prereq+=" tlp-stat"
   for bin in $prereq
   do
     local -n _atSys_bin1=${bin}_bin
