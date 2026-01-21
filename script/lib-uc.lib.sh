@@ -9,29 +9,19 @@
 
 lib_uc_lib__load ()
 {
-  true "${ENV_SRC:=}"
-  true "${ENV_LIB:=}"
-  true "${lib_loaded:=}"
-  true "${lib_uc_ext:=.lib.sh}"
-  true "${lib_uc_kin:=_lib}" # key infix: <libid><kin>_{loaded,init,_load}
+  : "${ENV_SRC:=}"
+  : "${ENV_LIB:=}"
+  : "${lib_loaded:=}"
+  : "${lib_uc_ext:=.lib.sh}"
+  : "${lib_uc_kin:=_lib}" # key infix: <libid><kin>_{loaded,init,_load}
 
   lib_uc_fun=$(echo lib_uc_{exists,has_init,hook,ids,init,init_all,initialized,initialized_all,islib,load,loaded,loaded_all,loop,path,require} uc_script_load)
+  typeset -ga lib_uc_dynf
 }
 
 lib_uc_lib__init ()
 {
-  sh_fun "${lib_load:-lib_load}" || {
-    typeset -a lib_uc_dyn=()
-    lib_uc__define
-  }
-  [[ -z "${SCRIPTPATH-}" ]] || {
-    local scrp
-    for scrp in ${SCRIPTPATH//:/ }
-    do
-      append_path "$scrp"
-    done
-    export PATH
-  }
+  sh_fun "${lib_load:-lib_load}" || lib_uc__define || return
 
   ! "${INIT:-false}" ||
   ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
@@ -58,15 +48,11 @@ lib_uc__define ()
     from_key=${ref#*:}
     to_key=${ref%:*}
     eval "lib_$to_key () { lib_uc_$from_key \"\$@\"; }"
-    lib_uc_dyn+=( "lib_$to_key" )
+    lib_uc_dynf+=( "lib_$to_key" )
   done
 }
 
-
-## Base
-
-# Test lib exists
-lib_uc_exists () # ~ <Name>
+lib_uc_exists () # ~ <Name> # Test lib exists
 {
   [[ 1 -eq $# ]] || return ${_E_GAE:-193}
   [[ -z "${libpath_var-}" ]] && {
@@ -271,11 +257,12 @@ lib_uc_loaded_all () # ~ [<Names...>]
     [[ "${lib_loaded-}" ]] && set -- $lib_loaded || return ${_E_MA:-194}
   }
   local lib_name lib_varn lib_stat
-  for lib_name in "${@:?}"
+  for lib_name
   do
     lib_varn=${lib_name//[^A-Za-z0-9_]/_}
     lib_stat=${lib_varn}${lib_uc_kin:-_lib}_load
     [[ 0 -eq ${!lib_stat:--1} ]] && continue
+    $LOG error "" "Assert loaded '$1'" "E${!lib_stat}" ${!lib_stat:--1}
     return ${!lib_stat:--1}
   done
 }

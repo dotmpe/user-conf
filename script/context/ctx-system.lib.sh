@@ -1,75 +1,240 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=2128 # using short notation to acces initial array value
+#
 ctx_system_lib__load () { :;}
-ctx_system_lib__init () { :;}
+ctx_system_lib__init () {
+  local bin prereq
+  prereq="lscpu lshw lsmem lspci lsusb sudo"
+  case "${HOSTTYPE:-$(uname -m)}" in
+    ( x86_64 ) prereq+=" dmidecode" ;;
+  esac
+  [[ -z "$(command ls /sys/class/power_supply/BAT*)" ]] || prereq+=" dmidecode"
+  for bin in $prereq
+  do
+    local -n _atSys_bin1=${bin}_bin
+    if_ok "$(command -v $bin)" &&
+    _atSys_bin1=$_ ||
+      failerr "Required command: $bin" || return
+  done
+  [[ ! ${DISPLAY-} ]] ||
+    for bin in lshw-gtk usbview
+    do
+      local -n _atSys_bin1=${bin}_bin
+      if_ok "$(command -v $bin)" &&
+      _atSys_bin1=$_ || _ failerr "Suggested install: $bin (ignored)"
+    done
+}
 
 # @System.init
-at_System__init ()
+@System.init ()
 {
-true #  lib_require
+  :
 }
 
 # discover: yield classes (tagrefs) applicable to this host
-at_System__discover ()
+@System.discover ()
 {
-  echo @CPU @Mem @Disk
-  #test -z "$(ls -F /sys/bus/cpu/devices/)" || echo @CPU
+  local -n to=${1:?}
 
-  case "$(uname -m)" in
+  to+=( @CPU @Mem @Disk )
+
+  case "${HOSTTYPE:-$(uname -m)}" in
     ( armv7l ) ;;
-    ( x86_64 ) echo @Motherboard @DMI
-      ;;
+    ( x86_64 ) to+=( @Motherboard @DMI ) ;;
   esac
 
-  test -z "$(ls -F /sys/bus/pci/devices/)" || echo @PCI
-  test -z "$(ls -F /sys/bus/usb/devices/)" || echo @USB
-  test -z "$(ls -F /sys/class/net/)" || echo @Net
-  test -z "$(ls -F /sys/class/power_supply/)" || echo @PSU
+  [[ ! ${DISPLAY-} ]] || to+=( @X11 )
+
+  [[ -z "$(command ls /sys/bus/pci/devices/)" ]] || to+=( @PCI )
+  [[ -z "$(command ls /sys/bus/usb/devices/)" ]] || to+=( @USB )
+  # shellcheck disable=2143 # erroneous trigger
+  [[ -z "$(grep -v '\<lo\>' < <(command ls /sys/class/net/))" ]] || to+=( @Net )
+  [[ -z "$(command ls /sys/class/power_supply/BAT*)" ]] || to+=( @Battery )
+  [[ -z "$(command ls /sys/class/power_supply/AC*)" ]] || to+=( @Power )
 }
 
-at_System__report ()
+@System.report ()
 {
-  case "$1" in
-    ( lshw-businfo ) sudo lshw -businfo -notime ;;
+  local sudo
+  [[ "${1:?}" != lshw* ]] ||
+    sudo_require $FUNCNAME:$1 lshw || return
+  case "${1:?}" in
   # TODO: ignore removable disks, cards?
-    ( lshw-notime ) sudo lshw -notime ;;
+  ( lshw.out ) "${sudo[@]}" lshw -notime ;;
+  ( lshw,pub.out ) "${sudo[@]}" lshw -notime -sanitize ;;
+  ( lshw,businfo.out ) "${sudo[@]}" lshw -businfo ;;
+  ( lshw.json )
+        "${sudo[@]}" lshw -notime -json |
+        jq 'walk(
+                if type == "object" and .class? == "processor"
+                then del(.size) else . end)'
+    ;;
+
+  ( --summary )
+      jq -r '"Host \(.id) is a \(.vendor) brand '\''\(.version)'\'' \(.description)
+Model: \(.product)
+Serial: \(.serial)"'
+
+      jq -r '{
+    core: {
+      cpus: [
+        .. | select(type=="object" and .class?=="processor") |
+        {
+          product: (.product // "unknown"),
+          max_ghz: ((.capacity // .size // 0) / 1e6),
+          cores:   (.configuration.cores // "n/a"),
+          threads: (.configuration.threads // "n/a"),
+          vendor:  (.vendor // "unknown")
+        }
+      ],
+      cache: [
+        .. | select(type=="object" and .class?=="memory" and (.id? | test("^cache:"))) |
+        {
+          id:      (.id // "unknown"),
+          size:    (.size // "n/a"),
+          level:   (.level? // "?"),
+          type:    (.description // .product // "unknown"),
+          vendor:  (.vendor // "unknown")
+        }
+      ],
+      memory: [
+        .. | select(type=="object" and .class?=="memory" and (.id? | test("^bank:"))) |
+        {
+          id:       (.id // "unknown"),
+          size:     (.size // "n/a"),
+          description: (.description // .product // "unknown"),
+          clock:    (.clock // "n/a"),
+          vendor:   (.vendor // "unknown")
+        }
+      ]
+    },
+    storage: {
+      interfaces: [
+        .. | select(type=="object" and .class?=="storage") |
+        {
+          id:       (.id // "unknown"),
+          type:     (.type // "unknown"),
+          vendor:   (.vendor // "unknown")
+        }
+      ],
+      disks: [
+        .. | select(type=="object" and .class?=="disk") |
+        {
+          id:            (.id // "unknown"),
+          description:   (.description // "unknown"),
+          product:       (.product // "unknown"),
+          size:         (.size // "unknown")
+        }
+      ]
+    }
+  }
+'
+    ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
   esac
 }
 
-at_PCI__report ()
+@Battery.report ()
 {
-  test -n "${1:-}" || set -- pci-tree
+  local sudo
+  [[ "${1:?}" != tlp-stat* ]] ||
+    sudo_require $FUNCNAME:$1 tlp-stat || return
   case "$1" in
-    ( pci-tree ) sudo lspci -tv ;;
-    ( pci-devices ) sudo lspci -Dvvv ;;
-    ( pci-power ) sudo tlp-stat --pcie ;;
+  ( tlp-stat,battery.out ) "${sudo[@]}" tlp-stat --battery ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
   esac
 }
 
-at_CPU__report ()
+@CPU.report ()
 {
-  lscpu
+  case "${1:?}" in
+  ( lscpu.json ) lscpu --json ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
 }
 
-at_Mem__report ()
+@DMI.report ()
 {
-  lsmem
+: about 'List all hardware components from DMI/SMBIOS table'
+  local sudo
+  [[ "${1:?}" != dmidecode* ]] ||
+    sudo_require $FUNCNAME:$1 dmidecode || return
+  case "${1:?}" in
+  ( dmidecode.out ) "${sudo[@]}" dmidecode ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
 }
 
-at_PSU__report ()
+@Mem.report ()
 {
-  tlp-stat --battery
+: about 'List all memory blocks'
+  case "${1:?}" in
+  ( lsmem.out ) lsmem --output-all ;;
+  ( lsmem,all.out ) lsmem --all --output-all ;;
+  ( lsmem,all,bytes.json ) lsmem --all --bytes --json --output-all ;;
+  ( lsmem,bytes.json ) lsmem --bytes --json --output-all ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
 }
 
-at_DMI__report ()
+@Net.report ()
 {
-  sudo dmidecode
+  case "${1:?}" in
+  ( ip,address.out ) ip a ;;
+  ( ip,route.out ) ip r ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
+}
+
+@PCI.report ()
+{
+: about 'Peripheral Component Interconnect bus'
+  local sudo
+  [[ "${1:?}" != tlp-stat* ]] ||
+    sudo_require $FUNCNAME:$1 tlp-stat || return
+  case "$1" in
+  ( lspci.out ) lspci -Dvv ;;
+  ( lspci,tree.out ) lspci -tv ;;
+  ( tlp-stat,pcie.out ) "${sudo[@]}" tlp-stat --pcie ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
+}
+
+@Power.report ()
+{
+: about 'AC power state'
+  case "${1:?}" in
+  ( power,online.out ) cat /sys/class/power_supply/AC/online ;;
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
 }
 
 @USB.report ()
 {
-  sudo lsusb -tvv
+: about 'List all USB devices'
+  [[ "${1:?}" != lsusb,details* ]] ||
+    sudo_require $FUNCNAME:$1 lsusb,details || return
+  case "${1:?}" in
+  ( lsusb.out ) lsusb ;;
+  ( lsusb,details.out ) "${sudo[@]}" lsusb -v ;;
 
+  ( lsusb,id,tree.out ) lsusb -tv ;;
+  ( lsusb,id,dev,tree.out ) lsusb -tvv ;;
+  ( lsusb,tree.out ) lsusb -t ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
+}
+
+@USB.x-report-hubs ()
+{
   local dev
 
   usb_hubs=$(usb_hubs)
@@ -88,6 +253,25 @@ at_DMI__report ()
   do
     echo $dev $(usb_devices "\3 \4" -s $dev)
   done
+}
+
+@X11.report ()
+{
+  case "${1:?}" in
+  ( fc-list.out ) fc-list ;;
+  ( xrandr.out ) xrandr --verbose ;;
+  ( xrdb.out ) xrdb -query ;;
+
+  ( * ) failerr "No such choice ${1@Q}" ${_E_nsk}
+  esac
+}
+
+
+sudo_require ()
+{
+  sudo -nv || test -t 0 ||
+    failerr "Sudo required for $1:$2 but no valid session and input is non-interactive" || return
+  sudo=( sudo -p "Enter sudo pass to run $2: "  )
 }
 
 # Print USB device (vendor, product) IDs
