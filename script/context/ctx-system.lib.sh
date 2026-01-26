@@ -4,7 +4,7 @@
 ctx_system_lib__load () { :;}
 ctx_system_lib__init () {
   local bin prereq
-  prereq="lscpu lshw lsmem lspci lsusb sudo"
+  prereq="acpi lscpu lshw lsmem lspci lsusb sudo"
   case "${HOSTTYPE:-$(uname -m)}" in
     ( x86_64 ) prereq+=" dmidecode" ;;
   esac
