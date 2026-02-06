@@ -14,10 +14,7 @@ uc_build_envs_try=( ${UC_BUILD_ENVS_TRY} )
 _Sys_Exec_Apply apply_first_nonempty . uc_build_envs_try ||
   failerr "E$? while looking for build env" || exit
 
-# XXX: for all those use cases to work, need to change boilerplate to
-#us-env -r user-script -- "$@" &&
-
-# XXX: rewrite to us-env -r uc-build &&
+# XXX: rewrite to us-env -r uc-build?
 #lib_require sys os build-uc &&
 
 #ucbuild_do4124 uc-build.local-default.bash.do "$@"

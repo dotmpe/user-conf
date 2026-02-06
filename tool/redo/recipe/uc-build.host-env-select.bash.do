@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -eETuo pipefail
-shopt -s extdebug
 : "${C:=$(realpath --relative-to "${REDO_BASE}" "${CACHE_DIR:-${METADIR:-.meta}/cache}")}"
 : "${B:=$(realpath --relative-to "${REDO_BASE}" "${BUILD_DIR:-${METADIR:-.meta}/build}")}"
 

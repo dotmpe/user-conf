@@ -3,14 +3,14 @@
 # Boilerplate (derived from env-local)
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  _ _INFO "Build env loading..."
+  _INFO "Build env loading..."
 
 case " ${ENV_BASE-} " in ( *" build "* )
-  _ALERT "Loop detected" "" ${_E_ifenv:-121} || return
+  ALERT "Loop detected" "" ${_E_ifenv:-121} || return
 ;; esac
 
 [[ ${ENV_PEND+set} ]] ||
-  _ALERT "Unverified env" "" ${_E_ifenv:-121} ||
+  ALERT "Unverified env" "PEND:unset" ${_E_ifenv:-121} ||
     return
 
 [[ ${ENV_PEND%% *} = build ]] || return ${_E_ifenv:-121}
@@ -24,17 +24,19 @@ for __ in ${EWD:?}/{,.}{_,}$_.sh
 do
   [[ -e $__ ]] && break || continue
 done && [[ -s $__ ]] && . "$__" ||
-  _ALERT "Failure resolving base env" "" ${_E_noenv:-123} || ${uc_stat}
+  ALERT "build-env: Failure resolving base env" "$_" ${_E_noenv:-123} || exit
 
 [[ ! ${ENV_PEND+set} ]] ||
-  _ALERT "Expected complete env" "" ${_E_noenv:-123} || return
+  ALERT "Expected complete env" "" ${_E_noenv:-123} || return
 
 ! "${VERBOSE:-false}" || ! "${DEBUG:-false}" ||
-  _ _INFO "Build env start"
+  INFO "Build env start"
 
 # Boilerplate end:
 
 # The env-build also inserts a default Env-Init that env-boot would pick up
+: "${APP:?}"
+: "${APP_ID:=${APP//[^A-Za-z0-9]}}"
 : "${PACK_ID:=${APP_ID:?env-build: package ID default; expected APP env}}"
 : "${ENV_BASE//[^A-Za-z0-9_]/_}"
 : "${ENV_INIT:=${PACK_ID//[^A-Za-z0-9_]/_}_env_${_:?}_init}"
@@ -51,13 +53,5 @@ done && [[ -s $__ ]] && . "$__" ||
 : "${BUILD_TARGETS:=${_}/stat/index/build-targets.local.list}"
 
 : "${A:=@build:}"
-
-# TODO: load this from local build dir and prepare under @localuc target
-uc_build_selects=(
-  "uc-build.host-env-select.bash.do"
-  "uc-build.local-select.bash.do"
-  "uc-build.composure-select.bash.do"
-  "uc-build.redo-select.bash.do"
-)
 
 #
