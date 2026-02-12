@@ -52,7 +52,7 @@ uc_debug () # ~ [ <Cmd...> ] # Test for or execute command if env debug is on
     "$@"
     return
   } ||
-    "${UC_DEBUG:-${DEBUG:-false}}"
+    ((${UC_DEBUG:-${DEBUG:-0}}))
 }
 
 # An exception helper, e.g. for inside ${var?...} expressions

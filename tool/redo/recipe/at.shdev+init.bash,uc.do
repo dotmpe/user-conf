@@ -52,8 +52,6 @@ case "${UC_DIR_ENV:-local}" in
       [[ ! -d "${UCONF:=$HOME/.conf}" ]] ||
         PATH=$PATH:"${UCONF}/tool/sh/part:${UCONF}/tool/bash/part"
 
-      . /etc/uc/host
-
       [[ ${US_ENV_PARTS:+set} ]] &&
       [[ ${US_ENV_INIT:+set} ]] &&
       eval "$US_ENV_INIT" &&
