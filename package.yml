@@ -4,10 +4,10 @@
   main: user-conf
   id: user-conf
   slug-id: U-C
-  version: 0.0.2-dev # user-conf
+  version: 0.0.3-dev # user-conf
   vendor: dotmpe
   distribution: public
-  license: GPL
+  license: MIT
 
   contexts:
     default: '@Dev @Script @Personal +\$package_id <\$package_dir> @Project'

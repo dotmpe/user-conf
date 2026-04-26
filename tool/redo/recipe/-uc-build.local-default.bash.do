@@ -9,7 +9,14 @@ set -euETo pipefail
   exit ${_E_noenv:-123}
 }
 
-: "${UC_BUILD_ENVS_TRY:="./{,.}{{build,local}-,}env.sh"}"
+redo-ifchange .env.bash
+. ./.env.bash
+>&2 declare -p EWD LOG METADIR
+
+PATH+=:$U_S/tool/bash/part
+. user-script.build.xredo.bash
+
+: "${UC_BUILD_ENVS_TRY:="./{,.}{{build,local}-,}env.{ba,}sh"}"
 eval "uc_build_envs_try=( ${UC_BUILD_ENVS_TRY} )"
 _Sys_Exec_Apply apply_first_nonempty . uc_build_envs_try ||
   failerr "E$? while looking for build env" || exit
