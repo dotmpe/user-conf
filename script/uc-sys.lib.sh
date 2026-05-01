@@ -16,7 +16,7 @@ uc_sys_lib__init ()
   envd_fun source_all var_{assert,set} &&
   true || return
 
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
   ${LOG:?} notice ":uc-sys:lib-init" "Initialized uc-sys.lib"
 }
 
@@ -64,14 +64,14 @@ sys_debug_mode ()
   local lk=${lk-}:uc/sys.lib:debug-mode
 
   case "${1:1}" in
-    ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
-    ( debug ) "${DEBUG:-${DEV:-false}}" ;;
-    ( dev ) "${DEV:-false}" ;;
-    ( diag ) "${DIAG:-${INIT:-${DEBUG:-false}}}" ;;
-    ( exceptions ) "${VERBOSE:-false}" || "${DIAG:-true}" || ! "${QUIET:-false}" ;;
-    ( init ) "${INIT:-false}" ;;
+    ( assert ) ((${ASSERT:-${DIAG:-${DEBUG:-${DEV:-0}}}})) ;;
+    ( debug ) ((${DEBUG:-${DEV:-0}})) ;;
+    ( dev ) ((${DEV:-0})) ;;
+    ( diag ) ((${DIAG:-${INIT:-${DEBUG:-0}}})) ;;
+    ( exceptions ) ((${VERBOSE:-0})) || ((${DIAG:-1})) || ! ((${QUIET:-0})) ;;
+    ( init ) ((${INIT:-0})) ;;
     # XXX: verbose: msg priv-lvl >= sess out-level
-    ( verbose ) "${VERBOSE:-false}" ;;
+    ( verbose ) ! ((${VERBOSE:-0})) ;;
 
     ( * ) $LOG alert "$lk" "No such mode" "$1" ${_E_script:?"$(sys_exc "$lk")"}
   esac
@@ -80,14 +80,15 @@ sys_debug_mode ()
 # XXX: hook to test for envd/uc and defer, returning cur bool value for setting
 sys_debug_ () # ~ [<...>]
 {
-  sys_debug "$@" && echo true || echo false
+  sys_debug "$@" && echo 1 || echo 0
 }
 # copy: sys.lib/sys-debug
 
 # A helper for inside ${var?...} expressions
 sys_exc () # Format exception-id and message
 {
-  ! "${DEBUG:-$(sys_debug_ exceptions)}" && echo "$1: $2" || sys_exc_trc "$1: $2"
+  ! ((${DEBUG:-$(sys_debug_ exceptions)})) && echo "$1: $2" ||
+    sys_exc_trc "$1: $2"
 }
 # copy: sys.lib/sys-exc
 

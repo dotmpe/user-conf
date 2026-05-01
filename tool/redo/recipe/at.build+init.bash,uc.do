@@ -26,8 +26,8 @@ set -eETuo pipefail
 
 # Keep this recipe UTD automatically
 [[ -h @build+init.do ]] || {
-  ! "${DEV:-false}" && {
-    ! "${DEBUG:-false}" || {
+  ! ((${DEV:-0})) && {
+    ! ((${DEBUG:-0})) || {
       >&2 diff -bqr @build+init.do \
       "${U_C:?}"/tool/redo/recipe/at.build+init.bash,uc.do ||
         $LOG alert : "Local recipe is OOD" "E122:doenv/req" 122 || exit $?

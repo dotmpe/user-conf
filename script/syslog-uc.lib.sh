@@ -20,14 +20,14 @@ syslog_uc_lib__load ()
   # Uc-Log-Base is the tag name or tag prefix passed to logger, the default
   # value for the tag field, or with which ':'-prefixed headers are concatenated
   # if the caller provides them.
-  true "${UC_LOG_BASE:="${scriptname:-"$USER syslog-uc[$$]"}"}"
+  : "${UC_LOG_BASE:="${scriptname:-"$USER syslog-uc[$$]"}"}"
 
-  true "${UC_LOG_LEVEL:=5}" # stderr: Notices and above
+  : "${UC_LOG_LEVEL:=5}" # stderr: Notices and above
   # Only print to stderr based on the events severity level.
   # This is independent of syslog event.
 
   # UC_{LOG_BASE,SYSLOG_{LEVEL,OFF},QUIET}
-  true "${UC_SYSLOG_LEVEL:=3}" # syslog: Errors and above
+  : "${UC_SYSLOG_LEVEL:=3}" # syslog: Errors and above
   # Only send an actual syslog event based on the severity level.
   # With either UC_SYSLOG_LEVEL=-1 or UC_SYSLOG_OFF=1 the logger can be put in
   # 'no-act' mode to prevent actual syslog events.
@@ -45,16 +45,15 @@ syslog_uc_lib__load ()
 
   # XXX: this could be off at 'dumb' and non-interactive by default
   # not sure when/if to toggle this yet.
-  true "${UC_PROFILE_LOG_FILTERS:="severity datetime colorize"}"
+  : "${UC_PROFILE_LOG_FILTERS:="severity datetime colorize"}"
 }
 
 syslog_uc_lib__init () # ~
 {
   lib_require $( [[ "1" != "${COLORIZE:-1}" ]] || echo ansi-uc ) stdlog-uc ||
     return
-  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
-  ! "${INIT:-false}" ||
-  ${LOG:?} notice ":syslog-uc:lib-init" "Initialized syslog-uc.lib"
+  ! { ((INIT)) || ((DEBUG)) || ((DEV)); } ||
+    ${LOG:?} notice ":syslog-uc:lib-init" "Initialized syslog-uc.lib"
 }
 
 # Init generates a new stdlog frontend for uc_syslog_1, the syslog 'logger'

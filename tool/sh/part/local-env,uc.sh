@@ -14,7 +14,7 @@ uc_env +continue || return
 #set -eETu
 #shopt -s extdebug
 
-! "${VERBOSE:-false}" ||
+! ((VERBOSE)) ||
   $LOG info :ucbuild:local-env "Local env trigger started..."
 
 APP_ID=uconfmpe

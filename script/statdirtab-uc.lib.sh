@@ -9,9 +9,8 @@ statdirtab_uc_lib__load ()
 
 statdirtab_uc_lib__init ()
 {
-  true
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
-  ${LOG:?} notice ":statdirtab-uc:lib-init" "Initialized statdirtab-uc.lib"
+  ! { ((INIT)) || ((DEBUG)) || ((DEV)); } ||
+    ${LOG:?} notice ":statdirtab-uc:lib-init" "Initialized statdirtab-uc.lib"
 }
 
 

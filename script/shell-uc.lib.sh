@@ -67,8 +67,7 @@ shell_uc_lib__init ()
   [[ -z "${BASH_VERSION:-}" ]] && IS_BASH=0 || IS_BASH=1
   shell_uc_def || return
 
-  ! "${INIT:-false}" ||
-  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
   ${LOG:?} notice ":shell-uc:lib-init" "Initialized shell-uc.lib"
 }
 

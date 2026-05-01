@@ -23,9 +23,8 @@ lib_uc_lib__init ()
 {
   sh_fun "${lib_load:-lib_load}" || lib_uc__define || return
 
-  ! "${INIT:-false}" ||
-  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
-  ${LOG:?} notice ":lib-uc:lib-init" "Initialized lib-uc.lib"
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
+    ${LOG:?} notice ":lib-uc:lib-init" "Initialized lib-uc.lib"
 }
 
 

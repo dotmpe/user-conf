@@ -29,7 +29,7 @@ stdlog_uc_lib__load ()
 stdlog_uc_lib__init ()
 {
   lib_require args-uc || return
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! { ((INIT)) || ((DEBUG)) || ((DEV)); } ||
   ${LOG:?} notice ":stdlog-uc:lib-init" "Initialized stdlog-uc.lib"
 }
 

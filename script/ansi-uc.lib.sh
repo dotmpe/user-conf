@@ -71,9 +71,7 @@ ansi_uc_lib__init ()
     ;;
 
   ( * )
-      ! "${DEBUG:-false}" &&
-      ! "${DEV:-false}" &&
-      ! "${INIT:-false}" ||
+      ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
         ${INIT_LOG:?} warn :uc:ansi:lib-init "Unknown TERM" "${TERM:-null}"
 
       # Just initialize the empty variables, ie. no style or color values
@@ -112,8 +110,7 @@ ansi_uc_lib__init ()
       ;;
   esac
 
-  ! "${INIT:-false}" ||
-  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
   ${INIT_LOG:?} info ":uc:ansi" "Lib initialized for" "TERM=$TERM:colors=$ncolors"
 }
 

@@ -32,7 +32,7 @@ class_uc_lib__init ()
   destroy () { class_del "$@"; }
   # see class-reference
   declare -g class_{ref,word,sid}
-  ! { "${DEBUG:-false}" || "${DEV:-false}" || "${INIT:-false}"; } ||
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
   ${INIT_LOG:?} info ":class-uc:lib-init" "Initialized class-uc.lib"
 }
 

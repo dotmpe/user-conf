@@ -161,13 +161,13 @@ sys_debug_mode ()
 : source "sys-uc.lib.sh"
   local lk=${lk-}:us:sys.lib:debug-mode
   case "$1" in
-    ( assert ) "${ASSERT:-${DIAG:-${DEBUG:-${DEV:-false}}}}" ;;
-    ( debug ) "${DEBUG:-${DEV:-false}}" ;;
-    ( dev ) "${DEV:-false}" ;;
-    ( diag ) "${DIAG:-${INIT:-${DEBUG:-false}}}" ;;
-    ( exceptions ) "${VERBOSE:-false}" || "${DIAG:-true}" || ! "${QUIET:-false}" ;;
-    ( init ) "${INIT:-false}" ;;
-    ( verbose ) "${VERBOSE:-false}" ;;
+    ( assert ) ((${ASSERT:-${DIAG:-${DEBUG:-${DEV:-1}}}})) ;;
+    ( debug ) ((${DEBUG:-${DEV:-0}})) ;;
+    ( dev ) ((${DEV:-0})) ;;
+    ( diag ) ((${DIAG:-${INIT:-${DEBUG:-0}}})) ;;
+    ( exceptions ) ((${VERBOSE:-0})) || ((${DIAG:-1})) || ! ((${QUIET:-0})) ;;
+    ( init ) ((${INIT:-0})) ;;
+    ( verbose ) ((${VERBOSE:-0})) ;;
 
     ( * ) $LOG alert "$lk" "No such mode" "$1" ${_E_script:?"$(sys_exc "$lk")"}
   esac
@@ -184,7 +184,9 @@ sys_debug_ () # ~ [<...>]
 sys_exc () # ~ <Head>: <Label> # Format exception-id and message
 {
 : source "sys-uc.lib.sh"
-  ! "${DEBUG:-$(sys_debug_ exceptions)}" && echo "$1: ${2-Expected}" ||
+  #"${DEBUG:-$(sys_debug_ exceptions)}"
+  ! ((DEBUG)) &&
+  echo "$1: ${2-Expected}" ||
     # TODO: use localenv for params
     "${sys_on_exc:-sys_exc_trc}" "$1" "${2-Expected}" 3 "${@:3}"
 }

@@ -16,9 +16,7 @@ bash_uc_lib__init ()
   #sh-mode strict
   #set -euo pipefail || return
 
-  ! ${SH_DEBUG:-${DEBUG:-false}} && {
-    true
-  } || {
+  ! ((DEBUG)) || {
     #sh-mode dev # Enable shell stacktrace print on errexit
     set -hET &&
     shopt -s extdebug &&
@@ -26,8 +24,7 @@ bash_uc_lib__init ()
     [[ "$_" == *ERR* ]] ||
     trap 'bash_uc_errexit' ERR || return
   }
-  ! "${INIT:-false}" ||
-  ! { "${DEBUG:-false}" || "${DEV:-false}"; } ||
+  ! ((INIT)) || ! { ((DEBUG)) || ((DEV)); } ||
   ${INIT_LOG:?} info ":bash-uc:lib-load" "Initialized bash-uc.lib"
 }
 
