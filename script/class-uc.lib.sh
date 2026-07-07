@@ -746,7 +746,7 @@ class_load_def () # (:ref) ~ [<Class-name>]
     # New method: from .class.sh files
     # (with two optional load hooks, but no init hook)
     declare lib_uc_kin=_class lib_uc_ext=.class.sh
-    lib_uc_islib "$fn" || return 127
+    lib_uc_islib "$cn" || return 127
     lib_require "$_" || return
     ctx_class_types=${ctx_class_types-}${ctx_class_types+" "}${1:?}
   }
@@ -1019,4 +1019,4 @@ class_typeset () # (name) ~
   declare -f class_${CLASS_NAME:?}_
 }
 
-#
+# ex:ft=bash:

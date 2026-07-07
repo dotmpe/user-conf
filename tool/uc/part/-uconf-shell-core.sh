@@ -41,10 +41,6 @@
       _Sys_Exec_ApplyMap _Sh_Fun_Eval us_core_dsl
       _Sys_Exec_ApplyMap _Sh_Fun_Eval us_debug_profile_dsl
 
-      TODO () {
-        failwith "TODO ${FUNCNAME[1]}" 125
-      }
-
       #. "uc-afs.bash"
       . "uc-cmp.bash"
       . "uc-env.bash"
