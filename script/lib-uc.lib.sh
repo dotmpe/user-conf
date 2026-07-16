@@ -318,7 +318,7 @@ lib_uc_require () # ~ <Names...>
 {
   [[ $# -gt 0 ]] || return ${_E_MA:-194}
 
-  [[ ${lib_load-} ]] && {
+  [[ ! ${lib_loading:+set} ]] || {
     # Already in load call; list unloaded libs and set as pending
     if_ok "$(filter_args "not lib_uc_loaded" "$@")" &&
     set -- $_ &&
