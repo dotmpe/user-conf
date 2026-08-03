@@ -1,4 +1,5 @@
-uc_os_lib__load()
+# XXX: this is just here as good case-study of the old(er) us lib and envd
+# The filter_args version here is deprecated by changed arguments.
 {
   lib_require envd
 }

@@ -122,24 +122,23 @@ lib_uc_init () # ~ [<Names...>]
   done
 }
 
-# requires sys.lib:filter_args
 lib_uc_init_all () # ~ <Names...>
 {
   local pending lk=${lk:-}:uc:init-all
   lib_uc_require "$@" ||
     $LOG error "$lk" "Failure loading libs" "E$?:$*" $? || return
-  if_ok "$(filter_args lib_uc_has_init "$@")" &&
+  if_ok "$(filter_args lib_uc_has_init "" "$@")" &&
   set -- $_ &&
   [[ 0 -eq $# ]] && return
   while true
   do
-    if_ok "$(filters_args "not lib_uc_initialized" "$@")" &&
+    if_ok "$(filters_args ': not lib_uc_initialized' "" "$@")" &&
     set -- $_ || return
     [[ 0 -lt $# ]] || break
     pending=$#
     INIT_LOG=$LOG lib_uc_init "$@" || {
       sys_astat -eq ${_E_retry:-198} && {
-        set -- $(filter_args "not lib_uc_initialized" "$@") &&
+        set -- $(filter_args ': not lib_uc_initialized' "" "$@") &&
         [[ $pending -gt $# ]] || {
           set -- "${@:2}" "$1"
         }
@@ -320,7 +319,7 @@ lib_uc_require () # ~ <Names...>
 
   [[ ! ${lib_loading:+set} ]] || {
     # Already in load call; list unloaded libs and set as pending
-    if_ok "$(filter_args "not lib_uc_loaded" "$@")" &&
+    if_ok "$(filter_args ':not lib_uc_loaded' "" "$@")" &&
     set -- $_ &&
     # Add pending libs and return
     LIB_REQ="${LIB_REQ:-}${LIB_REQ:+ }$*"
@@ -336,7 +335,7 @@ lib_uc_require () # ~ <Names...>
   do
     $LOG info :uc:lib-require "Required:" "$LIB_REQ:for:$*"
     set -- $LIB_REQ "$@" ; unset LIB_REQ
-    set -- $(filter_args "not lib_uc_loaded" "${@:?}" | awk '!a[$0]++')
+    set -- $(filter_args ':not lib_uc_loaded' "" "${@:?}" | awk '!a[$0]++')
     [[ $# -eq 0 ]] && return
     $LOG info :uc:lib-require "Pending:" "$*"
     lib_loading= lib_load "$@" && return || {

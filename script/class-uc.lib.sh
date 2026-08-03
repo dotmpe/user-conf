@@ -574,7 +574,7 @@ class_define_all () # ~ [<Class-names...>]
   : "${@:?"$(sys_exc class-uc.lib:-define-all: "Class names expected")"}"
 
   # Skip if already defined
-  set -- $(filter_args "not class_defined" "$@")
+  set -- $(filter_args ': not class_defined' "" "$@")
   [[ 0 -eq $# ]] && return
 
   declare class bases def
