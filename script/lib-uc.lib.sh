@@ -216,7 +216,7 @@ lib_uc_load () # <Names...>
     [[ "-1" != "${!lib_stat:--1}" ]] || {
       # Lookup path to lib
       lib_path=$(PATH=${UC_LIB_PATH} command -v "$lib_name${lib_uc_ext:-.lib.sh}") ||
-        $LOG error "${lk}" "No such lib found" "$lib_name" 127 || return
+        $LOG error "${lk}" "No such lib found (PATH=$UC_LIB_PATH)" "$lib_name" 127 || return
       # XXX: not the same var.. UC_TOOLS_DEBUG?
       #test -z "${USER_CONF_DEBUG-}" ||
       ! uc_debug || $LOG info "$lk:$lib_varn" "Loading" "$lib_path"
