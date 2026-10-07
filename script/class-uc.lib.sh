@@ -695,11 +695,12 @@ class_load () # ~ [<Class-names...>]
     class_assert_ref "$class" || return
     class_name=$(str_word "$class")
     class_loaded "$class_name" ||
-    class_load_def "$class" ||
-      $LOG alert "$lk" "Cannot find such definition" "E$?:$class" $? || return
+      class_load_def "$class" ||
+        $LOG alert "$lk" "Cannot find such definition" "E$?:$class" $? || return
     class_exists "$class" || {
       sh_fun class_${class_name}__load ||
-        $LOG alert "$lk" "Expected class 'load' hook" "$class:$class_name" 1 || return
+        $LOG alert "$lk" "Expected class 'load' hook" "$class:$class_name" 1 ||
+          return
       $_ ||
         $LOG error "$lk" "During class load" "E$?:$class" $? || return
 
@@ -736,6 +737,7 @@ class_load_def () # (:ref) ~ [<Class-name>]
   class_reference "$@" || return
 
   $LOG debug "$lk" "Looking for definitions" "$fn-class.lib $cn.class"
+
   # XXX: old method of loading?
   # If class corresponds to lib or other group, require that to be initialized
   lib_uc_islib "$fn-class" && {

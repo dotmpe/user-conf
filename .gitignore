@@ -1,3 +1,66 @@
+# Local env seed file/scripts
+.env*
+
+# Project paths
+pack/
+dist/
+
+# Log, cache and other local, special purpose dirs hidden from SCM et al
+.local/agent
+.local/build
+.local/cache
+.local/etc
+.local/log
+.local/mnt
+.local/sync
+.local/user/data
+.local/var
+
+# Redo build database
+.redo/
+
+# C tags... for generators that don't use already prepared hidden dirs
+.tags
+tags
+
+# Editor (and user) temp/swap/info files
+*~
 .*sw[a-p]
-.package*json
-.package*sh
+*.tmp
+
+# Aider's one path that doesn't seem to configure externally?
+.aider.tags.cache.v4
+# .aider/
+
+# Object files
+*.o
+*.os
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.def
+*.exp
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
